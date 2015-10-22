@@ -8,12 +8,12 @@ public class Channel {
     /**
      * The channel's unique ID (does not change over the lifespan of a channel)
      */
-    private String id;
+    private final String id;
 
     /**
      * The channel's human readable name (can change over time)
      */
-    private String name;
+    private final String name;
 
     public Channel(String id, String name) {
         this.id = id;
@@ -21,21 +21,20 @@ public class Channel {
     }
 
     public Channel() {
+        this(null, null);
     }
 
+    /**
+     * @return {@link #id}
+     */
     public String getId() {
         return id;
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
+    /**
+     * @return {@link #name}
+     */
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 }
