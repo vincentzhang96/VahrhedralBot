@@ -3,9 +3,11 @@ package co.phoenixlab.discord;
 import org.slf4j.Logger;
 import sx.blah.discord.DiscordClient;
 import sx.blah.discord.handle.obj.Message;
+import sx.blah.discord.util.MessageBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.StringJoiner;
 
 public class CommandDispatcher {
 
@@ -20,9 +22,29 @@ public class CommandDispatcher {
         this.discord = discord;
         this.bot = bot;
         commands = new HashMap<>();
+        addHelpCommand();
     }
 
-    public void registerCommand(String commandName, Command command,  String desc) {
+    private void addHelpCommand() {
+        Command helpCommand = (context, args) -> {
+            String prefix = bot.getConfig().getCommandPrefix();
+            StringJoiner joiner = new StringJoiner("\r\n", "Available Commands\r\n", "");
+            for (Map.Entry<String, CommandWrapper> entry : commands.entrySet()) {
+                joiner.add(String.format("%s%s - %s", prefix, entry.getKey(), entry.getValue().helpDesc));
+            }
+            final String result = joiner.toString();
+            final String channelId = context.getMessage().getChannel().getID();
+            bot.getTaskQueue().runOnMain(() -> {
+                new MessageBuilder().
+                        withChannel(channelId).
+                        withContent(result).
+                        send();
+            });
+        };
+        registerCommand("help", helpCommand, "Lists available commands");
+    }
+
+    public void registerCommand(String commandName, Command command, String desc) {
         commands.put(commandName, new CommandWrapper(command, desc));
         LOGGER.debug("Registered command \"{}\"", commandName);
     }
@@ -43,6 +65,7 @@ public class CommandDispatcher {
         String args = split.length > 1 ? split[1] : "";
         CommandWrapper wrapper = commands.get(cmd);
         if (wrapper != null) {
+            LOGGER.info("Dispatching command {}", cmd);
             wrapper.command.handleCommand(new MessageContext(discord, msg, bot), args);
         } else {
             LOGGER.info("Unknown command \"{}\"", cmd);
