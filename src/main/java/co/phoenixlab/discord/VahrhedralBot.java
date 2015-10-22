@@ -84,11 +84,12 @@ public class VahrhedralBot implements Runnable {
 
     private void onMessageRecievedEvent(MessageReceivedEvent event) {
         Message msg = event.getMessage();
-        LOGGER.info("Message from {} #{} {}: {}",
+        LOGGER.debug("Message from {} #{} {}: {}",
                 msg.getChannel().getParent().getName(),
                 msg.getChannel().getName(),
                 msg.getAuthor().getName(),
                 msg.getContent());
+
     }
 
 
