@@ -36,10 +36,12 @@ public class VahrhedralBot implements Runnable {
     private DiscordClient discord;
     private Configuration config;
     private CommandDispatcher commandDispatcher;
+    private TaskQueue taskQueue;
 
     public VahrhedralBot() {
         discord = DiscordClient.get();
         commandDispatcher = new CommandDispatcher(discord, this);
+        taskQueue = new TaskQueue();
     }
 
     @Override
@@ -64,6 +66,10 @@ public class VahrhedralBot implements Runnable {
         if (!discord.isReady()) {
             LOGGER.error("Discord client is not ready");
             return;
+        }
+
+        while (true) {
+            taskQueue.executeWaiting();
         }
     }
 
@@ -90,6 +96,10 @@ public class VahrhedralBot implements Runnable {
 
     public DiscordClient getDiscord() {
         return discord;
+    }
+
+    public TaskQueue getTaskQueue() {
+        return taskQueue;
     }
 
     private void onReadyEvent(ReadyEvent event) {
