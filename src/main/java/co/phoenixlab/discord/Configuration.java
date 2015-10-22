@@ -8,12 +8,14 @@ public class Configuration {
     private String email;
     private String password;
     private String commandPrefix;
+    private transient int prefixLength;
     private Set<String> blacklist;
 
     public Configuration() {
         email = "";
         password = "";
         commandPrefix = "!";
+        prefixLength = 0;
         blacklist = new HashSet<>();
     }
 
@@ -37,8 +39,17 @@ public class Configuration {
         return commandPrefix;
     }
 
+    public int getPrefixLength() {
+        //  Lazy load after we load from config file
+        if (prefixLength == 0) {
+            prefixLength = commandPrefix.length();
+        }
+        return prefixLength;
+    }
+
     public void setCommandPrefix(String commandPrefix) {
         this.commandPrefix = commandPrefix;
+        prefixLength = this.commandPrefix.length();
     }
 
     public Set<String> getBlacklist() {
