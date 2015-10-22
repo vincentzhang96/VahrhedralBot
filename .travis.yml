@@ -1,6 +1,6 @@
 language: java
 install: true
 before_install:
- - $TRAVIS_BUILD_DIR/travis-ci-support/install.sh
+ - mvn install:install-file -Dfile=$TRAVIS_BUILD_DIR/travis-ci-support/Discord4J-1.0-SNAPSHOT.jar -DpomFile=$TRAVIS_BUILD_DIR/travis-ci-support/Discord4J-1.0-SNAPSHOT.pom
 jdk:
   - oraclejdk8
