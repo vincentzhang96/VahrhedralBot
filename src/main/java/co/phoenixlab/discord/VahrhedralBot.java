@@ -1,12 +1,16 @@
 package co.phoenixlab.discord;
 
+import com.google.gson.Gson;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sx.blah.discord.DiscordClient;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -55,8 +59,10 @@ public class VahrhedralBot implements Runnable {
     }
 
     private Configuration loadConfiguration(Path path) throws IOException {
-        //  TODO
-        return new Configuration();
+        Gson configGson = new Gson();
+        try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+            return configGson.fromJson(reader, Configuration.class);
+        }
     }
 
 
