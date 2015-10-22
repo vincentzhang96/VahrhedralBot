@@ -11,6 +11,10 @@ public class Configuration {
     private Set<String> blacklist;
 
     public Configuration() {
+        email = "";
+        password = "";
+        commandPrefix = "!";
+        blacklist = new HashSet<>();
     }
 
     public String getEmail() {
