@@ -1,8 +1,14 @@
 package co.phoenixlab.discord;
 
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sx.blah.discord.DiscordClient;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class VahrhedralBot implements Runnable {
 
@@ -20,6 +26,7 @@ public class VahrhedralBot implements Runnable {
     }
 
     private DiscordClient discord;
+    private Configuration config;
 
     public VahrhedralBot() {
         discord = DiscordClient.get();
@@ -28,7 +35,28 @@ public class VahrhedralBot implements Runnable {
     @Override
     public void run() {
         //  TODO
+        //  Load Config
+        try {
+            config = loadConfiguration(Paths.get("config.json"));
+        } catch (IOException e) {
+            LOGGER.error("Unable to load configuration", e);
+            return;
+        }
+        try {
+            discord.login(config.getEmail(), config.getPassword());
+        } catch (IOException | ParseException | URISyntaxException e) {
+            LOGGER.error("Unable to log in", e);
+            return;
+        }
+        if (!discord.isReady()) {
+            LOGGER.error("Discord client is not ready");
+            return;
+        }
+    }
 
+    private Configuration loadConfiguration(Path path) throws IOException {
+        //  TODO
+        return new Configuration();
     }
 
 
