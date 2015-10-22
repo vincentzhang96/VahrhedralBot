@@ -85,6 +85,10 @@ public class VahrhedralBot implements Runnable {
     private void onMessageRecievedEvent(MessageReceivedEvent event) {
         Message msg = event.getMessage();
         String content = msg.getContent();
+        if (discord.getOurUser().getID().equals(msg.getAuthor().getID())) {
+            //  Ignore
+            return;
+        }
         LOGGER.debug("Message from {} #{} {}: {}",
                 msg.getChannel().getParent().getName(),
                 msg.getChannel().getName(),
