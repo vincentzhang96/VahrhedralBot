@@ -1,6 +1,6 @@
 language: java
 install: true
 before_install:
- - travis-ci-support/install.sh
+ - $TRAVIS_BUILD_DIR/travis-ci-support/install.sh
 jdk:
   - oraclejdk8
