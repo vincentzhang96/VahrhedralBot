@@ -35,9 +35,11 @@ public class VahrhedralBot implements Runnable {
 
     private DiscordClient discord;
     private Configuration config;
+    private CommandDispatcher commandDispatcher;
 
     public VahrhedralBot() {
         discord = DiscordClient.get();
+        commandDispatcher = new CommandDispatcher(discord, this);
     }
 
     @Override
@@ -78,6 +80,18 @@ public class VahrhedralBot implements Runnable {
         dispatcher.registerListener((IListener<MessageReceivedEvent>)this::onMessageRecievedEvent);
     }
 
+    public CommandDispatcher getCommandDispatcher() {
+        return commandDispatcher;
+    }
+
+    public Configuration getConfig() {
+        return config;
+    }
+
+    public DiscordClient getDiscord() {
+        return discord;
+    }
+
     private void onReadyEvent(ReadyEvent event) {
         LOGGER.info("Successfully connected as {}", discord.getOurUser().getName());
     }
@@ -98,10 +112,7 @@ public class VahrhedralBot implements Runnable {
                 content);
         if (content.startsWith(config.getCommandPrefix())) {
             //  Process command
-            //  TODO
-            LOGGER.info("Received command {} from {} ({})",
-                    content, msg.getAuthor().getName(), msg.getAuthor().getID());
-
+            commandDispatcher.handleCommand(msg);
         }
         //  otherwise ignore the message
     }
