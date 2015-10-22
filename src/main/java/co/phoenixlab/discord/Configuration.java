@@ -6,7 +6,6 @@ public class Configuration {
     private String password;
 
     public Configuration() {
-
     }
 
     public String getEmail() {
