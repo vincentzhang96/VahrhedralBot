@@ -97,6 +97,8 @@ public class VahrhedralBot implements Runnable {
         if (content.startsWith(config.getCommandPrefix())) {
             //  Process command
             //  TODO
+            LOGGER.info("Received command {} from {} ({})",
+                    content, msg.getAuthor().getName(), msg.getAuthor().getID());
 
         }
         //  otherwise ignore the message
