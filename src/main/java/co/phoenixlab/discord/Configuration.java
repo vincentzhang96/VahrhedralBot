@@ -1,10 +1,14 @@
 package co.phoenixlab.discord;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class Configuration {
 
     private String email;
     private String password;
     private String commandPrefix;
+    private Set<String> blacklist;
 
     public Configuration() {
     }
@@ -31,5 +35,9 @@ public class Configuration {
 
     public void setCommandPrefix(String commandPrefix) {
         this.commandPrefix = commandPrefix;
+    }
+
+    public Set<String> getBlacklist() {
+        return blacklist;
     }
 }

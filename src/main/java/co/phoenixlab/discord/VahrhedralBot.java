@@ -85,7 +85,9 @@ public class VahrhedralBot implements Runnable {
     private void onMessageRecievedEvent(MessageReceivedEvent event) {
         Message msg = event.getMessage();
         String content = msg.getContent();
-        if (discord.getOurUser().getID().equals(msg.getAuthor().getID())) {
+        String authorId = msg.getAuthor().getID();
+        if (discord.getOurUser().getID().equals(authorId) ||
+                config.getBlacklist().contains(authorId)) {
             //  Ignore
             return;
         }
