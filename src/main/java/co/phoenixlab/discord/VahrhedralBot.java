@@ -84,12 +84,18 @@ public class VahrhedralBot implements Runnable {
 
     private void onMessageRecievedEvent(MessageReceivedEvent event) {
         Message msg = event.getMessage();
+        String content = msg.getContent();
         LOGGER.debug("Message from {} #{} {}: {}",
                 msg.getChannel().getParent().getName(),
                 msg.getChannel().getName(),
                 msg.getAuthor().getName(),
-                msg.getContent());
+                content);
+        if (content.startsWith(config.getCommandPrefix())) {
+            //  Process command
+            //  TODO
 
+        }
+        //  otherwise ignore the message
     }
 
 

@@ -4,6 +4,7 @@ public class Configuration {
 
     private String email;
     private String password;
+    private String commandPrefix;
 
     public Configuration() {
     }
@@ -22,5 +23,13 @@ public class Configuration {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getCommandPrefix() {
+        return commandPrefix;
+    }
+
+    public void setCommandPrefix(String commandPrefix) {
+        this.commandPrefix = commandPrefix;
     }
 }
