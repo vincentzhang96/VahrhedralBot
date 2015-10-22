@@ -1,5 +1,7 @@
 package co.phoenixlab.discord.api.entities;
 
+import java.util.Objects;
+
 /**
  * Represents a text channel
  */
@@ -36,5 +38,22 @@ public class Channel {
      */
     public String getName() {
         return name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Channel channel = (Channel) o;
+        return Objects.equals(id, channel.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

@@ -4,6 +4,7 @@ import co.phoenixlab.discord.api.ApiConst;
 import co.phoenixlab.discord.api.util.ApiUtils;
 
 import java.net.URL;
+import java.util.Objects;
 
 public class User {
 
@@ -83,5 +84,23 @@ public class User {
     public String toString() {
         return String.format("User[username:\"%s\",id:\"%s\",avatar:\"%s\",avatarUrl:\"%s\"]",
                 username, id, avatar, avatarUrl.toExternalForm());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        User user = (User) o;
+        return Objects.equals(id, user.id) &&
+                Objects.equals(discriminator, user.discriminator);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, discriminator);
     }
 }
