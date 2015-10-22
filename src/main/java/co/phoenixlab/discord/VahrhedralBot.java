@@ -5,6 +5,11 @@ import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sx.blah.discord.DiscordClient;
+import sx.blah.discord.handle.IDispatcher;
+import sx.blah.discord.handle.IListener;
+import sx.blah.discord.handle.impl.events.MessageReceivedEvent;
+import sx.blah.discord.handle.impl.events.ReadyEvent;
+import sx.blah.discord.handle.obj.Message;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -45,6 +50,8 @@ public class VahrhedralBot implements Runnable {
             LOGGER.error("Unable to load configuration", e);
             return;
         }
+        //  Register our event listeners first
+        registerEventListeners();
         LOGGER.info("Logging in using {}", config.getEmail());
         try {
             discord.login(config.getEmail(), config.getPassword());
@@ -65,6 +72,24 @@ public class VahrhedralBot implements Runnable {
         }
     }
 
+    private void registerEventListeners() {
+        IDispatcher dispatcher = discord.getDispatcher();
+        dispatcher.registerListener((IListener<ReadyEvent>)this::onReadyEvent);
+        dispatcher.registerListener((IListener<MessageReceivedEvent>)this::onMessageRecievedEvent);
+    }
+
+    private void onReadyEvent(ReadyEvent event) {
+        LOGGER.info("Successfully connected as {}", discord.getOurUser().getName());
+    }
+
+    private void onMessageRecievedEvent(MessageReceivedEvent event) {
+        Message msg = event.getMessage();
+        LOGGER.info("Message from {} #{} {}: {}",
+                msg.getChannel().getParent().getName(),
+                msg.getChannel().getName(),
+                msg.getAuthor().getName(),
+                msg.getContent());
+    }
 
 
 }
