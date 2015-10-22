@@ -13,9 +13,14 @@ public class User {
     private final String username;
 
     /**
-     * The User's unique identifier (does not change)
+     * The User's identifier (does not change, not necessarily unqiue?)
      */
     private final String id;
+
+    /**
+     * An identifier used to discriminate between two users with the same name and/or id
+     */
+    private final String discriminator;
 
     /**
      * The user's avatar ID
@@ -27,15 +32,16 @@ public class User {
      */
     private final URL avatarUrl;
 
-    public User(String username, String id, String avatar) {
+    public User(String username, String id, String discriminator, String avatar) {
         this.username = username;
         this.id = id;
+        this.discriminator = discriminator;
         this.avatar = avatar;
         this.avatarUrl = ApiUtils.url(String.format(ApiConst.AVATAR_URL_PATTERN, id, avatar));
     }
 
     public User() {
-        this(null, null, null);
+        this(null, null, null, null);
     }
 
     /**
@@ -50,6 +56,13 @@ public class User {
      */
     public String getId() {
         return id;
+    }
+
+    /**
+     * @return {@link #discriminator}
+     */
+    public String getDiscriminator() {
+        return discriminator;
     }
 
     /**
