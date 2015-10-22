@@ -1,6 +1,9 @@
 # Maven
 target/
 
+# Config
+config/
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db

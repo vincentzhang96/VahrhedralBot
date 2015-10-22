@@ -24,9 +24,8 @@ public class VahrhedralBot implements Runnable {
             VahrhedralBot bot = new VahrhedralBot();
             bot.run();
         } catch (Exception e) {
-            LOGGER.error("Fatal error while running bot", e);
+            LOGGER.error("Fatal error while starting bot", e);
         }
-        LOGGER.info("Vahrhedral bot stopped");
     }
 
     private DiscordClient discord;
@@ -41,11 +40,12 @@ public class VahrhedralBot implements Runnable {
         //  TODO
         //  Load Config
         try {
-            config = loadConfiguration(Paths.get("config.json"));
+            config = loadConfiguration(Paths.get("config/config.json"));
         } catch (IOException e) {
             LOGGER.error("Unable to load configuration", e);
             return;
         }
+        LOGGER.info("Logging in using {}", config.getEmail());
         try {
             discord.login(config.getEmail(), config.getPassword());
         } catch (IOException | ParseException | URISyntaxException e) {
