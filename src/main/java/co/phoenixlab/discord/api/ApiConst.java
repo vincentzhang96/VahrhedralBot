@@ -20,6 +20,10 @@ public class ApiConst {
      */
     public static final String API_BASE_PATH = BASE_URL + "api";
     /**
+     * WebSocket gateway
+     */
+    public static final String WEBSOCKET_GATEWAY = API_BASE_PATH + "/gateway";
+    /**
      * The endpoint for accessing user information
      */
     public static final String USERS_ENDPOINT = API_BASE_PATH + "/users/";
