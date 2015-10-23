@@ -50,7 +50,7 @@ public class DiscordApiClient {
         if (status != HttpURLConnection.HTTP_OK) {
             if (status == HttpURLConnection.HTTP_FORBIDDEN) {
                 //  Servers return FORBIDDEN for bad credentials
-                LOGGER.warn("Unable to log in with given credentials: ", response.getStatusText());\
+                LOGGER.warn("Unable to log in with given credentials: ", response.getStatusText());
             } else {
                 LOGGER.warn("Unable to log in, Discord may be having issues");
             }
