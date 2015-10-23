@@ -18,7 +18,7 @@ public class ApiConst {
     /**
      * Base API path
      */
-    public static final String API_BASE_PATH = "api";
+    public static final String API_BASE_PATH = BASE_URL + "api";
     /**
      * The endpoint for accessing user information
      */
