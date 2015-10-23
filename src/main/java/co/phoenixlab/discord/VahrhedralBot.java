@@ -1,6 +1,7 @@
 package co.phoenixlab.discord;
 
 import com.google.gson.Gson;
+import com.mashape.unirest.http.Unirest;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,6 +126,15 @@ public class VahrhedralBot implements Runnable {
             commandDispatcher.handleCommand(msg);
         }
         //  otherwise ignore the message
+    }
+
+    public void shutdown() {
+        try {
+            Unirest.shutdown();
+        } catch (IOException e) {
+            LOGGER.warn("Was unable to cleanly shut down Unirest", e);
+        }
+        System.exit(0);
     }
 
 
