@@ -43,7 +43,7 @@ public class DiscordApiClient {
                     body(auth.toJSONString()).
                     asJson();
         } catch (UnirestException e) {
-            throw new IOException(e);
+            throw new IOException("Unable to log in", e);
         }
         int status = response.getStatus();
 
@@ -54,10 +54,10 @@ public class DiscordApiClient {
             } else {
                 LOGGER.warn("Unable to log in, Discord may be having issues");
             }
-            throw new IOException("Unable to auth: HTTP " + response.getStatus() + ": " + response.getStatusText());
+            throw new IOException("Unable to log in: HTTP " + response.getStatus() + ": " + response.getStatusText());
         }
         token = response.getBody().getObject().getString("token");
-        LOGGER.info("Successfully logged in, using token {}", token);
+        LOGGER.info("Successfully logged in, token is {}", token);
         openWebSocket();
     }
 
