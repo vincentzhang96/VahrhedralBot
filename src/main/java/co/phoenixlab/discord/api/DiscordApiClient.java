@@ -12,6 +12,8 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class DiscordApiClient {
 
@@ -27,15 +29,14 @@ public class DiscordApiClient {
     }
 
     public void logIn(String email, String password) throws IOException {
-        //  TODO
         LOGGER.info("Attempting to log in as {}...", email);
         this.email = email;
         this.password = password;
 
-        JSONObject auth = new JSONObject();
-        auth.put("email", email);
-        auth.put("password", password);
-
+        Map<String, String> authObj = new HashMap<>();
+        authObj.put("email", email);
+        authObj.put("password", password);
+        JSONObject auth = new JSONObject(authObj);
         HttpResponse<JsonNode> response;
         try {
              response = Unirest.post(ApiConst.LOGIN_ENDPOINT).
