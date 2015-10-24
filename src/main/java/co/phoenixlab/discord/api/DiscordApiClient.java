@@ -1,6 +1,5 @@
 package co.phoenixlab.discord.api;
 
-import co.phoenixlab.discord.VahrhedralBot;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
@@ -9,6 +8,7 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -17,7 +17,7 @@ import java.util.Map;
 
 public class DiscordApiClient {
 
-    private static final Logger LOGGER = VahrhedralBot.LOGGER;
+    private static final Logger LOGGER = LoggerFactory.getLogger("DiscordApiClient");
 
     private String email;
     private String password;
