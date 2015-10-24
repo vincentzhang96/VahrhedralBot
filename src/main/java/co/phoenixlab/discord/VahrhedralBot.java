@@ -40,6 +40,8 @@ public class VahrhedralBot implements Runnable {
 
     @Override
     public void run() {
+        //  Set thread name
+        Thread.currentThread().setName("VahrhedralBotMain");
         //  Load Config
         try {
             config = loadConfiguration(Paths.get("config/config.json"));
