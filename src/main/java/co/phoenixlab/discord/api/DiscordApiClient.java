@@ -61,8 +61,29 @@ public class DiscordApiClient {
         openWebSocket();
     }
 
-    private void openWebSocket() {
+    private void openWebSocket() throws IOException {
+        final String gateway = getWebSocketGateway();
         //  TODO
+    }
+
+    private String getWebSocketGateway() throws IOException {
+        HttpResponse<JsonNode> response;
+        try {
+            response = Unirest.get(ApiConst.WEBSOCKET_GATEWAY).
+                    header("authorization", token).
+                    asJson();
+        } catch (UnirestException e) {
+            throw new IOException("Unable to retrieve websocket gateway", e);
+        }
+        int status = response.getStatus();
+        if (status != HttpURLConnection.HTTP_OK) {
+            LOGGER.warn("Unable to retrieve websocket gateway: HTTP {}: {}", status, response.getStatusText());
+            throw new IOException("Unable to retrieve websocket : HTTP " + status + ": " + response.getStatusText());
+        }
+        String gateway = response.getBody().getObject().getString("url");
+        gateway = gateway.substring(1);
+        LOGGER.info("Found WebSocket gateway at {}", gateway);
+        return gateway;
     }
 
     public void sendMessage(String body, String channelId) throws IOException {
