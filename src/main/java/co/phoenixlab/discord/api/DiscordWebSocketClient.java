@@ -1,5 +1,7 @@
 package co.phoenixlab.discord.api;
 
+import co.phoenixlab.discord.api.entities.ReadyMessage;
+import com.google.gson.Gson;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.json.simple.JSONObject;
@@ -9,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class DiscordWebSocketClient extends WebSocketClient {
 
@@ -16,11 +20,14 @@ public class DiscordWebSocketClient extends WebSocketClient {
 
     private final DiscordApiClient apiClient;
     private final JSONParser parser;
+    private final Gson gson;
+    private ScheduledFuture keepAliveFuture;
 
     public DiscordWebSocketClient(DiscordApiClient apiClient, URI serverUri) {
         super(serverUri);
         this.apiClient = apiClient;
         this.parser = new JSONParser();
+        this.gson = new Gson();
     }
 
     @Override
@@ -49,16 +56,55 @@ public class DiscordWebSocketClient extends WebSocketClient {
             String type = (String) msg.get("t");
             JSONObject data = (JSONObject) msg.get("d");
             switch (type) {
+                case "READY":
+                    handleReadyMessage(data);
+                    break;
+
                 //  TODO
+
+                default:
+                    LOGGER.warn("Unknown message type {}:\n{}", type, data.toJSONString());
             }
         } catch (ParseException e) {
             LOGGER.warn("Unable to parse message", e);
         }
     }
 
+    private void handleReadyMessage(JSONObject data) {
+        //  Because this doesnt come often and to simplify matters
+        //  we'll serialize the subobject to string and have Gson parse out the object
+        String json = data.toJSONString();
+        LOGGER.debug(json);
+        ReadyMessage readyMessage = gson.fromJson(json, ReadyMessage.class);
+        apiClient.setSessionId(readyMessage.getSessionId());
+        LOGGER.info("Using sessionId {}", apiClient.getSessionId());
+        startKeepAlive(readyMessage.getHeartbeatInterval());
+        LOGGER.info("Sending keepAlive every {} ms", readyMessage.getHeartbeatInterval());
+        LOGGER.info("Connected to {} servers", readyMessage.getServers().length);
+        LOGGER.info("Holding {} private conversations", readyMessage.getPrivateChannels().length);
+        //  TODO
+    }
+
+    @SuppressWarnings("unchecked")
+    private void startKeepAlive(long keepAliveInterval) {
+        if (keepAliveFuture != null) {
+            keepAliveFuture.cancel(true);
+        }
+        keepAliveFuture = apiClient.getExecutorService().scheduleAtFixedRate(() -> {
+            JSONObject keepAlive = new JSONObject();
+            keepAlive.put("op", 1);
+            keepAlive.put("d", System.currentTimeMillis());
+            LOGGER.debug("Sending keepAlive");
+            send(keepAlive.toJSONString());
+        }, 0, keepAliveInterval, TimeUnit.MILLISECONDS);
+    }
+
     @Override
     public void onClose(int code, String reason, boolean remote) {
         LOGGER.info("Closing WebSocket {}: {} {}", code, reason, remote ? "remote" : "local");
+        if (keepAliveFuture != null) {
+            keepAliveFuture.cancel(true);
+        }
     }
 
     @Override
