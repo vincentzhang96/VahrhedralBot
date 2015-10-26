@@ -8,6 +8,7 @@ public class ReadyMessage {
     private int version;
 
     private User user;
+    @SerializedName("session_id")
     private String sessionId;
     @SerializedName("read_state")
     private ReadState[] readState;
