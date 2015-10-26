@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,6 +25,8 @@ public class DiscordApiClient {
     private String password;
 
     private String token;
+
+    private DiscordWebSocketClient webSocketClient;
 
     public DiscordApiClient() {
 
@@ -64,7 +68,14 @@ public class DiscordApiClient {
 
     private void openWebSocket() throws IOException {
         final String gateway = getWebSocketGateway();
-        //  TODO
+        try {
+            webSocketClient = new DiscordWebSocketClient(this, new URI(gateway));
+        } catch (URISyntaxException e) {
+            LOGGER.warn("Bad gateway", e);
+            throw new IOException(e);
+        }
+        webSocketClient.connect();
+
     }
 
     private String getWebSocketGateway() throws IOException {
@@ -82,7 +93,7 @@ public class DiscordApiClient {
             throw new IOException("Unable to retrieve websocket : HTTP " + status + ": " + response.getStatusText());
         }
         String gateway = response.getBody().getObject().getString("url");
-        gateway = gateway.substring(1);
+        gateway = "w" + gateway.substring(2);
         LOGGER.info("Found WebSocket gateway at {}", gateway);
         return gateway;
     }
@@ -100,7 +111,7 @@ public class DiscordApiClient {
         return false;
     }
 
-
-
-
+    public String getToken() {
+        return token;
+    }
 }
