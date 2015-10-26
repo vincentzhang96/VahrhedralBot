@@ -16,6 +16,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class DiscordApiClient {
 
@@ -25,6 +26,8 @@ public class DiscordApiClient {
     private String password;
 
     private String token;
+
+    private AtomicReference<String> sessionId;
 
     private DiscordWebSocketClient webSocketClient;
 
@@ -113,5 +116,13 @@ public class DiscordApiClient {
 
     public String getToken() {
         return token;
+    }
+
+    public String getSessionId() {
+        return sessionId.get();
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId.set(sessionId);
     }
 }
