@@ -1,6 +1,7 @@
 package co.phoenixlab.discord.api.entities;
 
-import java.util.HashSet;
+import com.google.gson.annotations.SerializedName;
+
 import java.util.Set;
 
 public class Server {
@@ -8,7 +9,7 @@ public class Server {
     /**
      * Display name of the server
      */
-    private final String name;
+    private String name;
 
     /**
      * Server identifier
@@ -18,23 +19,30 @@ public class Server {
     /**
      * The text channels that belong to this server
      */
-    private final Set<Channel> channels;
+    private Set<Channel> channels;
 
     /**
      * The members that belong to this server
      */
-    private final Set<Member> members;
+    private Set<Member> members;
 
-    public Server(String id, String name, Set<Channel> channels, Set<Member> members) {
-        this.name = name;
-        this.id = id;
-        this.channels = channels;
-        this.members = members;
+    private Set<Role> roles;
 
+    private String region;
+
+    @SerializedName("owner_id")
+    private String ownerId;
+
+    private boolean large;
+
+    private String icon;
+
+    public Server() {
+        this(null);
     }
 
-    public Server(String id, String name) {
-        this(id, name, new HashSet<>(), new HashSet<>());
+    public Server(String id) {
+        this.id = id;
     }
 
     /**
@@ -54,7 +62,7 @@ public class Server {
     /**
      * @return {@link #channels}
      */
-    public Set<Channel> getChannel() {
+    public Set<Channel> getChannels() {
         return channels;
     }
 
@@ -63,5 +71,25 @@ public class Server {
      */
     public Set<Member> getMembers() {
         return members;
+    }
+
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    public String getRegion() {
+        return region;
+    }
+
+    public String getOwnerId() {
+        return ownerId;
+    }
+
+    public boolean isLarge() {
+        return large;
+    }
+
+    public String getIcon() {
+        return icon;
     }
 }
