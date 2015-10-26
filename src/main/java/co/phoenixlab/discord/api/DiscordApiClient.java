@@ -16,11 +16,15 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class DiscordApiClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("DiscordApiClient");
+
+    private final ScheduledExecutorService executorService;
 
     private String email;
     private String password;
@@ -33,6 +37,7 @@ public class DiscordApiClient {
 
     public DiscordApiClient() {
         sessionId = new AtomicReference<>();
+        executorService = Executors.newScheduledThreadPool(4);
     }
 
     public void logIn(String email, String password) throws IOException {
@@ -124,5 +129,9 @@ public class DiscordApiClient {
 
     public void setSessionId(String sessionId) {
         this.sessionId.set(sessionId);
+    }
+
+    public ScheduledExecutorService getExecutorService() {
+        return executorService;
     }
 }
