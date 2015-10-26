@@ -32,7 +32,7 @@ public class DiscordApiClient {
     private DiscordWebSocketClient webSocketClient;
 
     public DiscordApiClient() {
-
+        sessionId = new AtomicReference<>();
     }
 
     public void logIn(String email, String password) throws IOException {
