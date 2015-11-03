@@ -77,11 +77,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
     }
 
     private void handleReadyMessage(JSONObject data) {
-        //  Because this doesnt come often and to simplify matters
-        //  we'll serialize the subobject to string and have Gson parse out the object
-        String json = data.toJSONString();
-        LOGGER.debug(json);
-        ReadyMessage readyMessage = gson.fromJson(json, ReadyMessage.class);
+        ReadyMessage readyMessage = jsonObjectToObject(data, ReadyMessage.class);
         apiClient.setSessionId(readyMessage.getSessionId());
         LOGGER.info("Using sessionId {}", apiClient.getSessionId());
         User user = readyMessage.getUser();
@@ -113,7 +109,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
     }
 
     private void handleMessageCreate(JSONObject data) {
-        
+
     }
 
     @Override
@@ -127,5 +123,13 @@ public class DiscordWebSocketClient extends WebSocketClient {
     @Override
     public void onError(Exception ex) {
         LOGGER.warn("WebSocket error", ex);
+    }
+
+    private <T> T jsonObjectToObject(JSONObject object, Class<T> clazz) {
+        //  Because this doesnt come too often and to simplify matters
+        //  we'll serialize the object to string and have Gson parse out the object
+        //  Eventually come up with a solution that allows for direct creation
+        String j = object.toJSONString();
+        return gson.fromJson(j, clazz);
     }
 }
