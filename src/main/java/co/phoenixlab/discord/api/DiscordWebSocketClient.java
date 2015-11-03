@@ -1,6 +1,7 @@
 package co.phoenixlab.discord.api;
 
 import co.phoenixlab.discord.api.entities.ReadyMessage;
+import co.phoenixlab.discord.api.entities.Server;
 import co.phoenixlab.discord.api.entities.User;
 import com.google.gson.Gson;
 import org.java_websocket.client.WebSocketClient;
@@ -12,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -86,8 +89,11 @@ public class DiscordWebSocketClient extends WebSocketClient {
         LOGGER.info("Sending keepAlive every {} ms", readyMessage.getHeartbeatInterval());
         LOGGER.info("Connected to {} servers", readyMessage.getServers().length);
         LOGGER.info("Holding {} private conversations", readyMessage.getPrivateChannels().length);
-        //  TODO
-
+        //  We don't bother populating channel messages since we only care about new messages coming in
+        List<Server> servers = apiClient.getServers();
+        servers.clear();
+        Collections.addAll(servers, readyMessage.getServers());
+        apiClient.remapServers();
     }
 
     @SuppressWarnings("unchecked")

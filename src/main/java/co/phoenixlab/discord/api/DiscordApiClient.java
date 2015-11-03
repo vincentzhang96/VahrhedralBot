@@ -1,5 +1,6 @@
 package co.phoenixlab.discord.api;
 
+import co.phoenixlab.discord.api.entities.Server;
 import co.phoenixlab.discord.api.entities.User;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
@@ -15,11 +16,15 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class DiscordApiClient {
 
@@ -38,10 +43,15 @@ public class DiscordApiClient {
 
     private DiscordWebSocketClient webSocketClient;
 
+    private List<Server> servers;
+    private Map<String, Server> serverMap;
+
     public DiscordApiClient() {
         sessionId = new AtomicReference<>();
         clientUser = new AtomicReference<>();
         executorService = Executors.newScheduledThreadPool(4);
+        servers = new ArrayList<>();
+        serverMap = new HashMap<>();
     }
 
     public void logIn(String email, String password) throws IOException {
@@ -141,6 +151,19 @@ public class DiscordApiClient {
 
     public void setClientUser(User user) {
         clientUser.set(user);
+    }
+
+    public List<Server> getServers() {
+        return servers;
+    }
+
+    public Map<String, Server> getServerMap() {
+        return serverMap;
+    }
+
+    public void remapServers() {
+        serverMap.clear();
+        serverMap.putAll(servers.stream().collect(Collectors.toMap(Server::getId, Function.identity())));
     }
 
     public ScheduledExecutorService getExecutorService() {
