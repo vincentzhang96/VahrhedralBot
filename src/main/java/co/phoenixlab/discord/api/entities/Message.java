@@ -18,11 +18,11 @@ public class Message {
 
     private final String id;
 
-    private final Mention[] mentions;
+    private final User[] mentions;
 
     private final String time;
 
-    public Message(User author, String channelId, String content, String id, Mention[] mentions, String time) {
+    public Message(User author, String channelId, String content, String id, User[] mentions, String time) {
         this.author = author;
         this.channelId = channelId;
         this.content = content;
@@ -51,7 +51,7 @@ public class Message {
         return id;
     }
 
-    public Mention[] getMentions() {
+    public User[] getMentions() {
         return mentions;
     }
 
