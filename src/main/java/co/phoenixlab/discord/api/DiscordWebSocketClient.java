@@ -1,5 +1,6 @@
 package co.phoenixlab.discord.api;
 
+import co.phoenixlab.discord.api.entities.Message;
 import co.phoenixlab.discord.api.entities.ReadyMessage;
 import co.phoenixlab.discord.api.entities.Server;
 import co.phoenixlab.discord.api.entities.User;
@@ -109,7 +110,12 @@ public class DiscordWebSocketClient extends WebSocketClient {
     }
 
     private void handleMessageCreate(JSONObject data) {
-
+        Message message = jsonObjectToObject(data, Message.class);
+        LOGGER.debug("Recieved message from {} in #{}: {}",
+                message.getAuthor().getUsername(),
+                apiClient.getChannelById(message.getChannelId()).getName(),
+                message.getContent());
+        //  TODO dispatch
     }
 
     @Override
