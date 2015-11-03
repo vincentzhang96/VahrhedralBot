@@ -63,7 +63,9 @@ public class DiscordWebSocketClient extends WebSocketClient {
                 case "READY":
                     handleReadyMessage(data);
                     break;
-
+                case "MESSAGE_CREATE":
+                    handleMessageCreate(data);
+                    break;
                 //  TODO
 
                 default:
@@ -108,6 +110,10 @@ public class DiscordWebSocketClient extends WebSocketClient {
             LOGGER.debug("Sending keepAlive");
             send(keepAlive.toJSONString());
         }, 0, keepAliveInterval, TimeUnit.MILLISECONDS);
+    }
+
+    private void handleMessageCreate(JSONObject data) {
+        
     }
 
     @Override
