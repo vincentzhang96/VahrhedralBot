@@ -46,6 +46,8 @@ public class DiscordApiClient {
     private List<Server> servers;
     private Map<String, Server> serverMap;
 
+
+
     public DiscordApiClient() {
         sessionId = new AtomicReference<>();
         clientUser = new AtomicReference<>();
@@ -159,6 +161,10 @@ public class DiscordApiClient {
 
     public Map<String, Server> getServerMap() {
         return serverMap;
+    }
+
+    public Server getServerByID(String id) {
+        return serverMap.get(id);
     }
 
     public void remapServers() {
