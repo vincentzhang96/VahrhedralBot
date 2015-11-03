@@ -2,6 +2,7 @@ package co.phoenixlab.discord.api.entities;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Objects;
 import java.util.Set;
 
 public class Server {
@@ -91,5 +92,23 @@ public class Server {
 
     public String getIcon() {
         return icon;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Server server = (Server) o;
+        return Objects.equals(id, server.id) &&
+                Objects.equals(region, server.region);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, region);
     }
 }
