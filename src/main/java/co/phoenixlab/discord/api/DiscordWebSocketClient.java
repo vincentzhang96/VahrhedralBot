@@ -1,6 +1,7 @@
 package co.phoenixlab.discord.api;
 
 import co.phoenixlab.discord.api.entities.ReadyMessage;
+import co.phoenixlab.discord.api.entities.User;
 import com.google.gson.Gson;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -78,11 +79,15 @@ public class DiscordWebSocketClient extends WebSocketClient {
         ReadyMessage readyMessage = gson.fromJson(json, ReadyMessage.class);
         apiClient.setSessionId(readyMessage.getSessionId());
         LOGGER.info("Using sessionId {}", apiClient.getSessionId());
+        User user = readyMessage.getUser();
+        apiClient.setClientUser(user);
+        LOGGER.info("Logged in as {}#{} ID {}", user.getUsername(), user.getDiscriminator(), user.getId());
         startKeepAlive(readyMessage.getHeartbeatInterval());
         LOGGER.info("Sending keepAlive every {} ms", readyMessage.getHeartbeatInterval());
         LOGGER.info("Connected to {} servers", readyMessage.getServers().length);
         LOGGER.info("Holding {} private conversations", readyMessage.getPrivateChannels().length);
         //  TODO
+
     }
 
     @SuppressWarnings("unchecked")

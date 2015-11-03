@@ -1,5 +1,6 @@
 package co.phoenixlab.discord.api;
 
+import co.phoenixlab.discord.api.entities.User;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
@@ -33,10 +34,13 @@ public class DiscordApiClient {
 
     private AtomicReference<String> sessionId;
 
+    private AtomicReference<User> clientUser;
+
     private DiscordWebSocketClient webSocketClient;
 
     public DiscordApiClient() {
         sessionId = new AtomicReference<>();
+        clientUser = new AtomicReference<>();
         executorService = Executors.newScheduledThreadPool(4);
     }
 
@@ -129,6 +133,14 @@ public class DiscordApiClient {
 
     public void setSessionId(String sessionId) {
         this.sessionId.set(sessionId);
+    }
+
+    public User getClientUser() {
+        return clientUser.get();
+    }
+
+    public void setClientUser(User user) {
+        clientUser.set(user);
     }
 
     public ScheduledExecutorService getExecutorService() {
