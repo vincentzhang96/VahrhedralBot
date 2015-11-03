@@ -1,5 +1,6 @@
 package co.phoenixlab.discord.api;
 
+import co.phoenixlab.discord.api.entities.Channel;
 import co.phoenixlab.discord.api.entities.Server;
 import co.phoenixlab.discord.api.entities.User;
 import com.mashape.unirest.http.HttpResponse;
@@ -16,10 +17,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
@@ -170,6 +168,14 @@ public class DiscordApiClient {
     public void remapServers() {
         serverMap.clear();
         serverMap.putAll(servers.stream().collect(Collectors.toMap(Server::getId, Function.identity())));
+    }
+
+    public Channel getChannelById(String id) {
+        return servers.stream().
+                map(Server::getChannels).
+                flatMap(Set::stream).
+                filter(c -> id.equals(c.getId())).
+                findFirst().orElse(null);
     }
 
     public ScheduledExecutorService getExecutorService() {
