@@ -67,8 +67,40 @@ public class DiscordWebSocketClient extends WebSocketClient {
                 case "MESSAGE_CREATE":
                     handleMessageCreate(data);
                     break;
+                case "MESSAGE_UPDATE":
+                    //  TODO
+                    break;
+                case "MESSAGE_DELETE":
+                    //  TODO
+                    break;
+                case "TYPING_START":
+                    //  Don't care
+                    break;
+                case "GUILD_CREATE":
+                    //  TODO
+                    break;
+                case "GUILD_DELETE":
+                    //  TODO
+                    break;
+                case "GUILD_MEMBER_ADD":
+                    //  TODO
+                    break;
+                case "GUILD_MEMBER_REMOVE":
+                    //  TODO
+                    break;
+                case "CHANNEL_CREATE":
+                    //  TODO
+                    break;
+                case "CHANNEL_DELETE":
+                    //  TODO
+                    break;
+                case "PRESENCE_UPDATE":
+                    //  TODO
+                    break;
+                case "VOICE_STATE_UPDATE":
+                    //  TODO
+                    break;
                 //  TODO
-
                 default:
                     LOGGER.warn("Unknown message type {}:\n{}", type, data.toJSONString());
             }
