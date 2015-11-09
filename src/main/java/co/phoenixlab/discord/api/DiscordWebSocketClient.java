@@ -125,6 +125,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         servers.clear();
         Collections.addAll(servers, readyMessage.getServers());
         apiClient.remapServers();
+        apiClient.getEventBus().post(readyMessage);
     }
 
     @SuppressWarnings("unchecked")
@@ -147,7 +148,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
                 message.getAuthor().getUsername(),
                 apiClient.getChannelById(message.getChannelId()).getName(),
                 message.getContent());
-        //  TODO dispatch
+        apiClient.getEventBus().post(message);
     }
 
     @Override
