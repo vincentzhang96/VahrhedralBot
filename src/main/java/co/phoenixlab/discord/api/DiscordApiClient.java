@@ -3,6 +3,7 @@ package co.phoenixlab.discord.api;
 import co.phoenixlab.discord.api.entities.Channel;
 import co.phoenixlab.discord.api.entities.Server;
 import co.phoenixlab.discord.api.entities.User;
+import com.google.common.eventbus.EventBus;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
@@ -44,6 +45,8 @@ public class DiscordApiClient {
     private List<Server> servers;
     private Map<String, Server> serverMap;
 
+    private final EventBus eventBus;
+
 
 
     public DiscordApiClient() {
@@ -52,6 +55,11 @@ public class DiscordApiClient {
         executorService = Executors.newScheduledThreadPool(4);
         servers = new ArrayList<>();
         serverMap = new HashMap<>();
+        eventBus = new EventBus((e, c) -> {
+            LOGGER.warn("Error while handling event {} when calling {}",
+                    c.getEvent(), c.getSubscriberMethod().toGenericString());
+            LOGGER.warn("EventBus dispatch exception", e);
+        });
     }
 
     public void logIn(String email, String password) throws IOException {
@@ -180,5 +188,9 @@ public class DiscordApiClient {
 
     public ScheduledExecutorService getExecutorService() {
         return executorService;
+    }
+
+    public EventBus getEventBus() {
+        return eventBus;
     }
 }
