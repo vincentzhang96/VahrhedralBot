@@ -141,7 +141,6 @@ public class DiscordApiClient {
         Map<String, String> headers = new HashMap<>();
         headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
         headers.put(HttpHeaders.AUTHORIZATION, token);
-        System.out.println(content);
         try {
             response = Unirest.post(ApiConst.CHANNELS_ENDPOINT + channelId + "/messages").
                     headers(headers).
