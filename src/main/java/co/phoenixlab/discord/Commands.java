@@ -1,10 +1,17 @@
 package co.phoenixlab.discord;
 
+import co.phoenixlab.discord.api.ApiConst;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.entities.Channel;
 import co.phoenixlab.discord.api.entities.Message;
 import co.phoenixlab.discord.api.entities.User;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.Unirest;
+import com.mashape.unirest.http.exceptions.UnirestException;
+import org.apache.http.HttpHeaders;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.StringJoiner;
@@ -42,6 +49,8 @@ public class Commands {
                 "Prints the blacklist, or blacklists the given user. Supports @mention and partial front matching");
         adminCommandDispatcher.registerAlwaysActiveCommand("pardon", this::adminPardon,
                 "Pardons the given user. Supports @mention and partial front matching");
+        adminCommandDispatcher.registerAlwaysActiveCommand("join", this::adminJoin,
+                "Joins using the provided Discord.gg invite link");
     }
 
     private void adminKill(MessageContext context, String args) {
@@ -139,6 +148,36 @@ public class Commands {
                     context.getMessage().getChannelId());
         } else {
             apiClient.sendMessage(String.format("`%s` was not blacklisted", user.getUsername()),
+                    context.getMessage().getChannelId());
+        }
+    }
+
+    private void adminJoin(MessageContext context, String args) {
+        DiscordApiClient apiClient = context.getApiClient();
+        URL inviteUrl;
+        try {
+            inviteUrl = new URL(args);
+        } catch (MalformedURLException e) {
+            VahrhedralBot.LOGGER.warn("Invalid invite link received", e);
+            apiClient.sendMessage("Invalid link",
+                    context.getMessage().getChannelId());
+            return;
+        }
+        String path = inviteUrl.getPath();
+        try {
+            System.out.println(ApiConst.INVITE_ENDPOINT + path);
+            HttpResponse<String> response = Unirest.post(ApiConst.INVITE_ENDPOINT + path).
+                    header(HttpHeaders.AUTHORIZATION, apiClient.getToken()).
+                    asString();
+            if (response.getStatus() != 200) {
+                VahrhedralBot.LOGGER.warn("Unable to join using invite link: HTTP {}: {}: {}",
+                        response.getStatus(), response.getStatusText(), response.getBody());
+                apiClient.sendMessage("Unable to join server: HTTP error",
+                        context.getMessage().getChannelId());
+            }
+        } catch (UnirestException e) {
+            VahrhedralBot.LOGGER.warn("Unable to join using invite link", e);
+            apiClient.sendMessage("Unable to join server: Network error",
                     context.getMessage().getChannelId());
         }
     }
