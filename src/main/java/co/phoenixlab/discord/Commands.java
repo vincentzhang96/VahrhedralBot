@@ -10,11 +10,14 @@ import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.http.HttpHeaders;
 
+import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 public class Commands {
 
@@ -51,7 +54,10 @@ public class Commands {
                 "Pardons the given user. Supports @mention and partial front matching");
         adminCommandDispatcher.registerAlwaysActiveCommand("join", this::adminJoin,
                 "Joins using the provided Discord.gg invite link");
+        adminCommandDispatcher.registerAlwaysActiveCommand("telegram", this::adminTelegram,
+                "Send a message to another channel");
     }
+
 
     private void adminKill(MessageContext context, String args) {
         context.getApiClient().sendMessage("Sudoku time, bye", context.getMessage().getChannelId());
@@ -90,11 +96,15 @@ public class Commands {
                 (r.maxMemory() - r.freeMemory()) / 1048576,
                 r.freeMemory() / 1048576,
                 r.maxMemory() / 1048576);
-        String response = String.format("**Status:** %s\n**Servers:** %d\n**Uptime:** %s\n**Memory:** `%s`",
+        String response = String.format("**Status:** %s\n**Servers:** %d\n**Uptime:** %s\n**Memory:** `%s`\n" +
+                "**Load:** %.4f\n**TCID:** %s\n**TSID:** %s",
                 mainDispatcher.active().get() ? "Running" : "Stopped",
                 apiClient.getServers().size(),
                 uptime,
-                memory);
+                memory,
+                ManagementFactory.getOperatingSystemMXBean().getSystemLoadAverage(),
+                context.getMessage().getChannelId(),
+                apiClient.getChannelById(context.getMessage().getChannelId()).getParent().getId());
         apiClient.sendMessage(response, context.getMessage().getChannelId());
     }
 
@@ -180,6 +190,20 @@ public class Commands {
             apiClient.sendMessage("Unable to join server: Network error",
                     context.getMessage().getChannelId());
         }
+    }
+
+    private void adminTelegram(MessageContext context, String s) {
+        DiscordApiClient apiClient = context.getApiClient();
+        String[] split = s.split(" ", 2);
+        if (split.length != 2) {
+            apiClient.sendMessage("Format: channelId Message",
+                    context.getMessage().getChannelId());
+            return;
+        }
+        User[] mentions = context.getMessage().getMentions();
+        apiClient.sendMessage(split[1], split[0], Arrays.stream(mentions).
+                map(User::getId).
+                collect(Collectors.toList()).toArray(new String[mentions.length]));
     }
 
     private User findUser(MessageContext context, String username) {
