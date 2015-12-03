@@ -218,10 +218,7 @@ public class Commands {
         if (message.getMentions() != null && message.getMentions().length > 0) {
             user = message.getMentions()[0];
         } else {
-            User temp = context.getApiClient().findUser(username, channel.getParent());
-            if (temp != null) {
-                user = temp;
-            }
+            user = context.getApiClient().findUser(username, channel.getParent());
         }
         return user;
     }
