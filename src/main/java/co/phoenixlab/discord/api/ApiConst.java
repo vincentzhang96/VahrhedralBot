@@ -46,7 +46,7 @@ public class ApiConst {
     /**
      * The endpoint for accepting invites
      */
-    public static final String INVITE_ENDPOINT = API_BASE_PATH + "/invite/";
+    public static final String INVITE_ENDPOINT = API_BASE_PATH + "/invite";
     /**
      * The format string for avatar URLs
      */
