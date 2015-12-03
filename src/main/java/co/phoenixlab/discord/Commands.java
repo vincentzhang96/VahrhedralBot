@@ -39,6 +39,9 @@ public class Commands {
         dispatcher.registerCommand("info", this::info,
                 "Display information about the caller or the provided name, if present. @Mentions and partial front " +
                         "matches are supported");
+        dispatcher.registerCommand("avatar", this::avatar,
+                "Display the avatar of the caller or the provided name, if present. @Mentions and partial front " +
+                        "matches are supported");
 
         registerTime = Instant.now();
     }
@@ -269,6 +272,24 @@ public class Commands {
                     config.getAdmins().contains(user.getId()) ? "**Bot Administrator**\n" : "",
                     avatar);
             context.getApiClient().sendMessage(response, message.getChannelId());
+        }
+    }
+
+    private void avatar(MessageContext context, String args) {
+        Message message = context.getMessage();
+        User user;
+        if (!args.isEmpty()) {
+            user = findUser(context, args);
+        } else {
+            user = message.getAuthor();
+        }
+        if (user == null) {
+            context.getApiClient().sendMessage("Unable to find user. Try typing their name EXACTLY or" +
+                    " @mention them instead", message.getChannelId());
+        } else {
+            String avatar = (user.getAvatar() == null ? "No avatar" : user.getAvatarUrl().toExternalForm());
+            context.getApiClient().sendMessage(String.format("%s's avatar: %s", user.getUsername(), avatar),
+                    message.getChannelId());
         }
     }
 
