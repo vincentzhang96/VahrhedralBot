@@ -69,7 +69,7 @@ public class CommandDispatcher {
             if (active.get() || wrapper.alwaysActive) {
                 //  Blacklist check
                 if (!bot.getConfig().getBlacklist().contains(msg.getAuthor().getId())) {
-                    LOGGER.info("Dispatching command {}", cmd);
+                    LOGGER.debug("Dispatching command {}", cmd);
                     wrapper.command.handleCommand(new MessageContext(msg, bot, this), args);
                 }
             }
