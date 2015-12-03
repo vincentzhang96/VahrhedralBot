@@ -208,6 +208,7 @@ public class DiscordApiClient {
     }
 
     public User findUser(String username) {
+        username = username.toLowerCase();
         for (Server server : servers) {
             User user = findUser(username, server);
             if (user != null) {
@@ -218,6 +219,7 @@ public class DiscordApiClient {
     }
 
     public User findUser(String username, Server server) {
+        username = username.toLowerCase();
         for (Member member : server.getMembers()) {
             User user = member.getUser();
             if (user.getUsername().equalsIgnoreCase(username)) {
@@ -227,7 +229,7 @@ public class DiscordApiClient {
         //  No match? Try matching start
         for (Member member : server.getMembers()) {
             User user = member.getUser();
-            if (user.getUsername().toLowerCase().startsWith(username.toLowerCase())) {
+            if (user.getUsername().toLowerCase().startsWith(username)) {
                 return user;
             }
         }
