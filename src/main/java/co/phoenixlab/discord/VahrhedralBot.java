@@ -6,19 +6,25 @@ import com.mashape.unirest.http.Unirest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
+import static java.nio.file.StandardOpenOption.WRITE;
 
 public class VahrhedralBot implements Runnable {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("VahrhedralBot");
 
-    private DiscordApiClient apiClient;
+    public static final Path CONFIG_PATH = Paths.get("config/config.json");
 
+    private DiscordApiClient apiClient;
     public static void main(String[] args) {
         LOGGER.info("Starting Vahrhedral bot");
         VahrhedralBot bot = new VahrhedralBot();
@@ -31,11 +37,15 @@ public class VahrhedralBot implements Runnable {
     }
 
     private Configuration config;
+
+    private Commands commands;
     private CommandDispatcher commandDispatcher;
+    private EventListener eventListener;
     private TaskQueue taskQueue;
 
     public VahrhedralBot() {
         taskQueue = new TaskQueue();
+        eventListener = new EventListener(this);
     }
 
     @Override
@@ -44,12 +54,16 @@ public class VahrhedralBot implements Runnable {
         Thread.currentThread().setName("VahrhedralBotMain");
         //  Load Config
         try {
-            config = loadConfiguration(Paths.get("config/config.json"));
+            config = loadConfiguration();
         } catch (IOException e) {
             LOGGER.error("Unable to load configuration", e);
             return;
         }
+        commandDispatcher = new CommandDispatcher(this, config.getCommandPrefix());
+        commands = new Commands(this);
+        commands.register(commandDispatcher);
         apiClient = new DiscordApiClient();
+        apiClient.getEventBus().register(eventListener);
         try {
             apiClient.logIn(config.getEmail(), config.getPassword());
         } catch (IOException e) {
@@ -60,14 +74,26 @@ public class VahrhedralBot implements Runnable {
         }
     }
 
-    private Configuration loadConfiguration(Path path) throws IOException {
+    private Configuration loadConfiguration() throws IOException {
         Gson configGson = new Gson();
-        try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+        try (Reader reader = Files.newBufferedReader(CONFIG_PATH, UTF_8)) {
             return configGson.fromJson(reader, Configuration.class);
         }
     }
 
-    public CommandDispatcher getCommandDispatcher() {
+    public boolean saveConfig() {
+        Gson configGson = new Gson();
+        try (BufferedWriter writer = Files.newBufferedWriter(CONFIG_PATH, UTF_8, CREATE, WRITE, TRUNCATE_EXISTING)) {
+            configGson.toJson(config, writer);
+            writer.flush();
+            return true;
+        } catch (IOException e) {
+            LOGGER.warn("Unable to save config", e);
+            return false;
+        }
+    }
+
+    public CommandDispatcher getMainCommandDispatcher() {
         return commandDispatcher;
     }
 
@@ -77,6 +103,14 @@ public class VahrhedralBot implements Runnable {
 
     public TaskQueue getTaskQueue() {
         return taskQueue;
+    }
+
+    public EventListener getEventListener() {
+        return eventListener;
+    }
+
+    public DiscordApiClient getApiClient() {
+        return apiClient;
     }
 
     public void shutdown() {

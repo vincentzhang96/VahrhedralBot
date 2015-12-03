@@ -1,9 +1,9 @@
 package co.phoenixlab.discord.api;
 
-import co.phoenixlab.discord.api.entities.Channel;
-import co.phoenixlab.discord.api.entities.Server;
-import co.phoenixlab.discord.api.entities.User;
+import co.phoenixlab.discord.api.entities.*;
 import com.google.common.eventbus.EventBus;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
@@ -47,7 +47,7 @@ public class DiscordApiClient {
 
     private final EventBus eventBus;
 
-
+    private final Gson gson;
 
     public DiscordApiClient() {
         sessionId = new AtomicReference<>();
@@ -60,6 +60,7 @@ public class DiscordApiClient {
                     c.getEvent(), c.getSubscriberMethod().toGenericString());
             LOGGER.warn("EventBus dispatch exception", e);
         });
+        gson = new GsonBuilder().serializeNulls().create();
     }
 
     public void logIn(String email, String password) throws IOException {
@@ -128,17 +129,37 @@ public class DiscordApiClient {
         return gateway;
     }
 
-    public void sendMessage(String body, String channelId) throws IOException {
-        //  TODO
+    public void sendMessage(String body, String channelId) {
+        sendMessage(body, channelId, new String[0]);
+    }
+
+    public void sendMessage(String body, String channelId, String[] mentions) {
+        OutboundMessage outboundMessage = new OutboundMessage(body, false, mentions);
+        String content = gson.toJson(outboundMessage);
+
+        HttpResponse<JsonNode> response;
+        Map<String, String> headers = new HashMap<>();
+        headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+        headers.put(HttpHeaders.AUTHORIZATION, token);
+        System.out.println(content);
+        try {
+            response = Unirest.post(ApiConst.CHANNELS_ENDPOINT + channelId + "/messages").
+                    headers(headers).
+                    body(content).
+                    asJson();
+        } catch (UnirestException e) {
+            LOGGER.warn("Unable to send message", e);
+            return;
+        }
+        int status = response.getStatus();
+        if (status != 200) {
+            LOGGER.warn("Unable to send message: HTTP {}: {}", status, response.getStatusText());
+            return;
+        }
     }
 
     public void deleteMessage(String messageId, String channelId) throws IOException {
         //  TODO
-    }
-
-    public boolean isOpen() {
-        //  TODO
-        return false;
     }
 
     public String getToken() {
@@ -176,6 +197,7 @@ public class DiscordApiClient {
     public void remapServers() {
         serverMap.clear();
         serverMap.putAll(servers.stream().collect(Collectors.toMap(Server::getId, Function.identity())));
+        servers.forEach(server -> server.getChannels().forEach(channel -> channel.setParent(server)));
     }
 
     public Channel getChannelById(String id) {
@@ -184,6 +206,56 @@ public class DiscordApiClient {
                 flatMap(Set::stream).
                 filter(c -> id.equals(c.getId())).
                 findFirst().orElse(null);
+    }
+
+    public User findUser(String username) {
+        for (Server server : servers) {
+            User user = findUser(username, server);
+            if (user != null) {
+                return user;
+            }
+        }
+        return null;
+    }
+
+    public User findUser(String username, Server server) {
+        for (Member member : server.getMembers()) {
+            User user = member.getUser();
+            if (user.getUsername().equalsIgnoreCase(username)) {
+                return user;
+            }
+        }
+        //  No match? Try matching start
+        for (Member member : server.getMembers()) {
+            User user = member.getUser();
+            if (user.getUsername().toLowerCase().startsWith(username.toLowerCase())) {
+                return user;
+            }
+        }
+        //  Still no match? Try fuzzy match
+        //  TODO
+
+        return null;
+    }
+
+    public User getUserById(String userId) {
+        for (Server server : servers) {
+            User user = getUserById(userId, server);
+            if (user != null) {
+                return user;
+            }
+        }
+        return null;
+    }
+
+    public User getUserById(String userId, Server server) {
+        for (Member member : server.getMembers()) {
+            User user = member.getUser();
+            if (user.getId().equals(userId)) {
+                return user;
+            }
+        }
+        return null;
     }
 
     public ScheduledExecutorService getExecutorService() {

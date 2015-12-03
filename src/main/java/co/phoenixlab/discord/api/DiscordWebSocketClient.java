@@ -68,19 +68,19 @@ public class DiscordWebSocketClient extends WebSocketClient {
                     handleMessageCreate(data);
                     break;
                 case "MESSAGE_UPDATE":
-                    //  TODO
+                    //  Don't care
                     break;
                 case "MESSAGE_DELETE":
-                    //  TODO
+                    //  Don't care
                     break;
                 case "TYPING_START":
                     //  Don't care
                     break;
                 case "GUILD_CREATE":
-                    //  TODO
+                    handleGuildCreate(data);
                     break;
                 case "GUILD_DELETE":
-                    //  TODO
+                    handleGuildDelete(data);
                     break;
                 case "GUILD_MEMBER_ADD":
                     //  TODO
@@ -128,6 +128,21 @@ public class DiscordWebSocketClient extends WebSocketClient {
         apiClient.getEventBus().post(readyMessage);
     }
 
+    private void handleGuildCreate(JSONObject data) {
+        Server server = jsonObjectToObject(data, Server.class);
+        server.getChannels().forEach(channel -> channel.setParent(server));
+        apiClient.getServers().add(server);
+        apiClient.getServerMap().put(server.getId(), server);
+        LOGGER.info("Added to server {}", server.getName());
+    }
+
+    private void handleGuildDelete(JSONObject data) {
+        Server server = jsonObjectToObject(data, Server.class);
+        apiClient.getServers().remove(server);
+        apiClient.getServerMap().remove(server.getId());
+        LOGGER.info("Left server {}", server.getName());
+    }
+
     @SuppressWarnings("unchecked")
     private void startKeepAlive(long keepAliveInterval) {
         if (keepAliveFuture != null) {
@@ -144,11 +159,14 @@ public class DiscordWebSocketClient extends WebSocketClient {
 
     private void handleMessageCreate(JSONObject data) {
         Message message = jsonObjectToObject(data, Message.class);
-        LOGGER.debug("Recieved message from {} in #{}: {}",
-                message.getAuthor().getUsername(),
-                apiClient.getChannelById(message.getChannelId()).getName(),
-                message.getContent());
-        apiClient.getEventBus().post(message);
+        //  Ignore messages from self
+        if (!message.getAuthor().equals(apiClient.getClientUser())) {
+            LOGGER.debug("Recieved message from {} in #{}: {}",
+                    message.getAuthor().getUsername(),
+                    apiClient.getChannelById(message.getChannelId()).getName(),
+                    message.getContent());
+            apiClient.getEventBus().post(message);
+        }
     }
 
     @Override

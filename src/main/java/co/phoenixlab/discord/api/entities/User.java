@@ -31,14 +31,13 @@ public class User {
     /**
      * The URL where the avatar can be downloaded from
      */
-    private final URL avatarUrl;
+    private URL avatarUrl;
 
     public User(String username, String id, String discriminator, String avatar) {
         this.username = username;
         this.id = id;
         this.discriminator = discriminator;
         this.avatar = avatar;
-        this.avatarUrl = ApiUtils.url(String.format(ApiConst.AVATAR_URL_PATTERN, id, avatar));
     }
 
     public User() {
@@ -77,6 +76,13 @@ public class User {
      * @return {@link #avatarUrl}
      */
     public URL getAvatarUrl() {
+        if (avatarUrl == null) {
+            if (avatar != null) {
+                avatarUrl = ApiUtils.url(String.format(ApiConst.AVATAR_URL_PATTERN, id, avatar));
+            } else {
+                avatarUrl = ApiUtils.url(String.format(ApiConst.AVATAR_URL_PATTERN, id, "NO_AVATAR.JPG"));
+            }
+        }
         return avatarUrl;
     }
 

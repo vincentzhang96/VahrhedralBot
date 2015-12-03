@@ -17,6 +17,8 @@ public class Channel {
      */
     private final String name;
 
+    private Server parent;
+
     public Channel(String id, String name) {
         this.id = id;
         this.name = name;
@@ -24,6 +26,14 @@ public class Channel {
 
     public Channel() {
         this(null, null);
+    }
+
+    public Server getParent() {
+        return parent;
+    }
+
+    public void setParent(Server parent) {
+        this.parent = parent;
     }
 
     /**
