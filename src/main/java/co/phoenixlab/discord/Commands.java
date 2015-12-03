@@ -24,7 +24,7 @@ public class Commands {
 
         dispatcher.registerAlwaysActiveCommand("admin", this::admin,
                 "Administrative commands");
-        dispatcher.registerAlwaysActiveCommand("admins", this::listAdmins,
+        dispatcher.registerCommand("admins", this::listAdmins,
                 "List admins");
         dispatcher.registerCommand("info", this::info,
                 "Display information about the caller or the provided name, if present. @Mentions and partial front " +
