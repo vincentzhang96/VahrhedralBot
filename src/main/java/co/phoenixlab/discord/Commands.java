@@ -7,6 +7,7 @@ import co.phoenixlab.discord.api.entities.User;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.StringJoiner;
 
 public class Commands {
 
@@ -23,6 +24,8 @@ public class Commands {
 
         dispatcher.registerAlwaysActiveCommand("admin", this::admin,
                 "Administrative commands");
+        dispatcher.registerAlwaysActiveCommand("admins", this::listAdmins,
+                "List admins");
         dispatcher.registerCommand("info", this::info,
                 "Display information about the caller or the provided name, if present. @Mentions and partial front " +
                         "matches are supported");
@@ -36,7 +39,7 @@ public class Commands {
         adminCommandDispatcher.registerAlwaysActiveCommand("status", this::adminStatus, "Bot status");
         adminCommandDispatcher.registerAlwaysActiveCommand("kill", this::adminKill, "Kill the bot (terminate app)");
         adminCommandDispatcher.registerAlwaysActiveCommand("blacklist", this::adminBlacklist,
-                "Blacklists the given user. Supports @mention and partial front matching");
+                "Prints the blacklist, or blacklists the given user. Supports @mention and partial front matching");
         adminCommandDispatcher.registerAlwaysActiveCommand("pardon", this::adminPardon,
                 "Pardons the given user. Supports @mention and partial front matching");
     }
@@ -88,8 +91,19 @@ public class Commands {
 
     private void adminBlacklist(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
+        VahrhedralBot bot = context.getBot();
         if (args.isEmpty()) {
-            apiClient.sendMessage("Please specify a user", context.getMessage().getChannelId());
+            StringJoiner joiner = new StringJoiner(", ");
+            bot.getConfig().getBlacklist().stream().
+                    map(apiClient::getUserById).
+                    filter(user -> user != null).
+                    map(User::getUsername).
+                    forEach(joiner::add);
+            String res = joiner.toString();
+            if (res.isEmpty()) {
+                res = "None";
+            }
+            apiClient.sendMessage("Blacklisted users: " + res, context.getMessage().getChannelId());
             return;
         }
         User user = findUser(context, args);
@@ -97,8 +111,12 @@ public class Commands {
             apiClient.sendMessage("Unable to find user", context.getMessage().getChannelId());
             return;
         }
-        context.getBot().getConfig().getBlacklist().add(user.getId());
-        context.getBot().saveConfig();
+        if (bot.getConfig().getAdmins().contains(user.getId())) {
+            apiClient.sendMessage("Cannot blacklist an admin", context.getMessage().getChannelId());
+            return;
+        }
+        bot.getConfig().getBlacklist().add(user.getId());
+        bot.saveConfig();
         apiClient.sendMessage(String.format("`%s` has been blacklisted", user.getUsername()),
                 context.getMessage().getChannelId());
     }
@@ -114,10 +132,15 @@ public class Commands {
             apiClient.sendMessage("Unable to find user", context.getMessage().getChannelId());
             return;
         }
-        context.getBot().getConfig().getBlacklist().remove(user.getId());
+        boolean removed = context.getBot().getConfig().getBlacklist().remove(user.getId());
         context.getBot().saveConfig();
-        apiClient.sendMessage(String.format("`%s` has been pardoned", user.getUsername()),
-                context.getMessage().getChannelId());
+        if (removed) {
+            apiClient.sendMessage(String.format("`%s` has been pardoned", user.getUsername()),
+                    context.getMessage().getChannelId());
+        } else {
+            apiClient.sendMessage(String.format("`%s` was not blacklisted", user.getUsername()),
+                    context.getMessage().getChannelId());
+        }
     }
 
     private User findUser(MessageContext context, String username) {
@@ -147,9 +170,26 @@ public class Commands {
                 original.getChannelId(), original.getMentions(), original.getTime()));
     }
 
+    private void listAdmins(MessageContext context, String s) {
+        DiscordApiClient apiClient = context.getApiClient();
+        VahrhedralBot bot = context.getBot();
+        StringJoiner joiner = new StringJoiner(", ");
+        bot.getConfig().getAdmins().stream().
+                map(apiClient::getUserById).
+                filter(user -> user != null).
+                map(User::getUsername).
+                forEach(joiner::add);
+        String res = joiner.toString();
+        if (res.isEmpty()) {
+            res = "None";
+        }
+        apiClient.sendMessage("Admins: " + res, context.getMessage().getChannelId());
+    }
+
     private void info(MessageContext context, String args) {
         Message message = context.getMessage();
-        User user = null;
+        Configuration config = context.getBot().getConfig();
+        User user;
         if (!args.isEmpty()) {
             user = findUser(context, args);
         } else {
@@ -159,14 +199,12 @@ public class Commands {
             context.getApiClient().sendMessage("Unable to find user. Try typing their name EXACTLY or" +
                     " @mention them instead", message.getChannelId());
         } else {
-            String response;
-            if (user.getAvatar() == null) {
-                response = String.format("**Username:** %s\n**ID:** %s:%s\n**Avatar:** N/A",
-                        user.getUsername(), user.getId(), user.getDiscriminator());
-            } else {
-                response = String.format("**Username:** %s\n**ID:** %s:%s\n**Avatar:** %s",
-                        user.getUsername(), user.getId(), user.getDiscriminator(), user.getAvatarUrl());
-            }
+            String avatar = (user.getAvatar() == null ? "N/A" : user.getAvatarUrl().toExternalForm());
+            String response = String.format("**Username:** %s\n**ID:** %s:%s\n%s%s**Avatar:** %s",
+                    user.getUsername(), user.getId(), user.getDiscriminator(),
+                    config.getBlacklist().contains(user.getId()) ? "**Blacklisted**\n" : "",
+                    config.getAdmins().contains(user.getId()) ? "**Bot Administrator**\n" : "",
+                    avatar);
             context.getApiClient().sendMessage(response, message.getChannelId());
         }
     }
