@@ -6,10 +6,10 @@
         </Console>
     </Appenders>
     <Loggers>
-        <Logger name="VahrhedralBot" level="trace" additivity="false">
+        <Logger name="VahrhedralBot" level="info" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="DiscordApiClient" level="trace" additivity="false">
+        <Logger name="DiscordApiClient" level="info" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
         <Root level="error">
