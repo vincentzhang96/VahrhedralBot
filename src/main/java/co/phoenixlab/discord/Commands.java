@@ -87,9 +87,9 @@ public class Commands {
         String uptime = String.format("%d:%02d:%02d:%02d", s / 86400, (s / 3600) % 24, (s % 3600) / 60, (s % 60));
         Runtime r = Runtime.getRuntime();
         String memory = String.format("%,dMB Used %,dMB Free %,dMB Max",
-                (r.maxMemory() - r.freeMemory()) / 1024 / 1024,
-                r.freeMemory() / 1024 / 1024,
-                r.maxMemory() / 1024 / 1024);
+                (r.maxMemory() - r.freeMemory()) / 1048576,
+                r.freeMemory() / 1048576,
+                r.maxMemory() / 1048576);
         String response = String.format("**Status:** %s\n**Servers:** %d\n**Uptime:** %s\n**Memory:** `%s`",
                 mainDispatcher.active().get() ? "Running" : "Stopped",
                 apiClient.getServers().size(),
