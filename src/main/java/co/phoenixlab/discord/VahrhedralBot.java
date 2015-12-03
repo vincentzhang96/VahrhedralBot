@@ -69,9 +69,7 @@ public class VahrhedralBot implements Runnable {
         } catch (IOException e) {
             LOGGER.error("Unable to log in", e);
         }
-        while (true) {
-            taskQueue.executeWaiting();
-        }
+        taskQueue.executeWaiting();
     }
 
     private Configuration loadConfiguration() throws IOException {
