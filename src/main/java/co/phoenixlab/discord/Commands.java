@@ -139,9 +139,7 @@ public class Commands {
 
     private void admin(MessageContext context, String args) {
         //  Permission check
-        //  TODO Implement a more comprehensive permission system
-        //  For now check if its me
-        if (!context.getMessage().getAuthor().getId().equals("90844514855424000")) {
+        if (!context.getBot().getConfig().getAdmins().contains(context.getMessage().getAuthor().getId())) {
             return;
         }
         Message original = context.getMessage();
