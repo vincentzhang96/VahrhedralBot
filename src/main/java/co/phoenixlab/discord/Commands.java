@@ -4,7 +4,9 @@ import co.phoenixlab.discord.api.ApiConst;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.entities.Channel;
 import co.phoenixlab.discord.api.entities.Message;
+import co.phoenixlab.discord.api.entities.OutboundMessage;
 import co.phoenixlab.discord.api.entities.User;
+import com.google.gson.Gson;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
@@ -61,6 +63,8 @@ public class Commands {
                 "Send a message to another channel");
         adminCommandDispatcher.registerAlwaysActiveCommand("prefix", this::adminPrefix,
                 "Get or set the main command prefix");
+        adminCommandDispatcher.registerAlwaysActiveCommand("raw", this::adminRaw,
+                "Send a message using raw JSON");
     }
 
 
@@ -225,6 +229,26 @@ public class Commands {
             apiClient.sendMessage(String.format("Command prefix set to `%s`", bot.getConfig().getCommandPrefix()),
                     context.getMessage().getChannelId());
         }
+    }
+
+    public void adminRaw(MessageContext context, String args) {
+        String channel = null;
+        String raw = null;
+        if (args.startsWith("cid=")) {
+            String[] split = args.split(" ", 2);
+            if (split.length == 2) {
+                channel = split[0].substring("cid=".length());
+                raw = split[1];
+            }
+        }
+         if (channel == null || raw == null) {
+             channel = context.getMessage().getChannelId();
+             raw = args;
+         }
+        OutboundMessage outboundMessage = new Gson().fromJson(raw, OutboundMessage.class);
+        context.getApiClient().sendMessage(outboundMessage.getContent(),
+                channel,
+                outboundMessage.getMentions());
     }
 
     private User findUser(MessageContext context, String username) {
