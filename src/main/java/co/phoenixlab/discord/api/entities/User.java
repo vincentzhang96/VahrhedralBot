@@ -89,7 +89,7 @@ public class User {
     @Override
     public String toString() {
         return String.format("User[username:\"%s\",id:\"%s\",avatar:\"%s\",avatarUrl:\"%s\"]",
-                username, id, avatar, avatarUrl.toExternalForm());
+                username, id, avatar, getAvatarUrl().toExternalForm());
     }
 
     @Override
