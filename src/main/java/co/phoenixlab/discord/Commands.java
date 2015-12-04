@@ -33,7 +33,7 @@ public class Commands {
     public void register(CommandDispatcher dispatcher) {
         registerAdminCommands();
 
-        dispatcher.registerAlwaysActiveCommand("admin", this::admin,
+        dispatcher.registerAlwaysActiveCommand("sudo", this::admin,
                 "Administrative commands");
         dispatcher.registerCommand("admins", this::listAdmins,
                 "List admins");
@@ -306,6 +306,9 @@ public class Commands {
     private void admin(MessageContext context, String args) {
         //  Permission check
         if (!context.getBot().getConfig().getAdmins().contains(context.getMessage().getAuthor().getId())) {
+            context.getApiClient().sendMessage(context.getMessage().getAuthor().getUsername() +
+                    " is not in the sudoers file. This incident will be reported",
+                    context.getMessage().getChannelId());
             return;
         }
         Message original = context.getMessage();
