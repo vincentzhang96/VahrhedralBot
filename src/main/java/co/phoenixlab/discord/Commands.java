@@ -102,14 +102,15 @@ public class Commands {
                 r.freeMemory() / 1048576,
                 r.maxMemory() / 1048576);
         String response = String.format("**Status:** %s\n**Servers:** %d\n**Uptime:** %s\n**Memory:** `%s`\n" +
-                "**Load:** %.4f\n**TCID:** %s\n**TSID:** %s",
+                "**Load:** %.4f\n**TCID:** %s\n**TSID:** %s\n**CLID:** %s",
                 mainDispatcher.active().get() ? "Running" : "Stopped",
                 apiClient.getServers().size(),
                 uptime,
                 memory,
                 ManagementFactory.getOperatingSystemMXBean().getSystemLoadAverage(),
                 context.getMessage().getChannelId(),
-                apiClient.getChannelById(context.getMessage().getChannelId()).getParent().getId());
+                apiClient.getChannelById(context.getMessage().getChannelId()).getParent().getId(),
+                apiClient.getClientUser().getId());
         apiClient.sendMessage(response, context.getMessage().getChannelId());
     }
 
@@ -280,8 +281,8 @@ public class Commands {
                     " @mention them instead", message.getChannelId());
         } else {
             String avatar = (user.getAvatar() == null ? "N/A" : user.getAvatarUrl().toExternalForm());
-            String response = String.format("**Username:** %s\n**ID:** %s:%s\n%s%s**Avatar:** %s",
-                    user.getUsername(), user.getId(), user.getDiscriminator(),
+            String response = String.format("**Username:** %s\n**ID:** %s\n%s%s**Avatar:** %s",
+                    user.getUsername(), user.getId(),
                     config.getBlacklist().contains(user.getId()) ? "**Blacklisted**\n" : "",
                     config.getAdmins().contains(user.getId()) ? "**Bot Administrator**\n" : "",
                     avatar);
