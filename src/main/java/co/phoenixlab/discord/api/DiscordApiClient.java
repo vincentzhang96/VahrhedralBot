@@ -266,4 +266,8 @@ public class DiscordApiClient {
     public EventBus getEventBus() {
         return eventBus;
     }
+
+    public DiscordWebSocketClient getWebSocketClient() {
+        return webSocketClient;
+    }
 }

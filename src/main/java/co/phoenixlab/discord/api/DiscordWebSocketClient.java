@@ -7,6 +7,7 @@ import co.phoenixlab.discord.api.entities.User;
 import co.phoenixlab.discord.api.event.LogInEvent;
 import co.phoenixlab.discord.api.event.MessageReceivedEvent;
 import co.phoenixlab.discord.api.event.ServerJoinLeaveEvent;
+import co.phoenixlab.discord.stats.RunningAverage;
 import com.google.gson.Gson;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -20,7 +21,10 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public class DiscordWebSocketClient extends WebSocketClient {
 
@@ -30,12 +34,14 @@ public class DiscordWebSocketClient extends WebSocketClient {
     private final JSONParser parser;
     private final Gson gson;
     private ScheduledFuture keepAliveFuture;
+    private final Statistics statistics;
 
     public DiscordWebSocketClient(DiscordApiClient apiClient, URI serverUri) {
         super(serverUri);
         this.apiClient = apiClient;
         this.parser = new JSONParser();
         this.gson = new Gson();
+        statistics = new Statistics();
     }
 
     @Override
@@ -49,66 +55,72 @@ public class DiscordWebSocketClient extends WebSocketClient {
 
     @Override
     public void onMessage(String message) {
-        LOGGER.debug("Recieved message: {}", message);
+        long start = System.nanoTime();
         try {
-            JSONObject msg = (JSONObject) parser.parse(message);
-            String errorMessage = (String) msg.get("message");
-            if (errorMessage != null) {
-                if (errorMessage.isEmpty()) {
-                    LOGGER.warn("Discord returned an unknown error");
-                } else {
-                    LOGGER.warn("Discord returned error: {}", errorMessage);
+            LOGGER.debug("Recieved message: {}", message);
+            statistics.messageReceiveCount.increment();
+            try {
+                JSONObject msg = (JSONObject) parser.parse(message);
+                String errorMessage = (String) msg.get("message");
+                if (errorMessage != null) {
+                    if (errorMessage.isEmpty()) {
+                        LOGGER.warn("Discord returned an unknown error");
+                    } else {
+                        LOGGER.warn("Discord returned error: {}", errorMessage);
+                    }
+                    return;
                 }
-                return;
+                String type = (String) msg.get("t");
+                JSONObject data = (JSONObject) msg.get("d");
+                switch (type) {
+                    case "READY":
+                        handleReadyMessage(data);
+                        break;
+                    case "MESSAGE_CREATE":
+                        handleMessageCreate(data);
+                        break;
+                    case "MESSAGE_UPDATE":
+                        //  Don't care
+                        break;
+                    case "MESSAGE_DELETE":
+                        //  Don't care
+                        break;
+                    case "TYPING_START":
+                        //  Don't care
+                        break;
+                    case "GUILD_CREATE":
+                        handleGuildCreate(data);
+                        break;
+                    case "GUILD_DELETE":
+                        handleGuildDelete(data);
+                        break;
+                    case "GUILD_MEMBER_ADD":
+                        //  TODO
+                        break;
+                    case "GUILD_MEMBER_REMOVE":
+                        //  TODO
+                        break;
+                    case "CHANNEL_CREATE":
+                        //  TODO
+                        break;
+                    case "CHANNEL_DELETE":
+                        //  TODO
+                        break;
+                    case "PRESENCE_UPDATE":
+                        //  TODO
+                        break;
+                    case "VOICE_STATE_UPDATE":
+                        //  TODO
+                        break;
+                    //  TODO
+                    default:
+                        LOGGER.warn("Unknown message type {}:\n{}", type, data.toJSONString());
+                }
+            } catch (ParseException e) {
+                LOGGER.warn("Unable to parse message", e);
             }
-            String type = (String) msg.get("t");
-            JSONObject data = (JSONObject) msg.get("d");
-            switch (type) {
-                case "READY":
-                    handleReadyMessage(data);
-                    break;
-                case "MESSAGE_CREATE":
-                    handleMessageCreate(data);
-                    break;
-                case "MESSAGE_UPDATE":
-                    //  Don't care
-                    break;
-                case "MESSAGE_DELETE":
-                    //  Don't care
-                    break;
-                case "TYPING_START":
-                    //  Don't care
-                    break;
-                case "GUILD_CREATE":
-                    handleGuildCreate(data);
-                    break;
-                case "GUILD_DELETE":
-                    handleGuildDelete(data);
-                    break;
-                case "GUILD_MEMBER_ADD":
-                    //  TODO
-                    break;
-                case "GUILD_MEMBER_REMOVE":
-                    //  TODO
-                    break;
-                case "CHANNEL_CREATE":
-                    //  TODO
-                    break;
-                case "CHANNEL_DELETE":
-                    //  TODO
-                    break;
-                case "PRESENCE_UPDATE":
-                    //  TODO
-                    break;
-                case "VOICE_STATE_UPDATE":
-                    //  TODO
-                    break;
-                //  TODO
-                default:
-                    LOGGER.warn("Unknown message type {}:\n{}", type, data.toJSONString());
-            }
-        } catch (ParseException e) {
-            LOGGER.warn("Unable to parse message", e);
+        } finally {
+            statistics.avgMessageHandleTime.add(MILLISECONDS.convert(System.nanoTime() - start, NANOSECONDS));
         }
     }
 
@@ -159,7 +171,8 @@ public class DiscordWebSocketClient extends WebSocketClient {
             keepAlive.put("d", System.currentTimeMillis());
             LOGGER.debug("Sending keepAlive");
             send(keepAlive.toJSONString());
-        }, 0, keepAliveInterval, TimeUnit.MILLISECONDS);
+            statistics.keepAliveCount.increment();
+        }, 0, keepAliveInterval, MILLISECONDS);
     }
 
     private void handleMessageCreate(JSONObject data) {
@@ -185,6 +198,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
     @Override
     public void onError(Exception ex) {
         LOGGER.warn("WebSocket error", ex);
+        statistics.errorCount.increment();
     }
 
     private <T> T jsonObjectToObject(JSONObject object, Class<T> clazz) {
@@ -193,5 +207,16 @@ public class DiscordWebSocketClient extends WebSocketClient {
         //  Eventually come up with a solution that allows for direct creation
         String j = object.toJSONString();
         return gson.fromJson(j, clazz);
+    }
+
+    public Statistics getStatistics() {
+        return statistics;
+    }
+
+    public static class Statistics {
+        public final RunningAverage avgMessageHandleTime = new RunningAverage();
+        public final LongAdder messageReceiveCount = new LongAdder();
+        public final LongAdder keepAliveCount = new LongAdder();
+        public final LongAdder errorCount = new LongAdder();
     }
 }

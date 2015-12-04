@@ -2,6 +2,7 @@ package co.phoenixlab.discord;
 
 import co.phoenixlab.discord.api.ApiConst;
 import co.phoenixlab.discord.api.DiscordApiClient;
+import co.phoenixlab.discord.api.DiscordWebSocketClient;
 import co.phoenixlab.discord.api.entities.*;
 import com.google.gson.Gson;
 import com.mashape.unirest.http.HttpResponse;
@@ -71,14 +72,27 @@ public class Commands {
         DiscordApiClient apiClient = context.getApiClient();
         CommandDispatcher mainDispatcher = context.getBot().getMainCommandDispatcher();
         CommandDispatcher.Statistics mdStats = mainDispatcher.getStatistics();
-        apiClient.sendMessage(String.format("__**Bot Statistics**__\n**MainCommandDispatcher**\n" +
-                        "AvgCmdHandleTime: %.2fms\nAvgAcceptedCmdHandleTime: %.2f\nms" +
-                        "ReceivedCommands: %,d\nReceivedCommandsOK: %,d\nReceivedCommandsKO: %,d",
+        DiscordWebSocketClient.Statistics wsStats = apiClient.getWebSocketClient().getStatistics();
+        apiClient.sendMessage(String.format("__**Bot Statistics**__\n" +
+                        "**MainCommandDispatcher**\n" +
+                        "AvgCmdHandleTime: %.2fms\n" +
+                        "AvgOKCmdHandleTime: %.2fms\n" +
+                        "ReceivedCommands: %,d T/%,d OK/%,d KO\n" +
+                
+                        "**WebSocketClient**\n" +
+                        "AvgMsgHandleTime: %.2fms\n" +
+                        "MsgCount: %,d\n" +
+                        "KeepAliveCount: %,d\n" +
+                        "ErrorCount: %,d\n",
                 mdStats.commandHandleTime.getRunningAverage(),
                 mdStats.acceptedCommandHandleTime.getRunningAverage(),
                 mdStats.commandsReceived.sum(),
                 mdStats.commandsHandledSuccessfully.sum() + 1,  //  +1 since this executed OK but hasnt counted yet
-                mdStats.commandsRejected.sum()),
+                mdStats.commandsRejected.sum(),
+                wsStats.avgMessageHandleTime.getRunningAverage(),
+                wsStats.messageReceiveCount.sum(),
+                wsStats.keepAliveCount.sum(),
+                wsStats.errorCount.sum()),
                 context.getMessage().getChannelId());
     }
 

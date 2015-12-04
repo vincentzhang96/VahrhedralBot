@@ -10,6 +10,9 @@ import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
 public class CommandDispatcher {
 
     private static final Logger LOGGER = VahrhedralBot.LOGGER;
@@ -89,7 +92,8 @@ public class CommandDispatcher {
                         LOGGER.debug("Dispatching command {}", cmd);
                         long handleStartTime = System.nanoTime();
                         wrapper.command.handleCommand(new MessageContext(msg, bot, this), args);
-                        statistics.acceptedCommandHandleTime.add((System.nanoTime() - handleStartTime) / 1000000);
+                        statistics.acceptedCommandHandleTime.
+                                add(MILLISECONDS.convert(System.nanoTime() - handleStartTime, NANOSECONDS));
                         statistics.commandsHandledSuccessfully.increment();
                         return;
                     }
@@ -99,7 +103,7 @@ public class CommandDispatcher {
             }
             statistics.commandsRejected.increment();
         } finally {
-            statistics.commandHandleTime.add((System.nanoTime() - cmdStartTime) / 1000000);
+            statistics.commandHandleTime.add(MILLISECONDS.convert(System.nanoTime() - cmdStartTime, NANOSECONDS));
         }
     }
 
