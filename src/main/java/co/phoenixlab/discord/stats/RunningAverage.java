@@ -53,6 +53,9 @@ public class RunningAverage {
     }
 
     public double getMin() {
+        if (min == Double.MAX_VALUE) {
+            return 0;
+        }
         return min;
     }
 
@@ -61,6 +64,6 @@ public class RunningAverage {
     }
 
     public String summary() {
-        return String.format("%.2f/%.2f/%.2f", min, running, max);
+        return String.format("%,d %.2f/%.2f/%.2f", getSize(), getMin(), getRunningAverage(), getMax());
     }
 }
