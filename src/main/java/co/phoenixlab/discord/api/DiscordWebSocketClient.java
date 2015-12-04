@@ -1,5 +1,6 @@
 package co.phoenixlab.discord.api;
 
+import co.phoenixlab.discord.api.entities.Channel;
 import co.phoenixlab.discord.api.entities.Message;
 import co.phoenixlab.discord.api.entities.ReadyMessage;
 import co.phoenixlab.discord.api.entities.Server;
@@ -54,7 +55,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
     public void onMessage(String message) {
         long start = System.nanoTime();
         try {
-            LOGGER.debug("Recieved message: {}", message);
+            LOGGER.trace("Recieved message: {}", message);
             statistics.messageReceiveCount.increment();
             try {
                 JSONObject msg = (JSONObject) parser.parse(message);
@@ -164,10 +165,17 @@ public class DiscordWebSocketClient extends WebSocketClient {
         Message message = jsonObjectToObject(data, Message.class);
         //  Ignore messages from self
         if (!message.getAuthor().equals(apiClient.getClientUser())) {
-            LOGGER.debug("Recieved message from {} in #{}: {}",
-                    message.getAuthor().getUsername(),
-                    apiClient.getChannelById(message.getChannelId()).getName(),
-                    message.getContent());
+            Channel channel = apiClient.getChannelById(message.getChannelId());
+            if (channel == null) {
+                LOGGER.debug("Recieved direct message from {}: {}",
+                        message.getAuthor().getUsername(),
+                        message.getContent());
+            } else {
+                LOGGER.debug("Recieved message from {} in #{}: {}",
+                        message.getAuthor().getUsername(),
+                        channel.getName(),
+                        message.getContent());
+            }
             apiClient.getEventBus().post(new MessageReceivedEvent(message));
         }
     }
