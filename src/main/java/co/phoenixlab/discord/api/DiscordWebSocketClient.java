@@ -3,7 +3,6 @@ package co.phoenixlab.discord.api;
 import co.phoenixlab.discord.api.entities.Message;
 import co.phoenixlab.discord.api.entities.ReadyMessage;
 import co.phoenixlab.discord.api.entities.Server;
-import co.phoenixlab.discord.api.entities.User;
 import co.phoenixlab.discord.api.event.LogInEvent;
 import co.phoenixlab.discord.api.event.MessageReceivedEvent;
 import co.phoenixlab.discord.api.event.ServerJoinLeaveEvent;
@@ -18,8 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -126,20 +123,8 @@ public class DiscordWebSocketClient extends WebSocketClient {
 
     private void handleReadyMessage(JSONObject data) {
         ReadyMessage readyMessage = jsonObjectToObject(data, ReadyMessage.class);
-        apiClient.setSessionId(readyMessage.getSessionId());
-        LOGGER.info("Using sessionId {}", apiClient.getSessionId());
-        User user = readyMessage.getUser();
-        apiClient.setClientUser(user);
-        LOGGER.info("Logged in as {}#{} ID {}", user.getUsername(), user.getDiscriminator(), user.getId());
         startKeepAlive(readyMessage.getHeartbeatInterval());
         LOGGER.info("Sending keepAlive every {} ms", readyMessage.getHeartbeatInterval());
-        LOGGER.info("Connected to {} servers", readyMessage.getServers().length);
-        LOGGER.info("Holding {} private conversations", readyMessage.getPrivateChannels().length);
-        //  We don't bother populating channel messages since we only care about new messages coming in
-        List<Server> servers = apiClient.getServers();
-        servers.clear();
-        Collections.addAll(servers, readyMessage.getServers());
-        apiClient.remapServers();
         apiClient.getEventBus().post(new LogInEvent(readyMessage));
     }
 

@@ -1,7 +1,9 @@
 package co.phoenixlab.discord.api;
 
 import co.phoenixlab.discord.api.entities.*;
+import co.phoenixlab.discord.api.event.LogInEvent;
 import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.mashape.unirest.http.HttpResponse;
@@ -132,6 +134,27 @@ public class DiscordApiClient {
         gateway = "w" + gateway.substring(2);
         LOGGER.info("Found WebSocket gateway at {}", gateway);
         return gateway;
+    }
+
+    @Subscribe
+    public void onLogInEvent(LogInEvent event) {
+        ReadyMessage readyMessage = event.getReadyMessage();
+        setSessionId(readyMessage.getSessionId());
+        LOGGER.info("Using sessionId {}", getSessionId());
+        User user = readyMessage.getUser();
+        setClientUser(user);
+        LOGGER.info("Logged in as {}#{} ID {}", user.getUsername(), user.getDiscriminator(), user.getId());
+        LOGGER.info("Connected to {} servers", readyMessage.getServers().length);
+        //  We don't bother populating channel messages since we only care about new messages coming in
+        servers.clear();
+        Collections.addAll(servers, readyMessage.getServers());
+        remapServers();
+
+        LOGGER.info("Holding {} private conversations", readyMessage.getPrivateChannels().length);
+        for (PrivateChannel privateChannel : readyMessage.getPrivateChannels()) {
+            privateChannels.put(privateChannel.getId(), privateChannel);
+            privateChannelsByUser.put(privateChannel.getRecipient(), privateChannel);
+        }
     }
 
     public void sendMessage(String body, String channelId) {
