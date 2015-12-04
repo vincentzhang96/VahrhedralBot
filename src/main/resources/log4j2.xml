@@ -4,13 +4,25 @@
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %logger{36}%n[%-5level] %msg%n"/>
         </Console>
+        <MemoryMappedFile name="BotFile" fileName="logs/bot.log" append="true">
+            <PatternLayout>
+                <Pattern>%d{HH:mm:ss.SSS} [%t] %logger{36}%n[%-5level] %msg%n</Pattern>
+            </PatternLayout>
+        </MemoryMappedFile>
+        <MemoryMappedFile name="ApiFile" fileName="logs/api.log" append="true">
+            <PatternLayout>
+                <Pattern>%d{HH:mm:ss.SSS} [%t] %logger{36}%n[%-5level] %msg%n</Pattern>
+            </PatternLayout>
+        </MemoryMappedFile>
     </Appenders>
     <Loggers>
-        <Logger name="VahrhedralBot" level="info" additivity="false">
-            <AppenderRef ref="Console"/>
+        <Logger name="VahrhedralBot" level="trace" additivity="false">
+            <AppenderRef ref="Console" level="info"/>
+            <AppenderRef ref="BotFile" level="debug"/>
         </Logger>
-        <Logger name="DiscordApiClient" level="info" additivity="false">
-            <AppenderRef ref="Console"/>
+        <Logger name="DiscordApiClient" level="trace" additivity="false">
+            <AppenderRef ref="Console" level="info"/>
+            <AppenderRef ref="ApiFile" level="debug"/>
         </Logger>
         <Root level="error">
             <AppenderRef ref="Console"/>
