@@ -20,6 +20,8 @@ import java.util.Arrays;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
+import static co.phoenixlab.discord.api.DiscordApiClient.NO_USER;
+
 public class Commands {
 
     private Instant registerTime;
@@ -174,7 +176,7 @@ public class Commands {
             return;
         }
         User user = findUser(context, args);
-        if (user == null) {
+        if (user == NO_USER) {
             apiClient.sendMessage("Unable to find user", context.getMessage().getChannelId());
             return;
         }
@@ -195,7 +197,7 @@ public class Commands {
             return;
         }
         User user = findUser(context, args);
-        if (user == null) {
+        if (user == NO_USER) {
             apiClient.sendMessage("Unable to find user", context.getMessage().getChannelId());
             return;
         }
@@ -341,7 +343,7 @@ public class Commands {
         } else {
             user = message.getAuthor();
         }
-        if (user == null) {
+        if (user == NO_USER) {
             context.getApiClient().sendMessage("Unable to find user. Try typing their name EXACTLY or" +
                     " @mention them instead", message.getChannelId());
         } else {
@@ -363,7 +365,7 @@ public class Commands {
         } else {
             user = message.getAuthor();
         }
-        if (user == null) {
+        if (user == NO_USER) {
             context.getApiClient().sendMessage("Unable to find user. Try typing their name EXACTLY or" +
                     " @mention them instead", message.getChannelId());
         } else {

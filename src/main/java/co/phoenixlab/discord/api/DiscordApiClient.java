@@ -31,6 +31,14 @@ public class DiscordApiClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("DiscordApiClient");
 
+    public static final Server NO_SERVER = new Server("NO_SERVER");
+    public static final Channel NO_CHANNEL = new Channel("", "NO_CHANNEL");
+    public static final User NO_USER = new User("NO_USER", "NO_USER", "NO_USER", null);
+
+    static {
+        NO_CHANNEL.setParent(NO_SERVER);
+    }
+
     private final ScheduledExecutorService executorService;
 
     private String email;
@@ -219,7 +227,11 @@ public class DiscordApiClient {
     }
 
     public Server getServerByID(String id) {
-        return serverMap.get(id);
+        Server server = serverMap.get(id);
+        if (server == null) {
+            server = NO_SERVER;
+        }
+        return server;
     }
 
     public Map<String, PrivateChannel> getPrivateChannels() {
@@ -250,7 +262,7 @@ public class DiscordApiClient {
                 map(Server::getChannels).
                 flatMap(Set::stream).
                 filter(c -> id.equals(c.getId())).
-                findFirst().orElse(null);
+                findFirst().orElse(NO_CHANNEL);
     }
 
     public User findUser(String username) {
@@ -261,10 +273,13 @@ public class DiscordApiClient {
                 return user;
             }
         }
-        return null;
+        return NO_USER;
     }
 
     public User findUser(String username, Server server) {
+        if (server == null) {
+            return findUser(username);
+        }
         username = username.toLowerCase();
         for (Member member : server.getMembers()) {
             User user = member.getUser();
@@ -282,7 +297,7 @@ public class DiscordApiClient {
         //  Still no match? Try fuzzy match
         //  TODO
 
-        return null;
+        return NO_USER;
     }
 
     public User getUserById(String userId) {
@@ -292,17 +307,20 @@ public class DiscordApiClient {
                 return user;
             }
         }
-        return null;
+        return NO_USER;
     }
 
     public User getUserById(String userId, Server server) {
+        if (server == null) {
+            getUserById(userId);
+        }
         for (Member member : server.getMembers()) {
             User user = member.getUser();
             if (user.getId().equals(userId)) {
                 return user;
             }
         }
-        return null;
+        return NO_USER;
     }
 
     public ScheduledExecutorService getExecutorService() {
