@@ -59,6 +59,8 @@ public class Commands {
                 "Joins using the provided Discord.gg invite link");
         adminCommandDispatcher.registerAlwaysActiveCommand("telegram", this::adminTelegram,
                 "Send a message to another channel");
+        adminCommandDispatcher.registerAlwaysActiveCommand("prefix", this::adminPrefix,
+                "Get or set the main command prefix");
     }
 
 
@@ -207,6 +209,21 @@ public class Commands {
         apiClient.sendMessage(split[1], split[0], Arrays.stream(mentions).
                 map(User::getId).
                 collect(Collectors.toList()).toArray(new String[mentions.length]));
+    }
+
+    private void adminPrefix(MessageContext context, String s) {
+        DiscordApiClient apiClient = context.getApiClient();
+        VahrhedralBot bot = context.getBot();
+        if (s.isEmpty()) {
+            apiClient.sendMessage(String.format("Command prefix: `%s`", bot.getConfig().getCommandPrefix()),
+                    context.getMessage().getChannelId());
+        } else {
+            context.getBot().getMainCommandDispatcher().setCommandPrefix(s);
+            bot.getConfig().setCommandPrefix(s);
+            bot.saveConfig();
+            apiClient.sendMessage(String.format("Command prefix set to `%s`", bot.getConfig().getCommandPrefix()),
+                    context.getMessage().getChannelId());
+        }
     }
 
     private User findUser(MessageContext context, String username) {

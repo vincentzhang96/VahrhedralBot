@@ -18,7 +18,7 @@ public class CommandDispatcher {
 
     private AtomicBoolean active;
 
-    private final String commandPrefix;
+    private String commandPrefix;
 
     public CommandDispatcher(VahrhedralBot bot, String commandPrefix) {
         this.bot = bot;
@@ -26,6 +26,14 @@ public class CommandDispatcher {
         active = new AtomicBoolean(true);
         commands = new HashMap<>();
         addHelpCommand();
+    }
+
+    public String getCommandPrefix() {
+        return commandPrefix;
+    }
+
+    public void setCommandPrefix(String commandPrefix) {
+        this.commandPrefix = commandPrefix;
     }
 
     private void addHelpCommand() {
