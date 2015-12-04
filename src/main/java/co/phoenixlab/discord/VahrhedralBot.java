@@ -1,92 +1,97 @@
 package co.phoenixlab.discord;
 
+import co.phoenixlab.discord.api.DiscordApiClient;
 import com.google.gson.Gson;
-import org.json.simple.parser.ParseException;
+import com.mashape.unirest.http.Unirest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sx.blah.discord.DiscordClient;
-import sx.blah.discord.handle.IDispatcher;
-import sx.blah.discord.handle.IListener;
-import sx.blah.discord.handle.impl.events.MessageReceivedEvent;
-import sx.blah.discord.handle.impl.events.ReadyEvent;
-import sx.blah.discord.handle.obj.Message;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Reader;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
+import static java.nio.file.StandardOpenOption.WRITE;
 
 public class VahrhedralBot implements Runnable {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("VahrhedralBot");
 
+    public static final Path CONFIG_PATH = Paths.get("config/config.json");
+
+    private DiscordApiClient apiClient;
     public static void main(String[] args) {
         LOGGER.info("Starting Vahrhedral bot");
+        VahrhedralBot bot = new VahrhedralBot();
         try {
-            VahrhedralBot bot = new VahrhedralBot();
             bot.run();
         } catch (Exception e) {
-            LOGGER.error("Fatal error while starting bot", e);
+            LOGGER.error("Fatal error while running bot", e);
         }
+        bot.shutdown();
     }
 
-    private DiscordClient discord;
     private Configuration config;
+
+    private Commands commands;
     private CommandDispatcher commandDispatcher;
+    private EventListener eventListener;
     private TaskQueue taskQueue;
 
     public VahrhedralBot() {
-        discord = DiscordClient.get();
-        commandDispatcher = new CommandDispatcher(discord, this);
         taskQueue = new TaskQueue();
+        eventListener = new EventListener(this);
     }
 
     @Override
     public void run() {
-        //  TODO
+        //  Set thread name
+        Thread.currentThread().setName("VahrhedralBotMain");
         //  Load Config
         try {
-            config = loadConfiguration(Paths.get("config/config.json"));
+            config = loadConfiguration();
         } catch (IOException e) {
             LOGGER.error("Unable to load configuration", e);
             return;
         }
-        //  Register our event listeners first
-        registerEventListeners();
-        LOGGER.info("Logging in using {}", config.getEmail());
+        commandDispatcher = new CommandDispatcher(this, config.getCommandPrefix());
+        commands = new Commands(this);
+        commands.register(commandDispatcher);
+        apiClient = new DiscordApiClient();
+        apiClient.getEventBus().register(eventListener);
         try {
-            discord.login(config.getEmail(), config.getPassword());
-        } catch (IOException | ParseException | URISyntaxException e) {
+            apiClient.logIn(config.getEmail(), config.getPassword());
+        } catch (IOException e) {
             LOGGER.error("Unable to log in", e);
-            return;
         }
-        if (!discord.isReady()) {
-            LOGGER.error("Discord client is not ready");
-            return;
-        }
-
-        while (true) {
-            taskQueue.executeWaiting();
-        }
+        taskQueue.executeWaiting();
     }
 
-    private Configuration loadConfiguration(Path path) throws IOException {
+    private Configuration loadConfiguration() throws IOException {
         Gson configGson = new Gson();
-        try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+        try (Reader reader = Files.newBufferedReader(CONFIG_PATH, UTF_8)) {
             return configGson.fromJson(reader, Configuration.class);
         }
     }
 
-    private void registerEventListeners() {
-        IDispatcher dispatcher = discord.getDispatcher();
-        dispatcher.registerListener((IListener<ReadyEvent>)this::onReadyEvent);
-        dispatcher.registerListener((IListener<MessageReceivedEvent>)this::onMessageRecievedEvent);
+    public boolean saveConfig() {
+        Gson configGson = new Gson();
+        try (BufferedWriter writer = Files.newBufferedWriter(CONFIG_PATH, UTF_8, CREATE, WRITE, TRUNCATE_EXISTING)) {
+            configGson.toJson(config, writer);
+            writer.flush();
+            return true;
+        } catch (IOException e) {
+            LOGGER.warn("Unable to save config", e);
+            return false;
+        }
     }
 
-    public CommandDispatcher getCommandDispatcher() {
+    public CommandDispatcher getMainCommandDispatcher() {
         return commandDispatcher;
     }
 
@@ -94,37 +99,25 @@ public class VahrhedralBot implements Runnable {
         return config;
     }
 
-    public DiscordClient getDiscord() {
-        return discord;
-    }
-
     public TaskQueue getTaskQueue() {
         return taskQueue;
     }
 
-    private void onReadyEvent(ReadyEvent event) {
-        LOGGER.info("Successfully connected as {}", discord.getOurUser().getName());
+    public EventListener getEventListener() {
+        return eventListener;
     }
 
-    private void onMessageRecievedEvent(MessageReceivedEvent event) {
-        Message msg = event.getMessage();
-        String content = msg.getContent();
-        String authorId = msg.getAuthor().getID();
-        if (discord.getOurUser().getID().equals(authorId) ||
-                config.getBlacklist().contains(authorId)) {
-            //  Ignore
-            return;
+    public DiscordApiClient getApiClient() {
+        return apiClient;
+    }
+
+    public void shutdown() {
+        try {
+            Unirest.shutdown();
+        } catch (IOException e) {
+            LOGGER.warn("Was unable to cleanly shut down Unirest", e);
         }
-        LOGGER.debug("Message from {} #{} {}: {}",
-                msg.getChannel().getParent().getName(),
-                msg.getChannel().getName(),
-                msg.getAuthor().getName(),
-                content);
-        if (content.startsWith(config.getCommandPrefix())) {
-            //  Process command
-            commandDispatcher.handleCommand(msg);
-        }
-        //  otherwise ignore the message
+        System.exit(0);
     }
 
 

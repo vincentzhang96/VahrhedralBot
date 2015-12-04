@@ -1,22 +1,19 @@
 package co.phoenixlab.discord;
 
-import sx.blah.discord.DiscordClient;
-import sx.blah.discord.handle.obj.Message;
+
+import co.phoenixlab.discord.api.DiscordApiClient;
+import co.phoenixlab.discord.api.entities.Message;
 
 public class MessageContext {
 
-    private final DiscordClient discord;
     private final Message message;
     private final VahrhedralBot bot;
+    private final CommandDispatcher dispatcher;
 
-    public MessageContext(DiscordClient discord, Message message, VahrhedralBot bot) {
-        this.discord = discord;
+    public MessageContext(Message message, VahrhedralBot bot, CommandDispatcher dispatcher) {
         this.message = message;
         this.bot = bot;
-    }
-
-    public DiscordClient getDiscord() {
-        return discord;
+        this.dispatcher = dispatcher;
     }
 
     public Message getMessage() {
@@ -25,5 +22,13 @@ public class MessageContext {
 
     public VahrhedralBot getBot() {
         return bot;
+    }
+
+    public DiscordApiClient getApiClient() {
+        return bot.getApiClient();
+    }
+
+    public CommandDispatcher getDispatcher() {
+        return dispatcher;
     }
 }

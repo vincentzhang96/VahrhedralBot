@@ -10,6 +10,7 @@ public class Configuration {
     private String commandPrefix;
     private transient int prefixLength;
     private Set<String> blacklist;
+    private Set<String> admins;
 
     public Configuration() {
         email = "";
@@ -17,6 +18,7 @@ public class Configuration {
         commandPrefix = "!";
         prefixLength = 0;
         blacklist = new HashSet<>();
+        admins = new HashSet<>();
     }
 
     public String getEmail() {
@@ -54,5 +56,9 @@ public class Configuration {
 
     public Set<String> getBlacklist() {
         return blacklist;
+    }
+
+    public Set<String> getAdmins() {
+        return admins;
     }
 }
