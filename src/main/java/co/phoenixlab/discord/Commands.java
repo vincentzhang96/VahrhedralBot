@@ -63,6 +63,23 @@ public class Commands {
                 "Get or set the main command prefix");
         adminCommandDispatcher.registerAlwaysActiveCommand("raw", this::adminRaw,
                 "Send a message using raw JSON");
+        adminCommandDispatcher.registerAlwaysActiveCommand("stats", this::adminStats,
+                "Display session statistics");
+    }
+
+    private void adminStats(MessageContext context, String s) {
+        DiscordApiClient apiClient = context.getApiClient();
+        CommandDispatcher mainDispatcher = context.getBot().getMainCommandDispatcher();
+        CommandDispatcher.Statistics mdStats = mainDispatcher.getStatistics();
+        apiClient.sendMessage(String.format("__**Bot Statistics**__\n**MainCommandDispatcher**\n" +
+                        "AvgCmdHandleTime: %.2fms\nAvgAcceptedCmdHandleTime: %.2f\nms" +
+                        "ReceivedCommands: %,d\nReceivedCommandsOK: %,d\nReceivedCommandsKO: %,d",
+                mdStats.commandHandleTime.getRunningAverage(),
+                mdStats.acceptedCommandHandleTime.getRunningAverage(),
+                mdStats.commandsReceived.sum(),
+                mdStats.commandsHandledSuccessfully.sum() + 1,  //  +1 since this executed OK but hasnt counted yet
+                mdStats.commandsRejected.sum()),
+                context.getMessage().getChannelId());
     }
 
 
@@ -113,7 +130,7 @@ public class Commands {
             serverDetail = String.format("%d servers: \n%s", apiClient.getServers().size(), serverJoiner.toString());
         }
         String response = String.format("**Status:** %s\n**Servers:** %s\n**Uptime:** %s\n**Heap:** `%s`\n" +
-                "**Load:** %.4f\n**TCID:** %s\n**TSID:** %s\n**CLID:** %s",
+                        "**Load:** %.4f\n**TCID:** %s\n**TSID:** %s\n**CLID:** %s",
                 mainDispatcher.active().get() ? "Running" : "Stopped",
                 serverDetail,
                 uptime,
@@ -248,10 +265,10 @@ public class Commands {
                 raw = split[1];
             }
         }
-         if (channel == null || raw == null) {
-             channel = context.getMessage().getChannelId();
-             raw = args;
-         }
+        if (channel == null || raw == null) {
+            channel = context.getMessage().getChannelId();
+            raw = args;
+        }
         OutboundMessage outboundMessage = new Gson().fromJson(raw, OutboundMessage.class);
         context.getApiClient().sendMessage(outboundMessage.getContent(),
                 channel,
