@@ -65,6 +65,7 @@ public class DiscordApiClient {
             LOGGER.warn("EventBus dispatch exception", e);
         });
         gson = new GsonBuilder().serializeNulls().create();
+        eventBus.register(this);
     }
 
     public void logIn(String email, String password) throws IOException {
