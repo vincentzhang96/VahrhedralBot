@@ -75,21 +75,21 @@ public class Commands {
         DiscordWebSocketClient.Statistics wsStats = apiClient.getWebSocketClient().getStatistics();
         apiClient.sendMessage(String.format("__**Bot Statistics**__\n" +
                         "**MainCommandDispatcher**\n" +
-                        "AvgCmdHandleTime: %.2fms\n" +
-                        "AvgOKCmdHandleTime: %.2fms\n" +
+                        "CmdHandleTime: %s ms\n" +
+                        "CmdOKHandleTime: %s ms\n" +
                         "ReceivedCommands: %,d T/%,d OK/%,d KO\n" +
-                
+
                         "**WebSocketClient**\n" +
-                        "AvgMsgHandleTime: %.2fms\n" +
+                        "MsgHandleTime: %s ms\n" +
                         "MsgCount: %,d\n" +
                         "KeepAliveCount: %,d\n" +
                         "ErrorCount: %,d\n",
-                mdStats.commandHandleTime.getRunningAverage(),
-                mdStats.acceptedCommandHandleTime.getRunningAverage(),
+                mdStats.commandHandleTime.summary(),
+                mdStats.acceptedCommandHandleTime.summary(),
                 mdStats.commandsReceived.sum(),
                 mdStats.commandsHandledSuccessfully.sum() + 1,  //  +1 since this executed OK but hasnt counted yet
                 mdStats.commandsRejected.sum(),
-                wsStats.avgMessageHandleTime.getRunningAverage(),
+                wsStats.avgMessageHandleTime.summary(),
                 wsStats.messageReceiveCount.sum(),
                 wsStats.keepAliveCount.sum(),
                 wsStats.errorCount.sum()),
