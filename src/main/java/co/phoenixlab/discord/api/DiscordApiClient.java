@@ -49,12 +49,16 @@ public class DiscordApiClient {
 
     private final Gson gson;
 
+    private Map<String, PrivateChannel> privateChannels;
+    private Map<User, PrivateChannel> privateChannelsByUser;
+
     public DiscordApiClient() {
         sessionId = new AtomicReference<>();
         clientUser = new AtomicReference<>();
         executorService = Executors.newScheduledThreadPool(4);
         servers = new ArrayList<>();
         serverMap = new HashMap<>();
+        privateChannels = new HashMap<>();
         eventBus = new EventBus((e, c) -> {
             LOGGER.warn("Error while handling event {} when calling {}",
                     c.getEvent(), c.getSubscriberMethod().toGenericString());
@@ -74,7 +78,7 @@ public class DiscordApiClient {
         JSONObject auth = new JSONObject(authObj);
         HttpResponse<JsonNode> response;
         try {
-             response = Unirest.post(ApiConst.LOGIN_ENDPOINT).
+            response = Unirest.post(ApiConst.LOGIN_ENDPOINT).
                     header(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType()).
                     body(auth.toJSONString()).
                     asJson();
@@ -192,6 +196,23 @@ public class DiscordApiClient {
     public Server getServerByID(String id) {
         return serverMap.get(id);
     }
+
+    public Map<String, PrivateChannel> getPrivateChannels() {
+        return privateChannels;
+    }
+
+    public Map<User, PrivateChannel> getPrivateChannelsByUserMap() {
+        return privateChannelsByUser;
+    }
+
+    public PrivateChannel getPrivateChannelById(String id) {
+        return privateChannels.get(id);
+    }
+
+    public PrivateChannel getPrivateChannelByUser(User user) {
+        return privateChannelsByUser.get(user);
+    }
+
 
     public void remapServers() {
         serverMap.clear();
