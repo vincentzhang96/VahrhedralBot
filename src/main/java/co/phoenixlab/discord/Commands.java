@@ -2,10 +2,7 @@ package co.phoenixlab.discord;
 
 import co.phoenixlab.discord.api.ApiConst;
 import co.phoenixlab.discord.api.DiscordApiClient;
-import co.phoenixlab.discord.api.entities.Channel;
-import co.phoenixlab.discord.api.entities.Message;
-import co.phoenixlab.discord.api.entities.OutboundMessage;
-import co.phoenixlab.discord.api.entities.User;
+import co.phoenixlab.discord.api.entities.*;
 import com.google.gson.Gson;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
@@ -13,6 +10,7 @@ import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.http.HttpHeaders;
 
 import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryUsage;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Duration;
@@ -101,14 +99,23 @@ public class Commands {
         long s = duration.getSeconds();
         String uptime = String.format("%d:%02d:%02d:%02d", s / 86400, (s / 3600) % 24, (s % 3600) / 60, (s % 60));
         Runtime r = Runtime.getRuntime();
-        String memory = String.format("%,dMB Used %,dMB Free %,dMB Max",
-                (r.maxMemory() - r.freeMemory()) / 1048576,
-                r.freeMemory() / 1048576,
-                r.maxMemory() / 1048576);
-        String response = String.format("**Status:** %s\n**Servers:** %d\n**Uptime:** %s\n**Memory:** `%s`\n" +
+        MemoryUsage heapMemoryUsage = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
+        String memory = String.format("%,dMB used %,dMB committed %,dMB max",
+                heapMemoryUsage.getUsed() / 1048576L,
+                heapMemoryUsage.getCommitted() / 1048576L,
+                heapMemoryUsage.getMax() / 1048576L);
+        String serverDetail = Integer.toString(apiClient.getServers().size());
+        if (args.contains("servers")) {
+            StringJoiner serverJoiner = new StringJoiner(",\n");
+            for (Server server : apiClient.getServers()) {
+                serverJoiner.add(String.format("`%s`:%s", server.getName(), server.getId()));
+            }
+            serverDetail = String.format("%d servers: \n%s", apiClient.getServers().size(), serverJoiner.toString());
+        }
+        String response = String.format("**Status:** %s\n**Servers:** %s\n**Uptime:** %s\n**Heap:** `%s`\n" +
                 "**Load:** %.4f\n**TCID:** %s\n**TSID:** %s\n**CLID:** %s",
                 mainDispatcher.active().get() ? "Running" : "Stopped",
-                apiClient.getServers().size(),
+                serverDetail,
                 uptime,
                 memory,
                 ManagementFactory.getOperatingSystemMXBean().getSystemLoadAverage(),
