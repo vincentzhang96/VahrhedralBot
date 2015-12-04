@@ -38,21 +38,21 @@ public class DiscordApiClient {
 
     private String token;
 
-    private AtomicReference<String> sessionId;
+    private final AtomicReference<String> sessionId;
 
-    private AtomicReference<User> clientUser;
+    private final AtomicReference<User> clientUser;
 
     private DiscordWebSocketClient webSocketClient;
 
-    private List<Server> servers;
-    private Map<String, Server> serverMap;
+    private final List<Server> servers;
+    private final Map<String, Server> serverMap;
 
     private final EventBus eventBus;
 
     private final Gson gson;
 
-    private Map<String, PrivateChannel> privateChannels;
-    private Map<User, PrivateChannel> privateChannelsByUser;
+    private final Map<String, PrivateChannel> privateChannels;
+    private final Map<User, PrivateChannel> privateChannelsByUser;
 
     public DiscordApiClient() {
         sessionId = new AtomicReference<>();
@@ -61,6 +61,7 @@ public class DiscordApiClient {
         servers = new ArrayList<>();
         serverMap = new HashMap<>();
         privateChannels = new HashMap<>();
+        privateChannelsByUser = new HashMap<>();
         eventBus = new EventBus((e, c) -> {
             LOGGER.warn("Error while handling event {} when calling {}",
                     c.getEvent(), c.getSubscriberMethod().toGenericString());
