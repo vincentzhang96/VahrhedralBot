@@ -4,6 +4,9 @@ import co.phoenixlab.discord.api.entities.Message;
 import co.phoenixlab.discord.api.entities.ReadyMessage;
 import co.phoenixlab.discord.api.entities.Server;
 import co.phoenixlab.discord.api.entities.User;
+import co.phoenixlab.discord.api.event.LogInEvent;
+import co.phoenixlab.discord.api.event.MessageReceivedEvent;
+import co.phoenixlab.discord.api.event.ServerJoinLeaveEvent;
 import com.google.gson.Gson;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -125,7 +128,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         servers.clear();
         Collections.addAll(servers, readyMessage.getServers());
         apiClient.remapServers();
-        apiClient.getEventBus().post(readyMessage);
+        apiClient.getEventBus().post(new LogInEvent(readyMessage));
     }
 
     private void handleGuildCreate(JSONObject data) {
@@ -134,6 +137,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         apiClient.getServers().add(server);
         apiClient.getServerMap().put(server.getId(), server);
         LOGGER.info("Added to server {}", server.getName());
+        apiClient.getEventBus().post(new ServerJoinLeaveEvent(server, true));
     }
 
     private void handleGuildDelete(JSONObject data) {
@@ -141,6 +145,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         apiClient.getServers().remove(server);
         apiClient.getServerMap().remove(server.getId());
         LOGGER.info("Left server {}", server.getName());
+        apiClient.getEventBus().post(new ServerJoinLeaveEvent(server, false));
     }
 
     @SuppressWarnings("unchecked")
@@ -165,7 +170,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
                     message.getAuthor().getUsername(),
                     apiClient.getChannelById(message.getChannelId()).getName(),
                     message.getContent());
-            apiClient.getEventBus().post(message);
+            apiClient.getEventBus().post(new MessageReceivedEvent(message));
         }
     }
 

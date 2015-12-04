@@ -1,6 +1,7 @@
 package co.phoenixlab.discord;
 
 import co.phoenixlab.discord.api.entities.Message;
+import co.phoenixlab.discord.api.event.MessageReceivedEvent;
 import com.google.common.eventbus.Subscribe;
 
 public class EventListener {
@@ -12,7 +13,8 @@ public class EventListener {
     }
 
     @Subscribe
-    public void onMessageRecieved(Message message) {
+    public void onMessageRecieved(MessageReceivedEvent messageReceivedEvent) {
+        Message message = messageReceivedEvent.getMessage();
         if (message.getContent().startsWith(bot.getConfig().getCommandPrefix())) {
             bot.getMainCommandDispatcher().handleCommand(message);
             return;
