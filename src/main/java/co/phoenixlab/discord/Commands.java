@@ -99,7 +99,7 @@ public class Commands {
 
     private void adminKill(MessageContext context, String args) {
         context.getApiClient().sendMessage("Sudoku time, bye", context.getMessage().getChannelId());
-        System.exit(0);
+        context.getBot().shutdown();
     }
 
     private void adminStart(MessageContext context, String args) {
