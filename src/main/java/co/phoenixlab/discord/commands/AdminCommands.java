@@ -43,6 +43,7 @@ public class AdminCommands {
         adminCommandDispatcher.registerAlwaysActiveCommand("stop", this::adminStop, "Stop bot");
         adminCommandDispatcher.registerAlwaysActiveCommand("status", this::adminStatus, "Bot status");
         adminCommandDispatcher.registerAlwaysActiveCommand("kill", this::adminKill, "Kill the bot (terminate app)");
+        adminCommandDispatcher.registerAlwaysActiveCommand("restart", this::adminRestart, "Restart the bot");
         adminCommandDispatcher.registerAlwaysActiveCommand("blacklist", this::adminBlacklist,
                 "Prints the blacklist, or blacklists the given user. Supports @mention and partial front matching");
         adminCommandDispatcher.registerAlwaysActiveCommand("pardon", this::adminPardon,
@@ -91,6 +92,11 @@ public class AdminCommands {
     private void adminKill(MessageContext context, String args) {
         context.getApiClient().sendMessage("Sudoku time, bye", context.getMessage().getChannelId());
         context.getBot().shutdown();
+    }
+
+    private void adminRestart(MessageContext context, String args) {
+        context.getApiClient().sendMessage("brb quick sudoku game", context.getMessage().getChannelId());
+        context.getBot().shutdown(20);
     }
 
     private void adminStart(MessageContext context, String args) {

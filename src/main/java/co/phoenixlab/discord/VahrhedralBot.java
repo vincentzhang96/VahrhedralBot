@@ -113,12 +113,16 @@ public class VahrhedralBot implements Runnable {
     }
 
     public void shutdown() {
+        shutdown(0);
+    }
+
+    public void shutdown(int code) {
         try {
             Unirest.shutdown();
         } catch (IOException e) {
             LOGGER.warn("Was unable to cleanly shut down Unirest", e);
         }
-        System.exit(0);
+        System.exit(code);
     }
 
 
