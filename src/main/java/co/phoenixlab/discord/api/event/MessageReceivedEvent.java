@@ -13,4 +13,13 @@ public class MessageReceivedEvent {
     public Message getMessage() {
         return message;
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s[msg='%s',from=%s,channelId=%s]",
+                getClass().getSimpleName(),
+                message.getContent(),
+                message.getAuthor().getUsername(),
+                message.getChannelId());
+    }
 }
