@@ -115,7 +115,7 @@ public class CommandDispatcher {
         return active;
     }
 
-    static class Statistics {
+    public static class Statistics {
         public final RunningAverage acceptedCommandHandleTime;
         public final RunningAverage commandHandleTime;
         public final LongAdder commandsReceived;
