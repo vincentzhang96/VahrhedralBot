@@ -1,9 +1,14 @@
-package co.phoenixlab.discord;
+package co.phoenixlab.discord.commands;
 
+import co.phoenixlab.discord.CommandDispatcher;
+import co.phoenixlab.discord.MessageContext;
+import co.phoenixlab.discord.VahrhedralBot;
 import co.phoenixlab.discord.api.ApiConst;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.DiscordWebSocketClient;
-import co.phoenixlab.discord.api.entities.*;
+import co.phoenixlab.discord.api.entities.OutboundMessage;
+import co.phoenixlab.discord.api.entities.Server;
+import co.phoenixlab.discord.api.entities.User;
 import com.google.gson.Gson;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
@@ -14,41 +19,26 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 import static co.phoenixlab.discord.api.DiscordApiClient.NO_USER;
+import static co.phoenixlab.discord.commands.CommandUtil.findUser;
 
-public class Commands {
-
-    private Instant registerTime;
+public class AdminCommands {
 
     private final CommandDispatcher adminCommandDispatcher;
 
-    public Commands(VahrhedralBot bot) {
+    public AdminCommands(VahrhedralBot bot) {
         adminCommandDispatcher = new CommandDispatcher(bot, "");
     }
 
-    public void register(CommandDispatcher dispatcher) {
-        registerAdminCommands();
-
-        dispatcher.registerAlwaysActiveCommand("sudo", this::admin,
-                "Administrative commands");
-        dispatcher.registerCommand("admins", this::listAdmins,
-                "List admins");
-        dispatcher.registerCommand("info", this::info,
-                "Display information about the caller or the provided name, if present. @Mentions and partial front " +
-                        "matches are supported");
-        dispatcher.registerCommand("avatar", this::avatar,
-                "Display the avatar of the caller or the provided name, if present. @Mentions and partial front " +
-                        "matches are supported");
-
-        registerTime = Instant.now();
+    public CommandDispatcher getAdminCommandDispatcher() {
+        return adminCommandDispatcher;
     }
 
-    private void registerAdminCommands() {
+    public void registerAdminCommands() {
         adminCommandDispatcher.registerAlwaysActiveCommand("start", this::adminStart, "Start bot");
         adminCommandDispatcher.registerAlwaysActiveCommand("stop", this::adminStop, "Stop bot");
         adminCommandDispatcher.registerAlwaysActiveCommand("status", this::adminStatus, "Bot status");
@@ -128,19 +118,11 @@ public class Commands {
         CommandDispatcher mainDispatcher = context.getBot().getMainCommandDispatcher();
         long s = ManagementFactory.getRuntimeMXBean().getUptime() / 1000L;
         String uptime = String.format("%d:%02d:%02d:%02d", s / 86400, (s / 3600) % 24, (s % 3600) / 60, (s % 60));
-        Runtime r = Runtime.getRuntime();
         MemoryUsage heapMemoryUsage = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
-        String memory = String.format("%,dMB used %,dMB committed %,dMB max",
-                heapMemoryUsage.getUsed() / 1048576L,
-                heapMemoryUsage.getCommitted() / 1048576L,
-                heapMemoryUsage.getMax() / 1048576L);
+        String memory = getMemoryInfo(heapMemoryUsage);
         String serverDetail = Integer.toString(apiClient.getServers().size());
         if (args.contains("servers")) {
-            StringJoiner serverJoiner = new StringJoiner(",\n");
-            for (Server server : apiClient.getServers()) {
-                serverJoiner.add(String.format("`%s`:%s", server.getName(), server.getId()));
-            }
-            serverDetail = String.format("%d servers: \n%s", apiClient.getServers().size(), serverJoiner.toString());
+            serverDetail = listServers(apiClient);
         }
         String response = String.format("**Status:** %s\n**Servers:** %s\n**Uptime:** %s\n**Heap:** `%s`\n" +
                         "**Load:** %.4f\n**TCID:** %s\n**TSID:** %s\n**CLID:** %s",
@@ -155,21 +137,27 @@ public class Commands {
         apiClient.sendMessage(response, context.getMessage().getChannelId());
     }
 
+    private String listServers(DiscordApiClient apiClient) {
+        String serverDetail;StringJoiner serverJoiner = new StringJoiner(",\n");
+        for (Server server : apiClient.getServers()) {
+            serverJoiner.add(String.format("`%s`:%s", server.getName(), server.getId()));
+        }
+        serverDetail = String.format("%d servers: \n%s", apiClient.getServers().size(), serverJoiner.toString());
+        return serverDetail;
+    }
+
+    private String getMemoryInfo(MemoryUsage heapMemoryUsage) {
+        return String.format("%,dMB used %,dMB committed %,dMB max",
+                heapMemoryUsage.getUsed() / 1048576L,
+                heapMemoryUsage.getCommitted() / 1048576L,
+                heapMemoryUsage.getMax() / 1048576L);
+    }
+
     private void adminBlacklist(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
         VahrhedralBot bot = context.getBot();
         if (args.isEmpty()) {
-            StringJoiner joiner = new StringJoiner(", ");
-            bot.getConfig().getBlacklist().stream().
-                    map(apiClient::getUserById).
-                    filter(user -> user != null).
-                    map(User::getUsername).
-                    forEach(joiner::add);
-            String res = joiner.toString();
-            if (res.isEmpty()) {
-                res = "None";
-            }
-            apiClient.sendMessage("Blacklisted users: " + res, context.getMessage().getChannelId());
+            listBlacklistedUsers(context, apiClient, bot);
             return;
         }
         User user = findUser(context, args);
@@ -185,6 +173,20 @@ public class Commands {
         bot.saveConfig();
         apiClient.sendMessage(String.format("`%s` has been blacklisted", user.getUsername()),
                 context.getMessage().getChannelId());
+    }
+
+    private void listBlacklistedUsers(MessageContext context, DiscordApiClient apiClient, VahrhedralBot bot) {
+        StringJoiner joiner = new StringJoiner(", ");
+        bot.getConfig().getBlacklist().stream().
+                map(apiClient::getUserById).
+                filter(user -> user != null).
+                map(User::getUsername).
+                forEach(joiner::add);
+        String res = joiner.toString();
+        if (res.isEmpty()) {
+            res = "None";
+        }
+        apiClient.sendMessage("Blacklisted users: " + res, context.getMessage().getChannelId());
     }
 
     private void adminPardon(MessageContext context, String args) {
@@ -221,8 +223,11 @@ public class Commands {
             return;
         }
         String path = inviteUrl.getPath();
+        makeJoinPOSTRequest(context, apiClient, path);
+    }
+
+    private void makeJoinPOSTRequest(MessageContext context, DiscordApiClient apiClient, String path) {
         try {
-            System.out.println(ApiConst.INVITE_ENDPOINT + path);
             HttpResponse<String> response = Unirest.post(ApiConst.INVITE_ENDPOINT + path).
                     header(HttpHeaders.AUTHORIZATION, apiClient.getToken()).
                     asString();
@@ -286,99 +291,5 @@ public class Commands {
         context.getApiClient().sendMessage(outboundMessage.getContent(),
                 channel,
                 outboundMessage.getMentions());
-    }
-
-    private User findUser(MessageContext context, String username) {
-        Message message = context.getMessage();
-        User user = null;
-        Channel channel = context.getApiClient().getChannelById(message.getChannelId());
-        //  Attempt to find the given user
-        //  If the user is @mentioned, try that first
-        if (message.getMentions() != null && message.getMentions().length > 0) {
-            user = message.getMentions()[0];
-        } else {
-            user = context.getApiClient().findUser(username, channel.getParent());
-        }
-        return user;
-    }
-
-    private void admin(MessageContext context, String args) {
-        //  Permission check
-        if (!context.getBot().getConfig().getAdmins().contains(context.getMessage().getAuthor().getId())) {
-            context.getApiClient().sendMessage(context.getMessage().getAuthor().getUsername() +
-                            " is not in the sudoers file. This incident will be reported",
-                    context.getMessage().getChannelId());
-            return;
-        }
-        Message original = context.getMessage();
-        adminCommandDispatcher.handleCommand(new Message(original.getAuthor(), original.getChannelId(), args,
-                original.getChannelId(), original.getMentions(), original.getTime()));
-    }
-
-    private void listAdmins(MessageContext context, String s) {
-        DiscordApiClient apiClient = context.getApiClient();
-        VahrhedralBot bot = context.getBot();
-        StringJoiner joiner = new StringJoiner(", ");
-        bot.getConfig().getAdmins().stream().
-                map(apiClient::getUserById).
-                filter(user -> user != null).
-                map(User::getUsername).
-                forEach(joiner::add);
-        String res = joiner.toString();
-        if (res.isEmpty()) {
-            res = "None";
-        }
-        apiClient.sendMessage("Admins: " + res, context.getMessage().getChannelId());
-    }
-
-    private void info(MessageContext context, String args) {
-        Message message = context.getMessage();
-        Configuration config = context.getBot().getConfig();
-        User user;
-        if (!args.isEmpty()) {
-            user = findUser(context, args);
-            selfCheck(context, user);
-        } else {
-            user = message.getAuthor();
-        }
-        if (user == NO_USER) {
-            context.getApiClient().sendMessage("Unable to find user. Try typing their name EXACTLY or" +
-                    " @mention them instead", message.getChannelId());
-        } else {
-            String avatar = (user.getAvatar() == null ? "N/A" : user.getAvatarUrl().toExternalForm());
-            String response = String.format("**Username:** %s\n**ID:** %s\n%s%s**Avatar:** %s",
-                    user.getUsername(), user.getId(),
-                    config.getBlacklist().contains(user.getId()) ? "**Blacklisted**\n" : "",
-                    config.getAdmins().contains(user.getId()) ? "**Bot Administrator**\n" : "",
-                    avatar);
-            context.getApiClient().sendMessage(response, message.getChannelId());
-        }
-    }
-
-    private void avatar(MessageContext context, String args) {
-        Message message = context.getMessage();
-        User user;
-        if (!args.isEmpty()) {
-            user = findUser(context, args);
-            selfCheck(context, user);
-        } else {
-            user = message.getAuthor();
-        }
-        if (user == NO_USER) {
-            context.getApiClient().sendMessage("Unable to find user. Try typing their name EXACTLY or" +
-                    " @mention them instead", message.getChannelId());
-        } else {
-            String avatar = (user.getAvatar() == null ? "No avatar" : user.getAvatarUrl().toExternalForm());
-            context.getApiClient().sendMessage(String.format("%s's avatar: %s", user.getUsername(), avatar),
-                    message.getChannelId());
-        }
-    }
-
-    private void selfCheck(MessageContext context, User user) {
-        if (context.getMessage().getAuthor().equals(user)) {
-            context.getApiClient().sendMessage(user.getUsername() + ", you can omit your name when " +
-                            "using this command to refer to yourself.",
-                    context.getMessage().getChannelId());
-        }
     }
 }

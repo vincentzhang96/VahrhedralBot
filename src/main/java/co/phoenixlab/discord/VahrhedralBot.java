@@ -1,6 +1,7 @@
 package co.phoenixlab.discord;
 
 import co.phoenixlab.discord.api.DiscordApiClient;
+import co.phoenixlab.discord.commands.Commands;
 import com.google.gson.Gson;
 import com.mashape.unirest.http.Unirest;
 import org.slf4j.Logger;
