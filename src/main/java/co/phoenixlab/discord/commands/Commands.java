@@ -4,12 +4,16 @@ import co.phoenixlab.discord.CommandDispatcher;
 import co.phoenixlab.discord.Configuration;
 import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.VahrhedralBot;
+import co.phoenixlab.discord.api.ApiConst;
 import co.phoenixlab.discord.api.DiscordApiClient;
+import co.phoenixlab.discord.api.entities.Channel;
 import co.phoenixlab.discord.api.entities.Message;
+import co.phoenixlab.discord.api.entities.Server;
 import co.phoenixlab.discord.api.entities.User;
 
 import java.util.StringJoiner;
 
+import static co.phoenixlab.discord.api.DiscordApiClient.NO_SERVER;
 import static co.phoenixlab.discord.api.DiscordApiClient.NO_USER;
 import static co.phoenixlab.discord.commands.CommandUtil.findUser;
 
@@ -32,7 +36,7 @@ public class Commands {
                         "matches are supported");
         dispatcher.registerCommand("avatar", this::avatar,
                 "Display the avatar of the caller or the provided name, if present. @Mentions and partial front " +
-                        "matches are supported");
+                        "matches are supported. Use `server` for the current server's avatar");
     }
 
     private void admin(MessageContext context, String args) {
@@ -93,6 +97,20 @@ public class Commands {
 
     private void avatar(MessageContext context, String args) {
         Message message = context.getMessage();
+        if ("server".equalsIgnoreCase(args)) {
+            Channel c = context.getApiClient().getChannelById(message.getChannelId());
+            if (c == null || c.getParent() == NO_SERVER) {
+                context.getApiClient().sendMessage("You cannot use the `server` option in a private message",
+                        message.getChannelId());
+            } else {
+                Server server = c.getParent();
+                String icon = server.getIcon();
+                context.getApiClient().sendMessage(icon == null ? "Server has no avatar set" :
+                        "Server avatar: " + String.format(ApiConst.ICON_URL_PATTERN, server.getId(), icon),
+                        message.getChannelId());
+            }
+            return;
+        }
         User user;
         if (!args.isEmpty()) {
             user = findUser(context, args);

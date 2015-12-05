@@ -51,5 +51,9 @@ public class ApiConst {
      * The format string for avatar URLs
      */
     public static final String AVATAR_URL_PATTERN = "https://cdn.discordapp.com/avatars/%1$s/%2$s.jpg";
+    /**
+     * The format string for icon URLs
+     */
+    public static final String ICON_URL_PATTERN = "https://cdn.discordapp.com/icons/%1$s/%2$s.jpg";
 
 }
