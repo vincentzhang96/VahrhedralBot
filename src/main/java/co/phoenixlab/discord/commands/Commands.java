@@ -50,7 +50,7 @@ public class Commands {
         Message original = context.getMessage();
         adminCommands.getAdminCommandDispatcher().
                 handleCommand(new Message(original.getAuthor(), original.getChannelId(), args,
-                original.getChannelId(), original.getMentions(), original.getTime()));
+                        original.getChannelId(), original.getMentions(), original.getTime()));
     }
 
     private void listAdmins(MessageContext context, String s) {
@@ -94,21 +94,10 @@ public class Commands {
     }
 
 
-
     private void avatar(MessageContext context, String args) {
         Message message = context.getMessage();
-        if ("server".equalsIgnoreCase(args)) {
-            Channel c = context.getApiClient().getChannelById(message.getChannelId());
-            if (c == null || c.getParent() == NO_SERVER) {
-                context.getApiClient().sendMessage("You cannot use the `server` option in a private message",
-                        message.getChannelId());
-            } else {
-                Server server = c.getParent();
-                String icon = server.getIcon();
-                context.getApiClient().sendMessage(icon == null ? "Server has no avatar set" :
-                        "Server avatar: " + String.format(ApiConst.ICON_URL_PATTERN, server.getId(), icon),
-                        message.getChannelId());
-            }
+        if (args.startsWith("server")) {
+            handleServerAvatar(context, message, args);
             return;
         }
         User user;
@@ -126,6 +115,29 @@ public class Commands {
             context.getApiClient().sendMessage(String.format("%s's avatar: %s", user.getUsername(), avatar),
                     message.getChannelId());
         }
+    }
+
+    private void handleServerAvatar(MessageContext context, Message message, String args) {
+        Server server;
+        Channel c = context.getApiClient().getChannelById(message.getChannelId());
+        if (args.startsWith("server ")) {
+            args = args.substring("server ".length());
+            server = context.getApiClient().getServerByID(args);
+            if (server == NO_SERVER) {
+                context.getApiClient().sendMessage("Bot is not a member of that server",
+                        message.getChannelId());
+            }
+        } else if (c == null || c.getParent() == NO_SERVER) {
+            context.getApiClient().sendMessage("You cannot use the `server` option in a private message",
+                    message.getChannelId());
+            return;
+        } else {
+            server = c.getParent();
+        }
+        String icon = server.getIcon();
+        context.getApiClient().sendMessage(server.getName() + (icon == null ? " server has no avatar set" :
+                        " server avatar: " + String.format(ApiConst.ICON_URL_PATTERN, server.getId(), icon)),
+                message.getChannelId());
     }
 
     private void selfCheck(MessageContext context, User user) {
