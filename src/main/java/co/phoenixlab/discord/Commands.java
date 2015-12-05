@@ -14,7 +14,6 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.StringJoiner;
@@ -127,9 +126,7 @@ public class Commands {
     private void adminStatus(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
         CommandDispatcher mainDispatcher = context.getBot().getMainCommandDispatcher();
-        Instant now = Instant.now();
-        Duration duration = Duration.between(registerTime, now);
-        long s = duration.getSeconds();
+        long s = ManagementFactory.getRuntimeMXBean().getUptime() / 1000L;
         String uptime = String.format("%d:%02d:%02d:%02d", s / 86400, (s / 3600) % 24, (s % 3600) / 60, (s % 60));
         Runtime r = Runtime.getRuntime();
         MemoryUsage heapMemoryUsage = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
@@ -309,7 +306,7 @@ public class Commands {
         //  Permission check
         if (!context.getBot().getConfig().getAdmins().contains(context.getMessage().getAuthor().getId())) {
             context.getApiClient().sendMessage(context.getMessage().getAuthor().getUsername() +
-                    " is not in the sudoers file. This incident will be reported",
+                            " is not in the sudoers file. This incident will be reported",
                     context.getMessage().getChannelId());
             return;
         }
@@ -340,6 +337,7 @@ public class Commands {
         User user;
         if (!args.isEmpty()) {
             user = findUser(context, args);
+            selfCheck(context, user);
         } else {
             user = message.getAuthor();
         }
@@ -362,6 +360,7 @@ public class Commands {
         User user;
         if (!args.isEmpty()) {
             user = findUser(context, args);
+            selfCheck(context, user);
         } else {
             user = message.getAuthor();
         }
@@ -375,4 +374,11 @@ public class Commands {
         }
     }
 
+    private void selfCheck(MessageContext context, User user) {
+        if (context.getMessage().getAuthor().equals(user)) {
+            context.getApiClient().sendMessage(user.getUsername() + ", you can omit your name when " +
+                            "using this command to refer to yourself.",
+                    context.getMessage().getChannelId());
+        }
+    }
 }
