@@ -7,6 +7,7 @@ import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,7 +100,7 @@ public class VahrhedralBot implements Runnable {
                     node.getString("sha"),
                     node.getString("html_url"), commitObj.getString("message"),
                     DateTimeFormatter.ofPattern("MM/dd HH:mm z").withZone(ZoneId.systemDefault()).format(time));
-        } catch (IOException | UnirestException e) {
+        } catch (IOException | UnirestException | JSONException e) {
             LOGGER.warn("Unable to load git commit version info", e);
         }
         return "N/A";
