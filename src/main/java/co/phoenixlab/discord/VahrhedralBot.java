@@ -95,7 +95,7 @@ public class VahrhedralBot implements Runnable {
             JSONObject commitObj = node.getJSONObject("commit");
             return String.format("Commit %s\nURL: %s\nMessage: %s\nDate: %s",
                     node.getString("sha"),
-                    commitObj.getString("html_url"), commitObj.getString("message"),
+                    node.getString("html_url"), commitObj.getString("message"),
                     commitObj.getJSONObject("committer").getString("date"));
         } catch (IOException | UnirestException e) {
             LOGGER.warn("Unable to load git commit version info", e);
