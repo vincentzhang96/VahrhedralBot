@@ -45,7 +45,6 @@ public class CommandDispatcher {
     }
 
     private void addHelpCommand() {
-        Localizer localizer = bot.getLocalizer();
         Command helpCommand = (context, args) -> {
             Localizer l = context.getBot().getLocalizer();
             String header = l.localize("commands.help.response.head", commands.size());
@@ -58,18 +57,21 @@ public class CommandDispatcher {
             final String result = joiner.toString();
             context.getBot().getApiClient().sendMessage(result, context.getMessage().getChannelId());
         };
-        registerCommand(localizer.localize("commands.help.command"),
-                helpCommand, localizer.localize("commands.help.help"));
+        registerCommand("commands.help.command", helpCommand, "commands.help.help");
     }
 
-    public void registerCommand(String commandName, Command command, String desc) {
-        commands.put(commandName, new CommandWrapper(command, desc));
-        LOGGER.debug("Registered command \"{}\"", commandName);
+    public void registerCommand(String commandNameKey, Command command, String descKey) {
+        commandNameKey = bot.getLocalizer().localize(commandNameKey);
+        descKey = bot.getLocalizer().localize(descKey);
+        commands.put(commandNameKey, new CommandWrapper(command, descKey));
+        LOGGER.debug("Registered command \"{}\"", commandNameKey);
     }
 
-    public void registerAlwaysActiveCommand(String commandName, Command command, String desc) {
-        commands.put(commandName, new CommandWrapper(command, desc, true));
-        LOGGER.debug("Registered command \"{}\"", commandName);
+    public void registerAlwaysActiveCommand(String commandNameKey, Command command, String descKey) {
+        commandNameKey = bot.getLocalizer().localize(commandNameKey);
+        descKey = bot.getLocalizer().localize(descKey);
+        commands.put(commandNameKey, new CommandWrapper(command, descKey, true));
+        LOGGER.debug("Registered command \"{}\"", commandNameKey);
     }
 
     public void handleCommand(Message msg) {
