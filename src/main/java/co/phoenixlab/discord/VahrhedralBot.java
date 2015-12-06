@@ -96,7 +96,7 @@ public class VahrhedralBot implements Runnable {
             ResourceBundle bundle;
             @Override
             public void setActiveLocale(Locale locale) {
-                bundle = ResourceBundle.getBundle("co.phoenixlab.discord.resources.locale.properties", locale);
+                bundle = ResourceBundle.getBundle("co.phoenixlab.discord.resources.locale", locale);
             }
 
             @Override
