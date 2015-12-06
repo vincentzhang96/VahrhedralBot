@@ -287,12 +287,18 @@ public class DiscordApiClient {
                 return user;
             }
         }
+        User temp = null;
         //  No match? Try matching start
         for (Member member : server.getMembers()) {
             User user = member.getUser();
             if (user.getUsername().toLowerCase().startsWith(username)) {
-                return user;
+                if (temp == null || user.getUsername().length() <= temp.getUsername().length()) {
+                    temp = user;
+                }
             }
+        }
+        if (temp != null) {
+            return temp;
         }
         //  Still no match? Try fuzzy match
         //  TODO
