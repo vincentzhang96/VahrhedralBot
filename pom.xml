@@ -12,6 +12,14 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>phoenixlab-maven</id>
+            <name>PhoenixLAB Maven Repo</name>
+            <url>http://maven.phoenixlab.co/maven2</url>
+        </repository>
+    </repositories>
+
     <scm>
         <url>https://github.com/vincentzhang96/VahrhedralBot</url>
         <connection>scm:git:git://github.com/vincentzhang96/VahrhedralBot.git</connection>
@@ -125,6 +133,11 @@
     </build>
 
     <dependencies>
+        <dependency>
+            <groupId>co.phoenixlab</groupId>
+            <artifactId>PhoenixLABCommons</artifactId>
+            <version>1.0.0</version>
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
