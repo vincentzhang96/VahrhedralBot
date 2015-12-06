@@ -12,8 +12,34 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <scm>
+        <url>https://github.com/vincentzhang96/VahrhedralBot</url>
+        <connection>scm:git:git://github.com/vincentzhang96/VahrhedralBot.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com:vincentzhang96/VahrhedralBot.git</developerConnection>
+    </scm>
+
     <build>
+        <resources>
+            <resource>
+                <!-- You may have a different path for your properties file -->
+                <directory>${basedir}/src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+                <version>1.1</version>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>create</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
