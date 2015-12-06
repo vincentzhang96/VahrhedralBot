@@ -1,5 +1,6 @@
 package co.phoenixlab.discord;
 
+import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.api.entities.Message;
 import co.phoenixlab.discord.stats.RunningAverage;
 import org.slf4j.Logger;
@@ -44,15 +45,21 @@ public class CommandDispatcher {
     }
 
     private void addHelpCommand() {
+        Localizer localizer = bot.getLocalizer();
         Command helpCommand = (context, args) -> {
-            StringJoiner joiner = new StringJoiner("\n", "__**Available Commands**__\n", "");
+            Localizer l = context.getBot().getLocalizer();
+            String header = l.localize("commands.help.response.head", commands.size());
+
+            StringJoiner joiner = new StringJoiner("\n", header, "");
             for (Map.Entry<String, CommandWrapper> entry : commands.entrySet()) {
-                joiner.add(String.format("**%s%s** - %s", commandPrefix, entry.getKey(), entry.getValue().helpDesc));
+                joiner.add(l.localize("commands.help.response.entry",
+                        commandPrefix, entry.getKey(), entry.getValue().helpDesc));
             }
             final String result = joiner.toString();
             context.getBot().getApiClient().sendMessage(result, context.getMessage().getChannelId());
         };
-        registerCommand("help", helpCommand, "Lists available commands");
+        registerCommand(localizer.localize("commands.help.command"),
+                helpCommand, localizer.localize("commands.help.help"));
     }
 
     public void registerCommand(String commandName, Command command, String desc) {

@@ -1,5 +1,8 @@
 package co.phoenixlab.discord;
 
+import co.phoenixlab.common.localization.LocaleStringProvider;
+import co.phoenixlab.common.localization.Localizer;
+import co.phoenixlab.common.localization.LocalizerImpl;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.commands.Commands;
 import com.google.gson.Gson;
@@ -21,7 +24,9 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.Properties;
+import java.util.ResourceBundle;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardOpenOption.*;
@@ -51,6 +56,7 @@ public class VahrhedralBot implements Runnable {
     private EventListener eventListener;
     private TaskQueue taskQueue;
     private String versionInfo;
+    private Localizer localizer;
 
     public VahrhedralBot() {
         taskQueue = new TaskQueue();
@@ -68,6 +74,7 @@ public class VahrhedralBot implements Runnable {
             LOGGER.error("Unable to load configuration", e);
             return;
         }
+        loadLocalization();
         versionInfo = loadVersionInfo();
         commandDispatcher = new CommandDispatcher(this, config.getCommandPrefix());
         commands = new Commands(this);
@@ -80,6 +87,29 @@ public class VahrhedralBot implements Runnable {
             LOGGER.error("Unable to log in", e);
         }
         taskQueue.executeWaiting();
+    }
+
+    private void loadLocalization() {
+        localizer = new LocalizerImpl(Locale.getDefault());
+        localizer.registerPluralityRules(LocalizerImpl.defaultPluralityRules());
+        LocaleStringProvider provider = new LocaleStringProvider() {
+            ResourceBundle bundle;
+            @Override
+            public void setActiveLocale(Locale locale) {
+                bundle = ResourceBundle.getBundle("/co/phoenixlab/discord/resources/locale.properties", locale);
+            }
+
+            @Override
+            public String get(String key) {
+                return bundle.getString(key);
+            }
+
+            @Override
+            public boolean contains(String key) {
+                return bundle.containsKey(key);
+            }
+        };
+        localizer.addLocaleStringProvider(provider);
     }
 
     private String loadVersionInfo() {
@@ -147,6 +177,10 @@ public class VahrhedralBot implements Runnable {
 
     public DiscordApiClient getApiClient() {
         return apiClient;
+    }
+
+    public Localizer getLocalizer() {
+        return localizer;
     }
 
     public void shutdown() {
