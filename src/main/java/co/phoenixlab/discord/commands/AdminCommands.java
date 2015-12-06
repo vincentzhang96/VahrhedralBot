@@ -131,15 +131,13 @@ public class AdminCommands {
             serverDetail = listServers(apiClient);
         }
         String response = String.format("**Status:** %s\n**Servers:** %s\n**Uptime:** %s\n**Heap:** `%s`\n" +
-                        "**Load:** %.4f\n**TCID:** %s\n**TSID:** %s\n**CLID:** %s",
+                        "**Load:** %.4f\n**Hamster Wheels in use:** %s",
                 mainDispatcher.active().get() ? "Running" : "Stopped",
                 serverDetail,
                 uptime,
                 memory,
                 ManagementFactory.getOperatingSystemMXBean().getSystemLoadAverage(),
-                context.getMessage().getChannelId(),
-                apiClient.getChannelById(context.getMessage().getChannelId()).getParent().getId(),
-                apiClient.getClientUser().getId());
+                ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors());
         apiClient.sendMessage(response, context.getMessage().getChannelId());
     }
 
