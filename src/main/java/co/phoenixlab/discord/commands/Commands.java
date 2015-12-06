@@ -37,6 +37,8 @@ public class Commands {
         dispatcher.registerCommand("avatar", this::avatar,
                 "Display the avatar of the caller or the provided name, if present. @Mentions and partial front " +
                         "matches are supported. Use `server` for the current server's avatar");
+        dispatcher.registerCommand("version", this::version,
+                "Display version information");
     }
 
     private void admin(MessageContext context, String args) {
@@ -138,6 +140,10 @@ public class Commands {
         context.getApiClient().sendMessage(server.getName() + (icon == null ? " server has no avatar set" :
                         " server avatar: " + String.format(ApiConst.ICON_URL_PATTERN, server.getId(), icon)),
                 message.getChannelId());
+    }
+
+    private void version(MessageContext context, String args) {
+        context.getApiClient().sendMessage(context.getBot().getVersionInfo(), context.getMessage().getChannelId());
     }
 
     private void selfCheck(MessageContext context, User user) {

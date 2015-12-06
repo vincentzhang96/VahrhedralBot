@@ -3,7 +3,11 @@ package co.phoenixlab.discord;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.commands.Commands;
 import com.google.gson.Gson;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
+import com.mashape.unirest.http.exceptions.UnirestException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +17,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Properties;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardOpenOption.CREATE;
@@ -43,6 +48,7 @@ public class VahrhedralBot implements Runnable {
     private CommandDispatcher commandDispatcher;
     private EventListener eventListener;
     private TaskQueue taskQueue;
+    private String versionInfo;
 
     public VahrhedralBot() {
         taskQueue = new TaskQueue();
@@ -60,6 +66,7 @@ public class VahrhedralBot implements Runnable {
             LOGGER.error("Unable to load configuration", e);
             return;
         }
+        versionInfo = loadVersionInfo();
         commandDispatcher = new CommandDispatcher(this, config.getCommandPrefix());
         commands = new Commands(this);
         commands.register(commandDispatcher);
@@ -71,6 +78,33 @@ public class VahrhedralBot implements Runnable {
             LOGGER.error("Unable to log in", e);
         }
         taskQueue.executeWaiting();
+    }
+
+    private String loadVersionInfo() {
+        try {
+            Properties properties = new Properties();
+            properties.load(getClass().getResourceAsStream("/git.properties"));
+            String gitHash = properties.getProperty("git-sha-1");
+            HttpResponse<JsonNode> ret =
+                    Unirest.get("https://api.github.com/repos/vincentzhang96/VahrhedralBot/commits/" + gitHash).
+                    asJson();
+            if (ret.getStatus() != 200) {
+                throw new IOException("Server returned " + ret.getStatus());
+            }
+            JSONObject node = ret.getBody().getObject();
+            JSONObject commitObj = node.getJSONObject("commit");
+            return String.format("Commit %s\nURL: %s\nMessage: %s\nDate: %s",
+                    node.getString("sha"),
+                    commitObj.getString("html_url"), commitObj.getString("message"),
+                    commitObj.getJSONObject("committer").getString("date"));
+        } catch (IOException | UnirestException e) {
+            LOGGER.warn("Unable to load git commit version info", e);
+        }
+        return "N/A";
+    }
+
+    public String getVersionInfo() {
+        return versionInfo;
     }
 
     private Configuration loadConfiguration() throws IOException {
