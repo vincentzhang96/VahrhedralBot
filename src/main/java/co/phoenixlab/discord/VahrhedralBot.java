@@ -17,12 +17,13 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.nio.file.StandardOpenOption.CREATE;
-import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
-import static java.nio.file.StandardOpenOption.WRITE;
+import static java.nio.file.StandardOpenOption.*;
 
 public class VahrhedralBot implements Runnable {
 
@@ -93,10 +94,11 @@ public class VahrhedralBot implements Runnable {
             }
             JSONObject node = ret.getBody().getObject();
             JSONObject commitObj = node.getJSONObject("commit");
+            Instant time = Instant.parse(commitObj.getJSONObject("committer").getString("date"));
             return String.format("Commit %s\nURL: %s\nMessage: %s\nDate: %s",
                     node.getString("sha"),
                     node.getString("html_url"), commitObj.getString("message"),
-                    commitObj.getJSONObject("committer").getString("date"));
+                    DateTimeFormatter.ofPattern("MM/dd HH:mm z").withZone(ZoneId.systemDefault()).format(time));
         } catch (IOException | UnirestException e) {
             LOGGER.warn("Unable to load git commit version info", e);
         }
