@@ -1,12 +1,7 @@
 package co.phoenixlab.discord.api;
 
-import co.phoenixlab.discord.api.entities.Channel;
-import co.phoenixlab.discord.api.entities.Message;
-import co.phoenixlab.discord.api.entities.ReadyMessage;
-import co.phoenixlab.discord.api.entities.Server;
-import co.phoenixlab.discord.api.event.LogInEvent;
-import co.phoenixlab.discord.api.event.MessageReceivedEvent;
-import co.phoenixlab.discord.api.event.ServerJoinLeaveEvent;
+import co.phoenixlab.discord.api.entities.*;
+import co.phoenixlab.discord.api.event.*;
 import co.phoenixlab.discord.stats.RunningAverage;
 import com.google.gson.Gson;
 import org.java_websocket.client.WebSocketClient;
@@ -99,10 +94,13 @@ public class DiscordWebSocketClient extends WebSocketClient {
                         //  TODO
                         break;
                     case "CHANNEL_CREATE":
-                        //  TODO
+                        handleChannelCreate(data);
                         break;
                     case "CHANNEL_DELETE":
-                        //  TODO
+                        handleChannelDelete(data);
+                        break;
+                    case "CHANNEL_UPDATE":
+                        handleChannelUpdate(data);
                         break;
                     case "PRESENCE_UPDATE":
                         //  TODO
@@ -119,6 +117,79 @@ public class DiscordWebSocketClient extends WebSocketClient {
             }
         } finally {
             statistics.avgMessageHandleTime.add(MILLISECONDS.convert(System.nanoTime() - start, NANOSECONDS));
+        }
+    }
+
+    private void handleChannelUpdate(JSONObject data) {
+        if (data.get("is_private") != null) {
+            PrivateChannel channel = jsonObjectToObject(data, PrivateChannel.class);
+            //  TODO
+            LOGGER.info("Updated private channel with {}", channel.getRecipient().getUsername());
+        } else {
+            Channel channel = jsonObjectToObject(data, Channel.class);
+            String parentServerId = (String) data.get("guild_id");
+            Server server = apiClient.getServerByID(parentServerId);
+            if (server != DiscordApiClient.NO_SERVER) {
+                channel.setParent(server);
+                server.getChannels().add(channel);
+                LOGGER.debug("Channel {} (id={}) in server {} (id={}) updated",
+                        channel.getName(), channel.getId(), server.getName(), server.getId());
+                apiClient.getEventBus().post(new ChannelChangeEvent(channel,
+                        ChannelChangeEvent.ChannelChange.UPDATED));
+            } else {
+                LOGGER.warn("Orphan update channel received, ignored (id={}, name={}, parentServerId={}",
+                        channel.getId(), channel.getName(), parentServerId);
+            }
+        }
+    }
+
+    private void handleChannelDelete(JSONObject data) {
+        if (data.get("is_private") != null) {
+            PrivateChannel channel = jsonObjectToObject(data, PrivateChannel.class);
+            //  TODO
+            LOGGER.info("Delete private channel with {}", channel.getRecipient().getUsername());
+        } else {
+            Channel channel = jsonObjectToObject(data, Channel.class);
+            String parentServerId = (String) data.get("guild_id");
+            Server server = apiClient.getServerByID(parentServerId);
+            if (server != DiscordApiClient.NO_SERVER) {
+                channel.setParent(server);
+                if (server.getChannels().remove(channel)) {
+                    LOGGER.debug("Channel {} (id={}) in server {} (id={}) deleted",
+                            channel.getName(), channel.getId(), server.getName(), server.getId());
+                    apiClient.getEventBus().post(new ChannelChangeEvent(channel,
+                            ChannelChangeEvent.ChannelChange.DELETED));
+                } else {
+                    LOGGER.warn("Channel {} (id={}) in server {} (id={}) could not be deleted (not found)",
+                            channel.getName(), channel.getId(), server.getName(), server.getId());
+                }
+            } else {
+                LOGGER.warn("Orphan delete channel received, ignored (id={}, name={}, parentServerId={}",
+                        channel.getId(), channel.getName(), parentServerId);
+            }
+        }
+    }
+
+    private void handleChannelCreate(JSONObject data) {
+        if (data.get("is_private") != null) {
+            PrivateChannel channel = jsonObjectToObject(data, PrivateChannel.class);
+            //  TODO
+            LOGGER.info("New private channel with {}", channel.getRecipient().getUsername());
+        } else {
+            Channel channel = jsonObjectToObject(data, Channel.class);
+            String parentServerId = (String) data.get("guild_id");
+            Server server = apiClient.getServerByID(parentServerId);
+            if (server != DiscordApiClient.NO_SERVER) {
+                channel.setParent(server);
+                server.getChannels().add(channel);
+                LOGGER.debug("New channel {} (id={}) in server {} (id={}) added",
+                        channel.getName(), channel.getId(), server.getName(), server.getId());
+                apiClient.getEventBus().post(new ChannelChangeEvent(channel,
+                        ChannelChangeEvent.ChannelChange.ADDED));
+            } else {
+                LOGGER.warn("Orphan create channel received, ignored (id={}, name={}, parentServerId={}",
+                        channel.getId(), channel.getName(), parentServerId);
+            }
         }
     }
 

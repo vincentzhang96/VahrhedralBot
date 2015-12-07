@@ -15,7 +15,9 @@ public class Channel {
     /**
      * The channel's human readable name (can change over time)
      */
-    private final String name;
+    private String name;
+
+    private String topic;
 
     private Server parent;
 
@@ -48,6 +50,18 @@ public class Channel {
      */
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getTopic() {
+        return topic;
+    }
+
+    public void setTopic(String topic) {
+        this.topic = topic;
     }
 
     @Override
