@@ -4,7 +4,7 @@
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %logger{36}%n[%-5level] %msg%n"/>
         </Console>
-        <RollingRandomAccessFileAppender name="BotFile" fileName="logs/bot.log" filePattern="logs/bot_%i.log"
+        <RollingRandomAccessFile name="BotFile" fileName="logs/bot.log" filePattern="logs/bot_%i.log"
                                          append="false">
             <PatternLayout>
                 <Pattern>%d{HH:mm:ss.SSS} [%t] %logger{36}%n[%-5level] %msg%n</Pattern>
@@ -14,8 +14,8 @@
                 <SizeBasedTriggeringPolicy size="50 MB"/>
             </Policies>
             <DefaultRolloverStrategy max="20"/>
-        </RollingRandomAccessFileAppender>
-        <RollingRandomAccessFileAppender name="ApiFile" fileName="logs/api.log" filePattern="logs/api_%i.log"
+        </RollingRandomAccessFile>
+        <RollingRandomAccessFile name="ApiFile" fileName="logs/api.log" filePattern="logs/api_%i.log"
                                          append="false">
             <PatternLayout>
                 <Pattern>%d{HH:mm:ss.SSS} [%t] %logger{36}%n[%-5level] %msg%n</Pattern>
@@ -25,7 +25,7 @@
                 <SizeBasedTriggeringPolicy size="50 MB"/>
             </Policies>
             <DefaultRolloverStrategy max="20"/>
-        </RollingRandomAccessFileAppender>
+        </RollingRandomAccessFile>
     </Appenders>
     <Loggers>
         <Logger name="VahrhedralBot" level="trace" additivity="false">
