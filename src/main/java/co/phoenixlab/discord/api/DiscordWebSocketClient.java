@@ -130,7 +130,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         Server server = apiClient.getServerByID(serverId);
         if (server != NO_SERVER) {
             server.getMembers().add(member);
-            LOGGER.info("Updated {}'s (id={}) membership in {} (id={})",
+            LOGGER.debug("Updated {}'s (id={}) membership in {} (id={})",
                     member.getUser().getId(), member.getUser().getUsername(),
                     server.getName(), server.getId());
             apiClient.getEventBus().post(new MemberChangeEvent(member, server,
@@ -147,7 +147,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         Server server = apiClient.getServerByID(serverId);
         if (server != NO_SERVER) {
             if(server.getMembers().remove(member)) {
-                LOGGER.info("Removed {}'s (id={}) membership in {} (id={})",
+                LOGGER.debug("Removed {}'s (id={}) membership in {} (id={})",
                         member.getUser().getId(), member.getUser().getUsername(),
                         server.getName(), server.getId());
                 apiClient.getEventBus().post(new MemberChangeEvent(member, server,
@@ -158,7 +158,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
                         server.getName(), server.getId());
             }
         } else {
-            LOGGER.info("Orphan member remove received, ignored (userid={} username={} serverid={}",
+            LOGGER.warn("Orphan member remove received, ignored (userid={} username={} serverid={}",
                     member.getUser().getId(), member.getUser().getUsername(), serverId);
         }
     }
@@ -175,7 +175,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
             apiClient.getEventBus().post(new MemberChangeEvent(member, server,
                     MemberChangeEvent.MemberChange.ADDED));
         } else {
-            LOGGER.info("Orphan member add received, ignored (userid={} username={} serverid={}",
+            LOGGER.warn("Orphan member add received, ignored (userid={} username={} serverid={}",
                     member.getUser().getId(), member.getUser().getUsername(), serverId);
         }
     }
