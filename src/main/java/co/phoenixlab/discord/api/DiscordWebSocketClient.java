@@ -130,7 +130,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         Server server = apiClient.getServerByID(serverId);
         if (server != NO_SERVER) {
             server.getMembers().add(member);
-            LOGGER.debug("Updated {}'s (id={}) membership in {} (id={})",
+            LOGGER.debug("Updated {}'s ({}) membership in {} ({})",
                     member.getUser().getId(), member.getUser().getUsername(),
                     server.getName(), server.getId());
             apiClient.getEventBus().post(new MemberChangeEvent(member, server,
@@ -147,13 +147,13 @@ public class DiscordWebSocketClient extends WebSocketClient {
         Server server = apiClient.getServerByID(serverId);
         if (server != NO_SERVER) {
             if(server.getMembers().remove(member)) {
-                LOGGER.debug("Removed {}'s (id={}) membership in {} (id={})",
+                LOGGER.debug("Removed {}'s ({}) membership in {} ({})",
                         member.getUser().getId(), member.getUser().getUsername(),
                         server.getName(), server.getId());
                 apiClient.getEventBus().post(new MemberChangeEvent(member, server,
                         MemberChangeEvent.MemberChange.DELETED));
             } else {
-                LOGGER.warn("Member {} (id={}) could not be removed from {} (id={}): Not found",
+                LOGGER.warn("Member {} ({}) could not be removed from {} ({}): Not found",
                         member.getUser().getId(), member.getUser().getUsername(),
                         server.getName(), server.getId());
             }
@@ -169,7 +169,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         Server server = apiClient.getServerByID(serverId);
         if (server != NO_SERVER) {
             server.getMembers().add(member);
-            LOGGER.info("Added {}'s (id={}) membership in {} (id={})",
+            LOGGER.info("Added {}'s ({}) membership in {} ({})",
                     member.getUser().getId(), member.getUser().getUsername(),
                     server.getName(), server.getId());
             apiClient.getEventBus().post(new MemberChangeEvent(member, server,
@@ -192,7 +192,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
             if (server != NO_SERVER) {
                 channel.setParent(server);
                 server.getChannels().add(channel);
-                LOGGER.debug("Channel {} (id={}) in server {} (id={}) updated",
+                LOGGER.debug("Channel {} ({}) in server {} ({}) updated",
                         channel.getName(), channel.getId(), server.getName(), server.getId());
                 apiClient.getEventBus().post(new ChannelChangeEvent(channel,
                         ChannelChangeEvent.ChannelChange.UPDATED));
@@ -215,12 +215,12 @@ public class DiscordWebSocketClient extends WebSocketClient {
             if (server != NO_SERVER) {
                 channel.setParent(server);
                 if (server.getChannels().remove(channel)) {
-                    LOGGER.debug("Channel {} (id={}) in server {} (id={}) deleted",
+                    LOGGER.debug("Channel {} ({}) in server {} ({}) deleted",
                             channel.getName(), channel.getId(), server.getName(), server.getId());
                     apiClient.getEventBus().post(new ChannelChangeEvent(channel,
                             ChannelChangeEvent.ChannelChange.DELETED));
                 } else {
-                    LOGGER.warn("Channel {} (id={}) in server {} (id={}) could not be deleted (not found)",
+                    LOGGER.warn("Channel {} ({}) in server {} ({}) could not be deleted (not found)",
                             channel.getName(), channel.getId(), server.getName(), server.getId());
                 }
             } else {
@@ -242,7 +242,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
             if (server != NO_SERVER) {
                 channel.setParent(server);
                 server.getChannels().add(channel);
-                LOGGER.debug("New channel {} (id={}) in server {} (id={}) added",
+                LOGGER.debug("New channel {} ({}) in server {} ({}) added",
                         channel.getName(), channel.getId(), server.getName(), server.getId());
                 apiClient.getEventBus().post(new ChannelChangeEvent(channel,
                         ChannelChangeEvent.ChannelChange.ADDED));
