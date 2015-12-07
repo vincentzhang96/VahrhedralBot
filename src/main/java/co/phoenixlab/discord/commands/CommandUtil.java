@@ -21,7 +21,7 @@ public class CommandUtil {
         }
         //  Try matching by ID
         if (user == DiscordApiClient.NO_USER) {
-            user = context.getApiClient().getUserById(username);
+            user = context.getApiClient().getUserById(username, channel.getParent());
         }
         return user;
     }
