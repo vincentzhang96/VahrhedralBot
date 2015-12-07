@@ -181,7 +181,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
     }
 
     private void handleChannelUpdate(JSONObject data) {
-        if (data.get("is_private") != null) {
+        if (Boolean.TRUE.equals(data.get("is_private"))) {
             PrivateChannel channel = jsonObjectToObject(data, PrivateChannel.class);
             //  TODO
             LOGGER.info("Updated private channel with {}", channel.getRecipient().getUsername());
@@ -204,7 +204,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
     }
 
     private void handleChannelDelete(JSONObject data) {
-        if (data.get("is_private") != null) {
+        if (Boolean.TRUE.equals(data.get("is_private"))) {
             PrivateChannel channel = jsonObjectToObject(data, PrivateChannel.class);
             //  TODO
             LOGGER.info("Delete private channel with {}", channel.getRecipient().getUsername());
@@ -231,7 +231,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
     }
 
     private void handleChannelCreate(JSONObject data) {
-        if (data.get("is_private") != null) {
+        if (Boolean.TRUE.equals(data.get("is_private"))) {
             PrivateChannel channel = jsonObjectToObject(data, PrivateChannel.class);
             //  TODO
             LOGGER.info("New private channel with {}", channel.getRecipient().getUsername());
