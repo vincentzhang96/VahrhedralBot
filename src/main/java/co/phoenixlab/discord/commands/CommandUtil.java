@@ -18,6 +18,10 @@ public class CommandUtil {
         } else {
             user = context.getApiClient().findUser(username, channel.getParent());
         }
+        //  Try matching by ID
+        if (user == null) {
+            user = context.getApiClient().getUserById(username);
+        }
         return user;
     }
 }
