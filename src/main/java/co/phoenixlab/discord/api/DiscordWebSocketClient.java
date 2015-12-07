@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.util.Iterator;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -98,6 +99,15 @@ public class DiscordWebSocketClient extends WebSocketClient {
                     case "GUILD_MEMBER_UPDATE":
                         handleGuildMemberUpdate(data);
                         break;
+                    case "GUILD_ROLE_CREATE":
+                        handleGuildRoleCreate(data);
+                        break;
+                    case "GUILD_ROLE_DELETE":
+                        handleGuildRoleDelete(data);
+                        break;
+                    case "GUILD_ROLE_UPDATE":
+                        handleGuildRoleUpdate(data);
+                        break;
                     case "CHANNEL_CREATE":
                         handleChannelCreate(data);
                         break;
@@ -125,6 +135,68 @@ public class DiscordWebSocketClient extends WebSocketClient {
         }
     }
 
+    private void handleGuildRoleUpdate(JSONObject data) {
+        Role role = jsonObjectToObject((JSONObject) data.get("role"), Role.class);
+        String serverId = (String) data.get("guild_id");
+        Server server = apiClient.getServerByID(serverId);
+        if (server != NO_SERVER) {
+            //  Literally just shove it in because Set
+            server.getRoles().add(role);
+            LOGGER.debug("Updated role {} ({}) to {} ({})",
+                    role.getName(), role.getId(), server.getName(), server.getId());
+            apiClient.getEventBus().post(new RoleChangeEvent(role, server,
+                    RoleChangeEvent.RoleChange.UPDATED));
+        } else {
+            LOGGER.warn("Orphan role update received, ignored (roleid={} rolename={} serverid={}",
+                    role.getId(), role.getName(), serverId);
+        }
+    }
+
+    private void handleGuildRoleDelete(JSONObject data) {
+        String roleId = (String) data.get("role_id");
+        String serverId = (String) data.get("guild_id");
+        Server server = apiClient.getServerByID(serverId);
+        if (server != NO_SERVER) {
+            Role removed = null;
+            for (Iterator<Role> iterator = server.getRoles().iterator(); iterator.hasNext();) {
+                Role role = iterator.next();
+                if (role.getId().equals(roleId)) {
+                    removed = role;
+                    iterator.remove();
+                    break;
+                }
+            }
+            if (removed != null) {
+                LOGGER.debug("Deleted role {} ({}) to {} ({})",
+                        removed.getName(), removed.getId(), server.getName(), server.getId());
+                apiClient.getEventBus().post(new RoleChangeEvent(removed, server,
+                        RoleChangeEvent.RoleChange.DELETED));
+            } else {
+                LOGGER.warn("No such role to delete (roleid={} serverid={})",
+                        roleId, serverId);
+            }
+        } else {
+            LOGGER.warn("Orphan role delete received, ignored (roleid={} serverid={})",
+                    roleId, serverId);
+        }
+    }
+
+    private void handleGuildRoleCreate(JSONObject data) {
+        Role role = jsonObjectToObject((JSONObject) data.get("role"), Role.class);
+        String serverId = (String) data.get("guild_id");
+        Server server = apiClient.getServerByID(serverId);
+        if (server != NO_SERVER) {
+            server.getRoles().add(role);
+            LOGGER.debug("Added new role {} ({}) to {} ({})",
+                    role.getName(), role.getId(), server.getName(), server.getId());
+            apiClient.getEventBus().post(new RoleChangeEvent(role, server,
+                    RoleChangeEvent.RoleChange.CREATED));
+        } else {
+            LOGGER.warn("Orphan role create received, ignored (roleid={} rolename={} serverid={}",
+                    role.getId(), role.getName(), serverId);
+        }
+    }
+
     private void handlePresenceUpdate(JSONObject data) {
         PresenceUpdate update = jsonObjectToObject(data, PresenceUpdate.class);
         Server server = apiClient.getServerByID(update.getServerId());
@@ -141,7 +213,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
                 }
             }
             LOGGER.debug("{}'s ({}) presence changed in {} ({})",
-                    user.getId(), update.getUser().getUsername(),
+                    user.getUsername(), user.getUsername(),
                     server.getName(), server.getId());
             apiClient.getEventBus().post(new PresenceUpdateEvent(update, server));
         } else {
@@ -172,7 +244,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         String serverId = (String) data.get("guild_id");
         Server server = apiClient.getServerByID(serverId);
         if (server != NO_SERVER) {
-            if(server.getMembers().remove(member)) {
+            if (server.getMembers().remove(member)) {
                 LOGGER.debug("Removed {}'s ({}) membership in {} ({})",
                         member.getUser().getId(), member.getUser().getUsername(),
                         server.getName(), server.getId());

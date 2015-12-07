@@ -8,11 +8,12 @@ public class Role {
     private long permissions;
     private String name;
     private boolean managed;
-    private String id;
+    private final String id;
     private boolean hoist;
     private int color;
 
     public Role() {
+        id = "";
     }
 
     public Role(int position, long permissions, String name, boolean managed, String id, boolean hoist, int color) {
