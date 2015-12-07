@@ -1,6 +1,7 @@
 package co.phoenixlab.discord.commands;
 
 import co.phoenixlab.discord.MessageContext;
+import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.entities.Channel;
 import co.phoenixlab.discord.api.entities.Message;
 import co.phoenixlab.discord.api.entities.User;
@@ -19,7 +20,7 @@ public class CommandUtil {
             user = context.getApiClient().findUser(username, channel.getParent());
         }
         //  Try matching by ID
-        if (user == null) {
+        if (user == DiscordApiClient.NO_USER) {
             user = context.getApiClient().getUserById(username);
         }
         return user;
