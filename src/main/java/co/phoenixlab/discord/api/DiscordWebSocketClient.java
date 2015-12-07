@@ -16,6 +16,7 @@ import java.net.URI;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.LongAdder;
 
+import static co.phoenixlab.discord.api.DiscordApiClient.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -88,10 +89,13 @@ public class DiscordWebSocketClient extends WebSocketClient {
                         handleGuildDelete(data);
                         break;
                     case "GUILD_MEMBER_ADD":
-                        //  TODO
+                        handleGuildMemberAdd(data);
                         break;
                     case "GUILD_MEMBER_REMOVE":
-                        //  TODO
+                        handleGuildMemberRemove(data);
+                        break;
+                    case "GUILD_MEMBER_UPDATE":
+                        handleGuildMemberUpdate(data);
                         break;
                     case "CHANNEL_CREATE":
                         handleChannelCreate(data);
@@ -120,6 +124,62 @@ public class DiscordWebSocketClient extends WebSocketClient {
         }
     }
 
+    private void handleGuildMemberUpdate(JSONObject data) {
+        Member member = jsonObjectToObject(data, Member.class);
+        String serverId = (String) data.get("guild_id");
+        Server server = apiClient.getServerByID(serverId);
+        if (server != NO_SERVER) {
+            server.getMembers().add(member);
+            LOGGER.info("Updated {}'s (id={}) membership in {} (id={})",
+                    member.getUser().getId(), member.getUser().getUsername(),
+                    server.getName(), server.getId());
+            apiClient.getEventBus().post(new MemberChangeEvent(member, server,
+                    MemberChangeEvent.MemberChange.UPDATED));
+        } else {
+            LOGGER.info("Orphan member update received, ignored (userid={} username={} serverid={}",
+                    member.getUser().getId(), member.getUser().getUsername(), serverId);
+        }
+    }
+
+    private void handleGuildMemberRemove(JSONObject data) {
+        Member member = jsonObjectToObject(data, Member.class);
+        String serverId = (String) data.get("guild_id");
+        Server server = apiClient.getServerByID(serverId);
+        if (server != NO_SERVER) {
+            if(server.getMembers().remove(member)) {
+                LOGGER.info("Removed {}'s (id={}) membership in {} (id={})",
+                        member.getUser().getId(), member.getUser().getUsername(),
+                        server.getName(), server.getId());
+                apiClient.getEventBus().post(new MemberChangeEvent(member, server,
+                        MemberChangeEvent.MemberChange.DELETED));
+            } else {
+                LOGGER.warn("Member {} (id={}) could not be removed from {} (id={}): Not found",
+                        member.getUser().getId(), member.getUser().getUsername(),
+                        server.getName(), server.getId());
+            }
+        } else {
+            LOGGER.info("Orphan member remove received, ignored (userid={} username={} serverid={}",
+                    member.getUser().getId(), member.getUser().getUsername(), serverId);
+        }
+    }
+
+    private void handleGuildMemberAdd(JSONObject data) {
+        Member member = jsonObjectToObject(data, Member.class);
+        String serverId = (String) data.get("guild_id");
+        Server server = apiClient.getServerByID(serverId);
+        if (server != NO_SERVER) {
+            server.getMembers().add(member);
+            LOGGER.info("Added {}'s (id={}) membership in {} (id={})",
+                    member.getUser().getId(), member.getUser().getUsername(),
+                    server.getName(), server.getId());
+            apiClient.getEventBus().post(new MemberChangeEvent(member, server,
+                    MemberChangeEvent.MemberChange.ADDED));
+        } else {
+            LOGGER.info("Orphan member add received, ignored (userid={} username={} serverid={}",
+                    member.getUser().getId(), member.getUser().getUsername(), serverId);
+        }
+    }
+
     private void handleChannelUpdate(JSONObject data) {
         if (data.get("is_private") != null) {
             PrivateChannel channel = jsonObjectToObject(data, PrivateChannel.class);
@@ -129,7 +189,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
             Channel channel = jsonObjectToObject(data, Channel.class);
             String parentServerId = (String) data.get("guild_id");
             Server server = apiClient.getServerByID(parentServerId);
-            if (server != DiscordApiClient.NO_SERVER) {
+            if (server != NO_SERVER) {
                 channel.setParent(server);
                 server.getChannels().add(channel);
                 LOGGER.debug("Channel {} (id={}) in server {} (id={}) updated",
@@ -152,7 +212,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
             Channel channel = jsonObjectToObject(data, Channel.class);
             String parentServerId = (String) data.get("guild_id");
             Server server = apiClient.getServerByID(parentServerId);
-            if (server != DiscordApiClient.NO_SERVER) {
+            if (server != NO_SERVER) {
                 channel.setParent(server);
                 if (server.getChannels().remove(channel)) {
                     LOGGER.debug("Channel {} (id={}) in server {} (id={}) deleted",
@@ -179,7 +239,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
             Channel channel = jsonObjectToObject(data, Channel.class);
             String parentServerId = (String) data.get("guild_id");
             Server server = apiClient.getServerByID(parentServerId);
-            if (server != DiscordApiClient.NO_SERVER) {
+            if (server != NO_SERVER) {
                 channel.setParent(server);
                 server.getChannels().add(channel);
                 LOGGER.debug("New channel {} (id={}) in server {} (id={}) added",
