@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.BiPredicate;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -25,6 +26,7 @@ public class CommandDispatcher {
     private AtomicBoolean active;
 
     private String commandPrefix;
+    private BiPredicate<CommandWrapper, Message> customCommandDispatchChecker;
     private final Statistics statistics;
 
     public CommandDispatcher(VahrhedralBot bot, String commandPrefix) {
@@ -33,6 +35,7 @@ public class CommandDispatcher {
         active = new AtomicBoolean(true);
         commands = new HashMap<>();
         statistics = new Statistics();
+        customCommandDispatchChecker = (commandWrapper, message) -> true;
         addHelpCommand();
     }
 
@@ -42,6 +45,10 @@ public class CommandDispatcher {
 
     public void setCommandPrefix(String commandPrefix) {
         this.commandPrefix = commandPrefix;
+    }
+
+    public void setCustomCommandDispatchChecker(BiPredicate<CommandWrapper, Message> customCommandDispatchChecker) {
+        this.customCommandDispatchChecker = customCommandDispatchChecker;
     }
 
     private void addHelpCommand() {
@@ -95,17 +102,14 @@ public class CommandDispatcher {
             String args = (split.length > 1 ? split[1] : "").trim();
             CommandWrapper wrapper = commands.get(cmd);
             if (wrapper != null) {
-                if (active.get() || wrapper.alwaysActive) {
-                    //  Blacklist check
-                    if (!bot.getConfig().getBlacklist().contains(msg.getAuthor().getId())) {
-                        LOGGER.debug("Dispatching command {}", cmd);
-                        long handleStartTime = System.nanoTime();
-                        wrapper.command.handleCommand(new MessageContext(msg, bot, this), args);
-                        statistics.acceptedCommandHandleTime.
-                                add(MILLISECONDS.convert(System.nanoTime() - handleStartTime, NANOSECONDS));
-                        statistics.commandsHandledSuccessfully.increment();
-                        return;
-                    }
+                if (shouldCommandBeDispatched(wrapper, msg)) {
+                    LOGGER.debug("Dispatching command {}", cmd);
+                    long handleStartTime = System.nanoTime();
+                    wrapper.command.handleCommand(new MessageContext(msg, bot, this), args);
+                    statistics.acceptedCommandHandleTime.
+                            add(MILLISECONDS.convert(System.nanoTime() - handleStartTime, NANOSECONDS));
+                    statistics.commandsHandledSuccessfully.increment();
+                    return;
                 }
             } else {
                 LOGGER.info("Unknown command \"{}\"", cmd);
@@ -124,6 +128,12 @@ public class CommandDispatcher {
         return active;
     }
 
+    public boolean shouldCommandBeDispatched(CommandWrapper command, Message msg) {
+        return (command.alwaysActive || active().get()) &&
+                !bot.getConfig().getBlacklist().contains(msg.getAuthor().getId()) &&
+                customCommandDispatchChecker.test(command, msg);
+    }
+
     public static class Statistics {
         public final RunningAverage acceptedCommandHandleTime;
         public final RunningAverage commandHandleTime;
@@ -139,21 +149,21 @@ public class CommandDispatcher {
             commandsRejected = new LongAdder();
         }
     }
-}
 
-class CommandWrapper {
-    final Command command;
-    final String helpDesc;
-    final boolean alwaysActive;
+    public static class CommandWrapper {
+        final Command command;
+        final String helpDesc;
+        final boolean alwaysActive;
 
-    public CommandWrapper(Command command, String helpDesc) {
-        this(command, helpDesc, false);
+        public CommandWrapper(Command command, String helpDesc) {
+            this(command, helpDesc, false);
+        }
+
+        public CommandWrapper(Command command, String helpDesc, boolean alwaysActive) {
+            this.command = command;
+            this.helpDesc = helpDesc;
+            this.alwaysActive = alwaysActive;
+        }
+
     }
-
-    public CommandWrapper(Command command, String helpDesc, boolean alwaysActive) {
-        this.command = command;
-        this.helpDesc = helpDesc;
-        this.alwaysActive = alwaysActive;
-    }
-
 }
