@@ -61,14 +61,14 @@ public class CommandDispatcher {
     }
 
     public void registerCommand(String commandNameKey, Command command, String descKey) {
-        commandNameKey = bot.getLocalizer().localize(commandNameKey);
+        commandNameKey = bot.getLocalizer().localize(commandNameKey).toUpperCase();
         descKey = bot.getLocalizer().localize(descKey);
         commands.put(commandNameKey, new CommandWrapper(command, descKey));
         LOGGER.debug("Registered command \"{}\"", commandNameKey);
     }
 
     public void registerAlwaysActiveCommand(String commandNameKey, Command command, String descKey) {
-        commandNameKey = bot.getLocalizer().localize(commandNameKey);
+        commandNameKey = bot.getLocalizer().localize(commandNameKey).toUpperCase();
         descKey = bot.getLocalizer().localize(descKey);
         commands.put(commandNameKey, new CommandWrapper(command, descKey, true));
         LOGGER.debug("Registered command \"{}\"", commandNameKey);
@@ -91,7 +91,7 @@ public class CommandDispatcher {
                 statistics.commandsRejected.increment();
                 return;
             }
-            String cmd = split[0];
+            String cmd = split[0].toUpperCase();
             String args = (split.length > 1 ? split[1] : "").trim();
             CommandWrapper wrapper = commands.get(cmd);
             if (wrapper != null) {
