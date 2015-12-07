@@ -283,7 +283,7 @@ public class DiscordApiClient {
         username = username.toLowerCase();
         for (Member member : server.getMembers()) {
             User user = member.getUser();
-            if (user.getUsername().equalsIgnoreCase(username)) {
+            if (username.equalsIgnoreCase(user.getUsername())) {
                 return user;
             }
         }
