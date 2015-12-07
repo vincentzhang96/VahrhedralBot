@@ -23,8 +23,9 @@ public class EventListener {
         User me = bot.getApiClient().getClientUser();
         for (User user : message.getMentions()) {
             if (me.equals(user)) {
-                bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.mention.response", user.getId()),
-                        message.getChannelId(), new String[] {user.getId()});
+                String otherId = message.getAuthor().getId();
+                bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.mention.response", otherId),
+                        message.getChannelId(), new String[] {otherId});
                 return;
             }
         }
