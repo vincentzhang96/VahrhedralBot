@@ -16,7 +16,7 @@ import java.net.URI;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.LongAdder;
 
-import static co.phoenixlab.discord.api.DiscordApiClient.*;
+import static co.phoenixlab.discord.api.DiscordApiClient.NO_SERVER;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -107,7 +107,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
                         handleChannelUpdate(data);
                         break;
                     case "PRESENCE_UPDATE":
-                        //  TODO
+                        handlePresenceUpdate(data);
                         break;
                     case "VOICE_STATE_UPDATE":
                         //  TODO
@@ -121,6 +121,31 @@ public class DiscordWebSocketClient extends WebSocketClient {
             }
         } finally {
             statistics.avgMessageHandleTime.add(MILLISECONDS.convert(System.nanoTime() - start, NANOSECONDS));
+        }
+    }
+
+    private void handlePresenceUpdate(JSONObject data) {
+        PresenceUpdate update = jsonObjectToObject(data, PresenceUpdate.class);
+        Server server = apiClient.getServerByID(update.getServerId());
+        if (server != NO_SERVER) {
+            User updateUser = update.getUser();
+            User user = apiClient.getUserById(update.getUser().getId(), server);
+            user.setAvatar(updateUser.getAvatar());
+            user.setUsername(updateUser.getUsername());
+            for (Member member : server.getMembers()) {
+                if (member.getUser().equals(user)) {
+                    member.getRoles().clear();
+                    member.getRoles().addAll(update.getRoles());
+                    break;
+                }
+            }
+            LOGGER.debug("{}'s ({}) presence changed in {} ({})",
+                    user.getId(), update.getUser().getUsername(),
+                    server.getName(), server.getId());
+            apiClient.getEventBus().post(new PresenceUpdateEvent(update, server));
+        } else {
+            LOGGER.info("Orphan presence update received, ignored (userid={} username={} serverid={}",
+                    update.getUser().getId(), update.getUser().getUsername(), update.getServerId());
         }
     }
 

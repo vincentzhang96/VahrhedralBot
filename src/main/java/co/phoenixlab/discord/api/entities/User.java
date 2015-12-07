@@ -11,7 +11,7 @@ public class User {
     /**
      * The User's display name (can change over time)
      */
-    private final String username;
+    private String username;
 
     /**
      * The User's identifier (does not change, not necessarily unqiue?)
@@ -26,7 +26,7 @@ public class User {
     /**
      * The user's avatar ID
      */
-    private final String avatar;
+    private String avatar;
 
     /**
      * The URL where the avatar can be downloaded from
@@ -84,6 +84,15 @@ public class User {
             }
         }
         return avatarUrl;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+        avatarUrl = null;
     }
 
     @Override
