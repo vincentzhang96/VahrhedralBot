@@ -1,5 +1,6 @@
 package co.phoenixlab.discord.api;
 
+import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.*;
 import co.phoenixlab.discord.stats.RunningAverage;
@@ -130,8 +131,8 @@ public class DiscordWebSocketClient extends WebSocketClient {
         if (server != NO_SERVER) {
             User updateUser = update.getUser();
             User user = apiClient.getUserById(update.getUser().getId(), server);
-            user.setAvatar(updateUser.getAvatar());
-            user.setUsername(updateUser.getUsername());
+            SafeNav.of(updateUser.getAvatar()).ifPresent(user::setAvatar);
+            SafeNav.of(updateUser.getUsername()).ifPresent(user::setUsername);
             for (Member member : server.getMembers()) {
                 if (member.getUser().equals(user)) {
                     member.getRoles().clear();
