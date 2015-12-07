@@ -1,5 +1,6 @@
 package co.phoenixlab.discord.commands;
 
+import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.CommandDispatcher;
 import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.VahrhedralBot;
@@ -10,6 +11,7 @@ import co.phoenixlab.discord.api.entities.OutboundMessage;
 import co.phoenixlab.discord.api.entities.Server;
 import co.phoenixlab.discord.api.entities.User;
 import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
@@ -28,84 +30,55 @@ import static co.phoenixlab.discord.commands.CommandUtil.findUser;
 
 public class AdminCommands {
 
-    private final CommandDispatcher adminCommandDispatcher;
+    private final CommandDispatcher dispatcher;
+    private Localizer loc;
 
     public AdminCommands(VahrhedralBot bot) {
-        adminCommandDispatcher = new CommandDispatcher(bot, "");
+        dispatcher = new CommandDispatcher(bot, "");
+        loc = bot.getLocalizer();
     }
 
     public CommandDispatcher getAdminCommandDispatcher() {
-        return adminCommandDispatcher;
+        return dispatcher;
     }
 
     public void registerAdminCommands() {
-        adminCommandDispatcher.registerAlwaysActiveCommand("start", this::adminStart, "Start bot");
-        adminCommandDispatcher.registerAlwaysActiveCommand("stop", this::adminStop, "Stop bot");
-        adminCommandDispatcher.registerAlwaysActiveCommand("status", this::adminStatus, "Bot status");
-        adminCommandDispatcher.registerAlwaysActiveCommand("kill", this::adminKill, "Kill the bot (terminate app)");
-        adminCommandDispatcher.registerAlwaysActiveCommand("restart", this::adminRestart, "Restart the bot");
-        adminCommandDispatcher.registerAlwaysActiveCommand("blacklist", this::adminBlacklist,
-                "Prints the blacklist, or blacklists the given user. Supports @mention and partial front matching");
-        adminCommandDispatcher.registerAlwaysActiveCommand("pardon", this::adminPardon,
-                "Pardons the given user. Supports @mention and partial front matching");
-        adminCommandDispatcher.registerAlwaysActiveCommand("join", this::adminJoin,
-                "Joins using the provided Discord.gg invite link");
-        adminCommandDispatcher.registerAlwaysActiveCommand("telegram", this::adminTelegram,
-                "Send a message to another channel");
-        adminCommandDispatcher.registerAlwaysActiveCommand("prefix", this::adminPrefix,
-                "Get or set the main command prefix");
-        adminCommandDispatcher.registerAlwaysActiveCommand("raw", this::adminRaw,
-                "Send a message using raw JSON");
-        adminCommandDispatcher.registerAlwaysActiveCommand("stats", this::adminStats,
-                "Display session statistics");
-    }
-
-    private void adminStats(MessageContext context, String s) {
-        DiscordApiClient apiClient = context.getApiClient();
-        CommandDispatcher mainDispatcher = context.getBot().getMainCommandDispatcher();
-        CommandDispatcher.Statistics mdStats = mainDispatcher.getStatistics();
-        DiscordWebSocketClient.Statistics wsStats = apiClient.getWebSocketClient().getStatistics();
-        apiClient.sendMessage(String.format("__**Bot Statistics**__\n" +
-                        "**MainCommandDispatcher**\n" +
-                        "CmdHandleTime: %s ms\n" +
-                        "CmdOKHandleTime: %s ms\n" +
-                        "ReceivedCommands: %,d T/%,d OK/%,d KO\n" +
-
-                        "**WebSocketClient**\n" +
-                        "MsgHandleTime: %s ms\n" +
-                        "MsgCount: %,d\n" +
-                        "KeepAliveCount: %,d\n" +
-                        "ErrorCount: %,d\n",
-                mdStats.commandHandleTime.summary(),
-                mdStats.acceptedCommandHandleTime.summary(),
-                mdStats.commandsReceived.sum(),
-                mdStats.commandsHandledSuccessfully.sum() + 1,  //  +1 since this executed OK but hasnt counted yet
-                mdStats.commandsRejected.sum(),
-                wsStats.avgMessageHandleTime.summary(),
-                wsStats.messageReceiveCount.sum(),
-                wsStats.keepAliveCount.sum(),
-                wsStats.errorCount.sum()),
-                context.getMessage().getChannelId());
-    }
-
-
-    private void adminKill(MessageContext context, String args) {
-        context.getApiClient().sendMessage("Sudoku time, bye", context.getMessage().getChannelId());
-        context.getBot().shutdown();
-    }
-
-    private void adminRestart(MessageContext context, String args) {
-        context.getApiClient().sendMessage("brb quick sudoku game", context.getMessage().getChannelId());
-        context.getBot().shutdown(20);
+        CommandDispatcher d = dispatcher;
+        d.registerAlwaysActiveCommand("commands.admin.start.command", this::adminStart,
+                "commands.admin.start.help");
+        d.registerAlwaysActiveCommand("commands.admin.stop.command", this::adminStop,
+                "commands.admin.stop.help");
+        d.registerAlwaysActiveCommand("commands.admin.status.command", this::adminStatus,
+                "commands.admin.status.help");
+        d.registerAlwaysActiveCommand("commands.admin.kill.command", this::adminKill,
+                "commands.admin.kill.help");
+        d.registerAlwaysActiveCommand("commands.admin.restart.command", this::adminRestart,
+                "commands.admin.restart.help");
+        d.registerAlwaysActiveCommand("commands.admin.blacklist.command", this::adminBlacklist,
+                "commands.admin.blacklist.help");
+        d.registerAlwaysActiveCommand("commands.admin.pardon.command", this::adminPardon,
+                "commands.admin.pardon.help");
+        d.registerAlwaysActiveCommand("commands.admin.join.command", this::adminJoin,
+                "commands.admin.join.help");
+        d.registerAlwaysActiveCommand("commands.admin.telegram.command", this::adminTelegram,
+                "commands.admin.telegram.help");
+        d.registerAlwaysActiveCommand("commands.admin.raw.command", this::adminRaw,
+                "commands.admin.raw.help");
+        d.registerAlwaysActiveCommand("commands.admin.prefix.command", this::adminPrefix,
+                "commands.admin.prefix.help");
+        d.registerAlwaysActiveCommand("commands.admin.stats.command", this::adminStats,
+                "commands.admin.stats.help");
     }
 
     private void adminStart(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
         CommandDispatcher mainDispatcher = context.getBot().getMainCommandDispatcher();
         if (mainDispatcher.active().compareAndSet(false, true)) {
-            apiClient.sendMessage("Bot started", context.getMessage().getChannelId());
+            apiClient.sendMessage(loc.localize("commands.admin.start.response.ok"),
+                    context.getMessage().getChannelId());
         } else {
-            apiClient.sendMessage("Bot was already started", context.getMessage().getChannelId());
+            apiClient.sendMessage(loc.localize("commands.admin.start.response.already_started"),
+                    context.getMessage().getChannelId());
         }
     }
 
@@ -113,9 +86,11 @@ public class AdminCommands {
         DiscordApiClient apiClient = context.getApiClient();
         CommandDispatcher mainDispatcher = context.getBot().getMainCommandDispatcher();
         if (mainDispatcher.active().compareAndSet(true, false)) {
-            apiClient.sendMessage("Bot stopped", context.getMessage().getChannelId());
+            apiClient.sendMessage(loc.localize("commands.admin.stop.response.ok"),
+                    context.getMessage().getChannelId());
         } else {
-            apiClient.sendMessage("Bot was already stopped", context.getMessage().getChannelId());
+            apiClient.sendMessage(loc.localize("commands.admin.stop.response.already_stopped"),
+                    context.getMessage().getChannelId());
         }
     }
 
@@ -127,12 +102,12 @@ public class AdminCommands {
         MemoryUsage heapMemoryUsage = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
         String memory = getMemoryInfo(heapMemoryUsage);
         String serverDetail = Integer.toString(apiClient.getServers().size());
-        if (args.contains("servers")) {
+        if (args.contains(loc.localize("commands.admin.status.subcommand.servers"))) {
             serverDetail = listServers(apiClient);
         }
-        String response = String.format("**Status:** %s\n**Servers:** %s\n**Uptime:** %s\n**Heap:** `%s`\n" +
-                        "**Load:** %.4f\n**Hamster Wheels in use:** %s",
-                mainDispatcher.active().get() ? "Running" : "Stopped",
+        String response = loc.localize("commands.admin.status.response.format",
+                loc.localize("commands.admin.status.response.state." +
+                        (mainDispatcher.active().get() ? "running" : "stopped")),
                 serverDetail,
                 uptime,
                 memory,
@@ -142,19 +117,33 @@ public class AdminCommands {
     }
 
     private String listServers(DiscordApiClient apiClient) {
-        String serverDetail;StringJoiner serverJoiner = new StringJoiner(",\n");
+        String serverDetail;
+        StringJoiner serverJoiner = new StringJoiner(",\n");
         for (Server server : apiClient.getServers()) {
-            serverJoiner.add(String.format("`%s`:%s", server.getName(), server.getId()));
+            serverJoiner.add(loc.localize("commands.admin.status.response.servers.entry", server.getName(), server.getId()));
         }
-        serverDetail = String.format("%d servers: \n%s", apiClient.getServers().size(), serverJoiner.toString());
+        serverDetail = loc.localize("commands.admin.status.response.servers.format",
+                apiClient.getServers().size(), serverJoiner.toString());
         return serverDetail;
     }
 
     private String getMemoryInfo(MemoryUsage heapMemoryUsage) {
-        return String.format("%,dMB used %,dMB committed %,dMB max",
+        return loc.localize("commands.admin.status.response.memory.format",
                 heapMemoryUsage.getUsed() / 1048576L,
                 heapMemoryUsage.getCommitted() / 1048576L,
                 heapMemoryUsage.getMax() / 1048576L);
+    }
+
+    private void adminKill(MessageContext context, String args) {
+        context.getApiClient().sendMessage(loc.localize("commands.admin.kill.response"),
+                context.getMessage().getChannelId());
+        context.getBot().shutdown();
+    }
+
+    private void adminRestart(MessageContext context, String args) {
+        context.getApiClient().sendMessage(loc.localize("commands.admin.restart.response"),
+                context.getMessage().getChannelId());
+        context.getBot().shutdown(20);
     }
 
     private void adminBlacklist(MessageContext context, String args) {
@@ -166,16 +155,19 @@ public class AdminCommands {
         }
         User user = findUser(context, args);
         if (user == NO_USER) {
-            apiClient.sendMessage("Unable to find user", context.getMessage().getChannelId());
+            apiClient.sendMessage(loc.localize("commands.admin.blacklist.response.not_found"),
+                    context.getMessage().getChannelId());
             return;
         }
         if (bot.getConfig().getAdmins().contains(user.getId())) {
-            apiClient.sendMessage("Cannot blacklist an admin", context.getMessage().getChannelId());
+            apiClient.sendMessage(loc.localize("commands.admin.blacklist.response.admin"),
+                    context.getMessage().getChannelId());
             return;
         }
         bot.getConfig().getBlacklist().add(user.getId());
         bot.saveConfig();
-        apiClient.sendMessage(String.format("`%s` has been blacklisted", user.getUsername()),
+        apiClient.sendMessage(loc.localize("commands.admin.blacklist.response.format",
+                user.getUsername()),
                 context.getMessage().getChannelId());
     }
 
@@ -188,29 +180,34 @@ public class AdminCommands {
                 forEach(joiner::add);
         String res = joiner.toString();
         if (res.isEmpty()) {
-            res = "None";
+            res = loc.localize("commands.admin.blacklist.response.list.none");
         }
-        apiClient.sendMessage("Blacklisted users: " + res, context.getMessage().getChannelId());
+        apiClient.sendMessage(loc.localize("commands.admin.blacklist.response.list.format", res),
+                context.getMessage().getChannelId());
     }
 
     private void adminPardon(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
         if (args.isEmpty()) {
-            apiClient.sendMessage("Please specify a user", context.getMessage().getChannelId());
+            apiClient.sendMessage(loc.localize("commands.admin.pardon.response.no_user"),
+                    context.getMessage().getChannelId());
             return;
         }
         User user = findUser(context, args);
         if (user == NO_USER) {
-            apiClient.sendMessage("Unable to find user", context.getMessage().getChannelId());
+            apiClient.sendMessage(loc.localize("commands.admin.pardon.response.not_found"),
+                    context.getMessage().getChannelId());
             return;
         }
         boolean removed = context.getBot().getConfig().getBlacklist().remove(user.getId());
         context.getBot().saveConfig();
         if (removed) {
-            apiClient.sendMessage(String.format("`%s` has been pardoned", user.getUsername()),
+            apiClient.sendMessage(loc.localize("commands.admin.pardon.response.format",
+                    user.getUsername()),
                     context.getMessage().getChannelId());
         } else {
-            apiClient.sendMessage(String.format("`%s` was not blacklisted", user.getUsername()),
+            apiClient.sendMessage(loc.localize("commands.admin.pardon.response.not_blacklisted",
+                    user.getUsername()),
                     context.getMessage().getChannelId());
         }
     }
@@ -222,7 +219,7 @@ public class AdminCommands {
             inviteUrl = new URL(args);
         } catch (MalformedURLException e) {
             VahrhedralBot.LOGGER.warn("Invalid invite link received", e);
-            apiClient.sendMessage("Invalid link",
+            apiClient.sendMessage(loc.localize("commands.admin.join.response.invalid"),
                     context.getMessage().getChannelId());
             return;
         }
@@ -238,12 +235,12 @@ public class AdminCommands {
             if (response.getStatus() != 200) {
                 VahrhedralBot.LOGGER.warn("Unable to join using invite link: HTTP {}: {}: {}",
                         response.getStatus(), response.getStatusText(), response.getBody());
-                apiClient.sendMessage("Unable to join server: HTTP error",
+                apiClient.sendMessage(loc.localize("commands.admin.join.response.http_error", response.getStatus()),
                         context.getMessage().getChannelId());
             }
         } catch (UnirestException e) {
             VahrhedralBot.LOGGER.warn("Unable to join using invite link", e);
-            apiClient.sendMessage("Unable to join server: Network error",
+            apiClient.sendMessage(loc.localize("commands.admin.join.response.network_error"),
                     context.getMessage().getChannelId());
         }
     }
@@ -252,7 +249,7 @@ public class AdminCommands {
         DiscordApiClient apiClient = context.getApiClient();
         String[] split = s.split(" ", 2);
         if (split.length != 2) {
-            apiClient.sendMessage("Format: channelId Message",
+            apiClient.sendMessage(loc.localize("commands.admin.telegram.response.invalid"),
                     context.getMessage().getChannelId());
             return;
         }
@@ -260,21 +257,6 @@ public class AdminCommands {
         apiClient.sendMessage(split[1], split[0], Arrays.stream(mentions).
                 map(User::getId).
                 collect(Collectors.toList()).toArray(new String[mentions.length]));
-    }
-
-    private void adminPrefix(MessageContext context, String s) {
-        DiscordApiClient apiClient = context.getApiClient();
-        VahrhedralBot bot = context.getBot();
-        if (s.isEmpty()) {
-            apiClient.sendMessage(String.format("Command prefix: `%s`", bot.getConfig().getCommandPrefix()),
-                    context.getMessage().getChannelId());
-        } else {
-            context.getBot().getMainCommandDispatcher().setCommandPrefix(s);
-            bot.getConfig().setCommandPrefix(s);
-            bot.saveConfig();
-            apiClient.sendMessage(String.format("Command prefix set to `%s`", bot.getConfig().getCommandPrefix()),
-                    context.getMessage().getChannelId());
-        }
     }
 
     public void adminRaw(MessageContext context, String args) {
@@ -291,9 +273,49 @@ public class AdminCommands {
             channel = context.getMessage().getChannelId();
             raw = args;
         }
-        OutboundMessage outboundMessage = new Gson().fromJson(raw, OutboundMessage.class);
-        context.getApiClient().sendMessage(outboundMessage.getContent(),
-                channel,
-                outboundMessage.getMentions());
+        try {
+            OutboundMessage outboundMessage = new Gson().fromJson(raw, OutboundMessage.class);
+            context.getApiClient().sendMessage(outboundMessage.getContent(),
+                    channel,
+                    outboundMessage.getMentions());
+        } catch (JsonParseException e) {
+            context.getApiClient().sendMessage(loc.localize("commands.admin.raw.response.invalid"),
+                    context.getMessage().getChannelId());
+        }
+    }
+
+    private void adminPrefix(MessageContext context, String s) {
+        DiscordApiClient apiClient = context.getApiClient();
+        VahrhedralBot bot = context.getBot();
+        if (s.isEmpty()) {
+            apiClient.sendMessage(loc.localize("commands.admin.prefix.response.get",
+                    bot.getConfig().getCommandPrefix()),
+                    context.getMessage().getChannelId());
+        } else {
+            context.getBot().getMainCommandDispatcher().setCommandPrefix(s);
+            bot.getConfig().setCommandPrefix(s);
+            bot.saveConfig();
+            apiClient.sendMessage(loc.localize("commands.admin.prefix.response.set",
+                    bot.getConfig().getCommandPrefix()),
+                    context.getMessage().getChannelId());
+        }
+    }
+
+    private void adminStats(MessageContext context, String s) {
+        DiscordApiClient apiClient = context.getApiClient();
+        CommandDispatcher mainDispatcher = context.getBot().getMainCommandDispatcher();
+        CommandDispatcher.Statistics mdStats = mainDispatcher.getStatistics();
+        DiscordWebSocketClient.Statistics wsStats = apiClient.getWebSocketClient().getStatistics();
+        apiClient.sendMessage(loc.localize("commands.admin.stats.response.format",
+                mdStats.commandHandleTime.summary(),
+                mdStats.acceptedCommandHandleTime.summary(),
+                mdStats.commandsReceived.sum(),
+                mdStats.commandsHandledSuccessfully.sum() + 1,  //  +1 since this executed OK but hasnt counted yet
+                mdStats.commandsRejected.sum(),
+                wsStats.avgMessageHandleTime.summary(),
+                wsStats.messageReceiveCount.sum(),
+                wsStats.keepAliveCount.sum(),
+                wsStats.errorCount.sum()),
+                context.getMessage().getChannelId());
     }
 }

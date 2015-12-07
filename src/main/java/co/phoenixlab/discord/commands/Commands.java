@@ -1,5 +1,6 @@
 package co.phoenixlab.discord.commands;
 
+import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.CommandDispatcher;
 import co.phoenixlab.discord.Configuration;
 import co.phoenixlab.discord.MessageContext;
@@ -20,39 +21,34 @@ import static co.phoenixlab.discord.commands.CommandUtil.findUser;
 public class Commands {
 
     private final AdminCommands adminCommands;
+    private final Localizer loc;
 
     public Commands(VahrhedralBot bot) {
         adminCommands = new AdminCommands(bot);
+        loc = bot.getLocalizer();
     }
 
-    public void register(CommandDispatcher dispatcher) {
+    public void register(CommandDispatcher d) {
         adminCommands.registerAdminCommands();
-        dispatcher.registerAlwaysActiveCommand("sudo", this::admin,
-                "Administrative commands");
-        dispatcher.registerCommand("admins", this::listAdmins,
-                "List admins");
-        dispatcher.registerCommand("info", this::info,
-                "Display information about the caller or the provided name, if present. @Mentions and partial front " +
-                        "matches are supported");
-        dispatcher.registerCommand("avatar", this::avatar,
-                "Display the avatar of the caller or the provided name, if present. @Mentions and partial front " +
-                        "matches are supported. Use `server` for the current server's avatar");
-        dispatcher.registerCommand("version", this::version,
-                "Display version information");
+        d.registerAlwaysActiveCommand("commands.general.admin.command", this::admin, "commands.general.admin.help");
+        d.registerCommand("commands.general.admins.command", this::listAdmins, "commands.general.admins.help");
+        d.registerCommand("commands.general.info.command", this::info, "commands.general.info.help");
+        d.registerCommand("commands.general.avatar.command", this::avatar, "commands.general.avatar.help");
+        d.registerCommand("commands.general.version.command", this::version, "commands.general.version.help");
     }
 
     private void admin(MessageContext context, String args) {
         //  Permission check
-        if (!context.getBot().getConfig().getAdmins().contains(context.getMessage().getAuthor().getId())) {
-            context.getApiClient().sendMessage(context.getMessage().getAuthor().getUsername() +
-                            " is not in the sudoers file. This incident will be reported",
-                    context.getMessage().getChannelId());
+        Message message = context.getMessage();
+        if (!context.getBot().getConfig().getAdmins().contains(message.getAuthor().getId())) {
+            context.getApiClient().sendMessage(
+                    loc.localize("commands.general.admin.response.reject", message.getAuthor().getUsername()),
+                    message.getChannelId());
             return;
         }
-        Message original = context.getMessage();
         adminCommands.getAdminCommandDispatcher().
-                handleCommand(new Message(original.getAuthor(), original.getChannelId(), args,
-                        original.getChannelId(), original.getMentions(), original.getTime()));
+                handleCommand(new Message(message.getAuthor(), message.getChannelId(), args,
+                        message.getChannelId(), message.getMentions(), message.getTime()));
     }
 
     private void listAdmins(MessageContext context, String s) {
@@ -66,9 +62,10 @@ public class Commands {
                 forEach(joiner::add);
         String res = joiner.toString();
         if (res.isEmpty()) {
-            res = "None";
+            res = loc.localize("commands.general.admins.response.none");
         }
-        apiClient.sendMessage("Admins: " + res, context.getMessage().getChannelId());
+        apiClient.sendMessage(loc.localize("commands.general.admins.response.format", res),
+                context.getMessage().getChannelId());
     }
 
     private void info(MessageContext context, String args) {
@@ -82,14 +79,17 @@ public class Commands {
             user = message.getAuthor();
         }
         if (user == NO_USER) {
-            context.getApiClient().sendMessage("Unable to find user. Try typing their name EXACTLY or" +
-                    " @mention them instead", message.getChannelId());
+            context.getApiClient().sendMessage(loc.localize("commands.general.info.response.not_found"),
+                    message.getChannelId());
         } else {
-            String avatar = (user.getAvatar() == null ? "N/A" : user.getAvatarUrl().toExternalForm());
-            String response = String.format("**Username:** %s\n**ID:** %s\n%s%s**Avatar:** %s",
+            String avatar = (user.getAvatar() == null ? loc.localize("commands.general.info.response.no_avatar") :
+                    user.getAvatarUrl().toExternalForm());
+            String response = loc.localize("commands.general.info.response.format",
                     user.getUsername(), user.getId(),
-                    config.getBlacklist().contains(user.getId()) ? "**Blacklisted**\n" : "",
-                    config.getAdmins().contains(user.getId()) ? "**Bot Administrator**\n" : "",
+                    config.getBlacklist().contains(user.getId()) ?
+                            loc.localize("commands.general.info.response.blacklisted") : "",
+                    config.getAdmins().contains(user.getId()) ?
+                            loc.localize("commands.general.info.response.admin") : "",
                     avatar);
             context.getApiClient().sendMessage(response, message.getChannelId());
         }
@@ -98,7 +98,7 @@ public class Commands {
 
     private void avatar(MessageContext context, String args) {
         Message message = context.getMessage();
-        if (args.startsWith("server")) {
+        if (args.startsWith(loc.localize("commands.general.avatar.subcommand.server"))) {
             handleServerAvatar(context, message, args);
             return;
         }
@@ -110,36 +110,45 @@ public class Commands {
             user = message.getAuthor();
         }
         if (user == NO_USER) {
-            context.getApiClient().sendMessage("Unable to find user. Try typing their name EXACTLY or" +
-                    " @mention them instead", message.getChannelId());
+            context.getApiClient().sendMessage(loc.localize("commands.general.avatar.response.not_found"),
+                    message.getChannelId());
         } else {
-            String avatar = (user.getAvatar() == null ? "No avatar" : user.getAvatarUrl().toExternalForm());
-            context.getApiClient().sendMessage(String.format("%s's avatar: %s", user.getUsername(), avatar),
+            String avatar = (user.getAvatar() == null ?
+                    loc.localize("commands.general.avatar.response.no_avatar") : user.getAvatarUrl().toExternalForm());
+            context.getApiClient().sendMessage(loc.localize("commands.general.avatar.response.format",
+                    user.getUsername(), avatar),
                     message.getChannelId());
         }
     }
 
     private void handleServerAvatar(MessageContext context, Message message, String args) {
         Server server;
-        Channel c = context.getApiClient().getChannelById(message.getChannelId());
-        if (args.startsWith("server ")) {
-            args = args.substring("server ".length());
-            server = context.getApiClient().getServerByID(args);
+        DiscordApiClient apiClient = context.getApiClient();
+        Channel c = apiClient.getChannelById(message.getChannelId());
+        if (args.contains(" ")) {
+            args = args.split(" ", 2)[1];
+            server = apiClient.getServerByID(args);
             if (server == NO_SERVER) {
-                context.getApiClient().sendMessage("Bot is not a member of that server",
+                apiClient.sendMessage(loc.localize("commands.general.avatar.response.server.not_member"),
                         message.getChannelId());
             }
         } else if (c == null || c.getParent() == NO_SERVER) {
-            context.getApiClient().sendMessage("You cannot use the `server` option in a private message",
+            apiClient.sendMessage(loc.localize("commands.general.avatar.response.server.private"),
                     message.getChannelId());
             return;
         } else {
             server = c.getParent();
         }
         String icon = server.getIcon();
-        context.getApiClient().sendMessage(server.getName() + (icon == null ? " server has no avatar set" :
-                        " server avatar: " + String.format(ApiConst.ICON_URL_PATTERN, server.getId(), icon)),
-                message.getChannelId());
+        if (icon == null) {
+            apiClient.sendMessage(loc.localize("commands.general.avatar.response.server.format.none",
+                    server.getName()),
+                    message.getChannelId());
+        } else {
+            apiClient.sendMessage(loc.localize("commands.general.avatar.response.server.format",
+                    server.getName(), String.format(ApiConst.ICON_URL_PATTERN, server.getId(), icon)),
+                    message.getChannelId());
+        }
     }
 
     private void version(MessageContext context, String args) {
@@ -148,8 +157,7 @@ public class Commands {
 
     private void selfCheck(MessageContext context, User user) {
         if (context.getMessage().getAuthor().equals(user)) {
-            context.getApiClient().sendMessage(user.getUsername() + ", you can omit your name when " +
-                            "using this command to refer to yourself.",
+            context.getApiClient().sendMessage(loc.localize("commands.common.self_reference", user.getUsername()),
                     context.getMessage().getChannelId());
         }
     }
