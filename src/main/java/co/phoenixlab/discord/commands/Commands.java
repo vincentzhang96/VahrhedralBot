@@ -7,6 +7,7 @@ import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.VahrhedralBot;
 import co.phoenixlab.discord.api.ApiConst;
 import co.phoenixlab.discord.api.DiscordApiClient;
+import co.phoenixlab.discord.api.DiscordWebSocketClient;
 import co.phoenixlab.discord.api.entities.Channel;
 import co.phoenixlab.discord.api.entities.Message;
 import co.phoenixlab.discord.api.entities.Server;
@@ -35,6 +36,7 @@ public class Commands {
         d.registerCommand("commands.general.info.command", this::info, "commands.general.info.help");
         d.registerCommand("commands.general.avatar.command", this::avatar, "commands.general.avatar.help");
         d.registerCommand("commands.general.version.command", this::version, "commands.general.version.help");
+        d.registerCommand("commands.general.stats.command", this::stats, "commands.general.stats.help");
     }
 
     private void admin(MessageContext context, String args) {
@@ -153,6 +155,24 @@ public class Commands {
 
     private void version(MessageContext context, String args) {
         context.getApiClient().sendMessage(context.getBot().getVersionInfo(), context.getMessage().getChannelId());
+    }
+
+    private void stats(MessageContext context, String s) {
+        DiscordApiClient apiClient = context.getApiClient();
+        CommandDispatcher mainDispatcher = context.getBot().getMainCommandDispatcher();
+        CommandDispatcher.Statistics mdStats = mainDispatcher.getStatistics();
+        DiscordWebSocketClient.Statistics wsStats = apiClient.getWebSocketClient().getStatistics();
+        apiClient.sendMessage(loc.localize("commands.general.stats.response.format",
+                mdStats.commandHandleTime.summary(),
+                mdStats.acceptedCommandHandleTime.summary(),
+                mdStats.commandsReceived.sum(),
+                mdStats.commandsHandledSuccessfully.sum() + 1,  //  +1 since this executed OK but hasnt counted yet
+                mdStats.commandsRejected.sum(),
+                wsStats.avgMessageHandleTime.summary(),
+                wsStats.messageReceiveCount.sum(),
+                wsStats.keepAliveCount.sum(),
+                wsStats.errorCount.sum()),
+                context.getMessage().getChannelId());
     }
 
     private void selfCheck(MessageContext context, User user) {

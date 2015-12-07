@@ -66,8 +66,6 @@ public class AdminCommands {
                 "commands.admin.raw.help");
         d.registerAlwaysActiveCommand("commands.admin.prefix.command", this::adminPrefix,
                 "commands.admin.prefix.help");
-        d.registerAlwaysActiveCommand("commands.admin.stats.command", this::adminStats,
-                "commands.admin.stats.help");
     }
 
     private void adminStart(MessageContext context, String args) {
@@ -301,21 +299,4 @@ public class AdminCommands {
         }
     }
 
-    private void adminStats(MessageContext context, String s) {
-        DiscordApiClient apiClient = context.getApiClient();
-        CommandDispatcher mainDispatcher = context.getBot().getMainCommandDispatcher();
-        CommandDispatcher.Statistics mdStats = mainDispatcher.getStatistics();
-        DiscordWebSocketClient.Statistics wsStats = apiClient.getWebSocketClient().getStatistics();
-        apiClient.sendMessage(loc.localize("commands.admin.stats.response.format",
-                mdStats.commandHandleTime.summary(),
-                mdStats.acceptedCommandHandleTime.summary(),
-                mdStats.commandsReceived.sum(),
-                mdStats.commandsHandledSuccessfully.sum() + 1,  //  +1 since this executed OK but hasnt counted yet
-                mdStats.commandsRejected.sum(),
-                wsStats.avgMessageHandleTime.summary(),
-                wsStats.messageReceiveCount.sum(),
-                wsStats.keepAliveCount.sum(),
-                wsStats.errorCount.sum()),
-                context.getMessage().getChannelId());
-    }
 }
