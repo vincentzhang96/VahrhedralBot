@@ -52,7 +52,7 @@ public class CommandDispatcher {
             StringJoiner joiner = new StringJoiner("\n", header, "");
             for (Map.Entry<String, CommandWrapper> entry : commands.entrySet()) {
                 joiner.add(l.localize("commands.help.response.entry",
-                        commandPrefix, entry.getKey(), entry.getValue().helpDesc));
+                        commandPrefix, entry.getKey().toLowerCase(), entry.getValue().helpDesc));
             }
             final String result = joiner.toString();
             context.getBot().getApiClient().sendMessage(result, context.getMessage().getChannelId());
