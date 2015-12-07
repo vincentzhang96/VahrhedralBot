@@ -269,7 +269,7 @@ public class DiscordApiClient {
         username = username.toLowerCase();
         for (Server server : servers) {
             User user = findUser(username, server);
-            if (user != null) {
+            if (user != NO_USER) {
                 return user;
             }
         }
@@ -309,7 +309,7 @@ public class DiscordApiClient {
     public User getUserById(String userId) {
         for (Server server : servers) {
             User user = getUserById(userId, server);
-            if (user != null) {
+            if (user != NO_USER) {
                 return user;
             }
         }
