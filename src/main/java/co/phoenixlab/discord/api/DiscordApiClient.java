@@ -34,6 +34,7 @@ public class DiscordApiClient {
     public static final Server NO_SERVER = new Server("NO_SERVER");
     public static final Channel NO_CHANNEL = new Channel("", "NO_CHANNEL");
     public static final User NO_USER = new User("NO_USER", "NO_USER", "NO_USER", null);
+    public static final Member NO_MEMBER = new Member(NO_USER, Collections.emptyList());
 
     static {
         NO_CHANNEL.setParent(NO_SERVER);
@@ -327,6 +328,20 @@ public class DiscordApiClient {
             }
         }
         return NO_USER;
+    }
+
+    public Member getUserMember(User user, Server server) {
+        return getUserMember(user.getId(), server);
+    }
+
+    public Member getUserMember(String userId, Server server) {
+        for (Member member : server.getMembers()) {
+            User user = member.getUser();
+            if (user.getId().equals(userId)) {
+                return member;
+            }
+        }
+        return NO_MEMBER;
     }
 
     public ScheduledExecutorService getExecutorService() {

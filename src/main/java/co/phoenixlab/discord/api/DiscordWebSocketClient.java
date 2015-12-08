@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.LongAdder;
 
+import static co.phoenixlab.discord.api.DiscordApiClient.NO_MEMBER;
 import static co.phoenixlab.discord.api.DiscordApiClient.NO_SERVER;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -158,7 +159,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         Server server = apiClient.getServerByID(serverId);
         if (server != NO_SERVER) {
             Role removed = null;
-            for (Iterator<Role> iterator = server.getRoles().iterator(); iterator.hasNext();) {
+            for (Iterator<Role> iterator = server.getRoles().iterator(); iterator.hasNext(); ) {
                 Role role = iterator.next();
                 if (role.getId().equals(roleId)) {
                     removed = role;
@@ -205,19 +206,20 @@ public class DiscordWebSocketClient extends WebSocketClient {
             User user = apiClient.getUserById(update.getUser().getId(), server);
             SafeNav.of(updateUser.getAvatar()).ifPresent(user::setAvatar);
             SafeNav.of(updateUser.getUsername()).ifPresent(user::setUsername);
-            for (Member member : server.getMembers()) {
-                if (member.getUser().equals(user)) {
-                    member.getRoles().clear();
-                    member.getRoles().addAll(update.getRoles());
-                    break;
-                }
+            Member member = apiClient.getUserMember(user, server);
+            if (member != NO_MEMBER && member.getUser().equals(user)) {
+                member.getRoles().clear();
+                member.getRoles().addAll(update.getRoles());
+                LOGGER.debug("{}'s ({}) presence changed in {} ({})",
+                        user.getUsername(), user.getUsername(),
+                        server.getName(), server.getId());
+                apiClient.getEventBus().post(new PresenceUpdateEvent(update, server));
+            } else {
+                LOGGER.info("Orphan presence update received, ignored (userid={} username={} serverid={}): Not found",
+                        update.getUser().getId(), update.getUser().getUsername(), update.getServerId());
             }
-            LOGGER.debug("{}'s ({}) presence changed in {} ({})",
-                    user.getUsername(), user.getUsername(),
-                    server.getName(), server.getId());
-            apiClient.getEventBus().post(new PresenceUpdateEvent(update, server));
         } else {
-            LOGGER.info("Orphan presence update received, ignored (userid={} username={} serverid={}",
+            LOGGER.info("Orphan presence update received, ignored (userid={} username={} serverid={})",
                     update.getUser().getId(), update.getUser().getUsername(), update.getServerId());
         }
     }
