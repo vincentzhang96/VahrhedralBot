@@ -61,4 +61,8 @@ public class Configuration {
     public Set<String> getAdmins() {
         return admins;
     }
+
+    public boolean isAdmin(String userId) {
+        return admins.contains(userId);
+    }
 }

@@ -52,7 +52,7 @@ public class Commands {
     private void admin(MessageContext context, String args) {
         //  Permission check
         Message message = context.getMessage();
-        if (!context.getBot().getConfig().getAdmins().contains(message.getAuthor().getId())) {
+        if (!context.getBot().getConfig().isAdmin(message.getAuthor().getId())) {
             context.getApiClient().sendMessage(
                     loc.localize("commands.general.admin.response.reject", message.getAuthor().getUsername()),
                     message.getChannelId());
@@ -243,7 +243,8 @@ public class Commands {
             return;
         }
         Member issuer = apiClient.getUserMember(message.getAuthor(), server);
-        if (!checkPermission(Permission.GEN_MANAGE_ROLES, issuer, server, apiClient)) {
+        if (!(checkPermission(Permission.GEN_MANAGE_ROLES, issuer, server, apiClient) ||
+                context.getBot().getConfig().isAdmin(message.getAuthor().getId()))) {
             apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.no_user_perms"),
                     message.getChannelId());
             return;
