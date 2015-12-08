@@ -190,11 +190,11 @@ public class Commands {
             Server server = channel.getParent();
             Member member = apiClient.getUserMember(user, server);
             if (member != NO_MEMBER) {
-                context.getApiClient().sendMessage(loc.localize("commands.general.roles.response.not_found"),
-                        message.getChannelId());
-            } else {
                 context.getApiClient().sendMessage(loc.localize("commands.general.roles.response.format",
                         user.getUsername(), listRoles(member, server, apiClient)),
+                        message.getChannelId());
+            } else {
+                context.getApiClient().sendMessage(loc.localize("commands.general.roles.response.member_not_found"),
                         message.getChannelId());
             }
         }
