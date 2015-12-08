@@ -188,6 +188,10 @@ public class Commands {
         } else {
             Channel channel = apiClient.getChannelById(context.getMessage().getChannelId());
             Server server = channel.getParent();
+            if (server == NO_SERVER) {
+                apiClient.sendMessage(loc.localize("commands.general.roles.response.private"), message.getChannelId());
+                return;
+            }
             Member member = apiClient.getUserMember(user, server);
             if (member != NO_MEMBER) {
                 context.getApiClient().sendMessage(loc.localize("commands.general.roles.response.format",
