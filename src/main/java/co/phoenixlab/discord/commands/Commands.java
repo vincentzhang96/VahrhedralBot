@@ -1,5 +1,6 @@
 package co.phoenixlab.discord.commands;
 
+import co.phoenixlab.common.lang.number.ParseInt;
 import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.CommandDispatcher;
 import co.phoenixlab.discord.Configuration;
@@ -9,7 +10,18 @@ import co.phoenixlab.discord.api.ApiConst;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.DiscordWebSocketClient;
 import co.phoenixlab.discord.api.entities.*;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.JsonNode;
+import com.mashape.unirest.http.Unirest;
+import com.mashape.unirest.http.exceptions.UnirestException;
+import org.apache.http.HttpHeaders;
+import org.apache.http.entity.ContentType;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.OptionalInt;
 import java.util.StringJoiner;
 
 import static co.phoenixlab.discord.api.DiscordApiClient.*;
@@ -34,6 +46,7 @@ public class Commands {
         d.registerCommand("commands.general.version.command", this::version, "commands.general.version.help");
         d.registerCommand("commands.general.stats.command", this::stats, "commands.general.stats.help");
         d.registerCommand("commands.general.roles.command", this::roles, "commands.general.roles.help");
+        d.registerCommand("commands.general.rolecolor.command", this::roleColor, "commands.general.rolecolor.help");
     }
 
     private void admin(MessageContext context, String args) {
@@ -215,6 +228,99 @@ public class Commands {
                 map(r -> loc.localize("commands.general.roles.response.role.format", r.getName(), r.getId())).
                 forEach(joiner::add);
         return joiner.toString();
+    }
+
+    private void roleColor(MessageContext context, String args) {
+        DiscordApiClient apiClient = context.getApiClient();
+        Message message = context.getMessage();
+        //  Check permissions first
+        Channel channel = apiClient.getChannelById(context.getMessage().getChannelId());
+        Server server = channel.getParent();
+        if (server == NO_SERVER) {
+            apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.private"),
+                    message.getChannelId());
+            return;
+        }
+        Member issuer = apiClient.getUserMember(message.getAuthor(), server);
+        if (!checkPermission(Permission.GEN_MANAGE_ROLES, issuer, server, apiClient)) {
+            apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.no_user_perms"),
+                    message.getChannelId());
+            return;
+        }
+        Member bot = apiClient.getUserMember(apiClient.getClientUser(), server);
+        if (!checkPermission(Permission.GEN_MANAGE_ROLES, bot, server, apiClient)) {
+            apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.no_bot_perms"),
+                    message.getChannelId());
+            return;
+        }
+        String[] split = args.split(" ");
+        if (split.length != 2) {
+            apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.help_format"),
+                    message.getChannelId());
+            return;
+        }
+        String colorStr = split[1];
+        OptionalInt colorOpt = ParseInt.parseHexOptional(colorStr);
+        if (!colorOpt.isPresent()) {
+            apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.help_format"),
+                    message.getChannelId());
+            return;
+        }
+        int color = colorOpt.getAsInt();
+        String roleId = split[0];
+        Role role = apiClient.getRole(roleId, server);
+        if (role == NO_ROLE) {
+            apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.role_not_found"),
+                    message.getChannelId());
+            return;
+        }
+
+        patchRole(apiClient, message, server, color, role);
+    }
+
+    private void patchRole(DiscordApiClient apiClient, Message message, Server server, int color, Role role) {
+        try {
+            Map<String, String> headers = new HashMap<>();
+            headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+            headers.put(HttpHeaders.AUTHORIZATION, apiClient.getToken());
+            HttpResponse<JsonNode> response = Unirest.
+                    patch(ApiConst.SERVERS_ENDPOINT + server.getId() + "/roles/" + role.getId()).
+                    headers(headers).
+                    asJson();
+            if (response.getStatus() != 200) {
+                VahrhedralBot.LOGGER.warn("Unable to PATCH role: HTTP {}: {}",
+                        response.getStatus(), response.getStatusText());
+                apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.general_error"),
+                        message.getChannelId());
+                return;
+            }
+            JsonNode body = response.getBody();
+            JSONObject obj = body.getObject();
+            if (obj.getInt("color") != color) {
+                VahrhedralBot.LOGGER.warn("Unable to PATCH role: Returned color does not match",
+                        response.getStatus(), response.getStatusText());
+                apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.general_error"),
+                        message.getChannelId());
+                return;
+            }
+            apiClient.sendMessage(loc.localize("commands.general.rolecolor.response",
+                    role.getName(), role.getId(), color),
+                    message.getChannelId());
+        } catch (UnirestException | JSONException e) {
+            VahrhedralBot.LOGGER.warn("Unable to PATCH role", e);
+            apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.general_error"),
+                    message.getChannelId());
+        }
+    }
+
+    private boolean checkPermission(Permission permission, Member member, Server server, DiscordApiClient apiClient) {
+        for (String roleId : member.getRoles()) {
+            Role role = apiClient.getRole(roleId, server);
+            if (permission.test(role.getPermissions())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void selfCheck(MessageContext context, User user) {
