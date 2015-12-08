@@ -101,6 +101,9 @@ public class VahrhedralBot implements Runnable {
 
             @Override
             public String get(String key) {
+                if (!contains(key)) {
+                    return key;
+                }
                 return bundle.getString(key);
             }
 
