@@ -142,6 +142,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         Server server = apiClient.getServerByID(serverId);
         if (server != NO_SERVER) {
             //  Literally just shove it in because Set
+            server.getRoles().remove(role);
             server.getRoles().add(role);
             LOGGER.debug("Updated role {} ({}) to {} ({})",
                     role.getName(), role.getId(), server.getName(), server.getId());
@@ -203,7 +204,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         Server server = apiClient.getServerByID(update.getServerId());
         if (server != NO_SERVER) {
             User updateUser = update.getUser();
-            User user = apiClient.getUserById(update.getUser().getId(), server);
+            User user = apiClient.getUserById(updateUser.getId(), server);
             SafeNav.of(updateUser.getAvatar()).ifPresent(user::setAvatar);
             SafeNav.of(updateUser.getUsername()).ifPresent(user::setUsername);
             Member member = apiClient.getUserMember(user, server);
@@ -211,7 +212,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
                 member.getRoles().clear();
                 member.getRoles().addAll(update.getRoles());
                 LOGGER.debug("{}'s ({}) presence changed in {} ({})",
-                        user.getUsername(), user.getUsername(),
+                        user.getUsername(), user.getId(),
                         server.getName(), server.getId());
                 apiClient.getEventBus().post(new PresenceUpdateEvent(update, server));
             } else {
@@ -229,9 +230,10 @@ public class DiscordWebSocketClient extends WebSocketClient {
         String serverId = (String) data.get("guild_id");
         Server server = apiClient.getServerByID(serverId);
         if (server != NO_SERVER) {
+            server.getMembers().remove(member);
             server.getMembers().add(member);
             LOGGER.debug("Updated {}'s ({}) membership in {} ({})",
-                    member.getUser().getId(), member.getUser().getUsername(),
+                    member.getUser().getUsername(), member.getUser().getId(),
                     server.getName(), server.getId());
             apiClient.getEventBus().post(new MemberChangeEvent(member, server,
                     MemberChangeEvent.MemberChange.UPDATED));
@@ -248,7 +250,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         if (server != NO_SERVER) {
             if (server.getMembers().remove(member)) {
                 LOGGER.debug("Removed {}'s ({}) membership in {} ({})",
-                        member.getUser().getId(), member.getUser().getUsername(),
+                        member.getUser().getUsername(), member.getUser().getId(),
                         server.getName(), server.getId());
                 apiClient.getEventBus().post(new MemberChangeEvent(member, server,
                         MemberChangeEvent.MemberChange.DELETED));
@@ -270,7 +272,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         if (server != NO_SERVER) {
             server.getMembers().add(member);
             LOGGER.info("Added {}'s ({}) membership in {} ({})",
-                    member.getUser().getId(), member.getUser().getUsername(),
+                    member.getUser().getUsername(), member.getUser().getId(),
                     server.getName(), server.getId());
             apiClient.getEventBus().post(new MemberChangeEvent(member, server,
                     MemberChangeEvent.MemberChange.ADDED));
