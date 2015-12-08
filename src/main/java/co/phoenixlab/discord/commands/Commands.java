@@ -51,9 +51,11 @@ public class Commands {
         //  Permission check
         Message message = context.getMessage();
         if (!context.getBot().getConfig().isAdmin(message.getAuthor().getId())) {
-            context.getApiClient().sendMessage(
-                    loc.localize("commands.general.admin.response.reject", message.getAuthor().getUsername()),
-                    message.getChannelId());
+            if (context.getDispatcher().active().get()) {
+                context.getApiClient().sendMessage(
+                        loc.localize("commands.general.admin.response.reject", message.getAuthor().getUsername()),
+                        message.getChannelId());
+            }
             return;
         }
         adminCommands.getAdminCommandDispatcher().
