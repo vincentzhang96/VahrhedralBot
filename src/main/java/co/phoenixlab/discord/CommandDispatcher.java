@@ -54,6 +54,19 @@ public class CommandDispatcher {
     private void addHelpCommand() {
         Command helpCommand = (context, args) -> {
             Localizer l = context.getBot().getLocalizer();
+            if (!args.isEmpty()) {
+                CommandWrapper wrapper = commands.get(args.toUpperCase());
+                if (wrapper != null) {
+                    context.getBot().getApiClient().sendMessage(l.localize("commands.help.response.detailed",
+                            args, wrapper.detailedHelp, wrapper.argumentsHelp),
+                            context.getMessage().getChannelId());
+                } else {
+                    context.getBot().getApiClient().sendMessage(l.localize("commands.help.response.not_found",
+                            args),
+                            context.getMessage().getChannelId());
+                }
+                return;
+            }
             String header = l.localize("commands.help.response.head", commands.size());
 
             StringJoiner joiner = new StringJoiner("\n", header, "");
@@ -64,21 +77,29 @@ public class CommandDispatcher {
             final String result = joiner.toString();
             context.getBot().getApiClient().sendMessage(result, context.getMessage().getChannelId());
         };
-        registerCommand("commands.help.command", helpCommand, "commands.help.help");
+        registerCommand("commands.help", helpCommand);
     }
 
-    public void registerCommand(String commandNameKey, Command command, String descKey) {
-        commandNameKey = bot.getLocalizer().localize(commandNameKey).toUpperCase();
-        descKey = bot.getLocalizer().localize(descKey);
-        commands.put(commandNameKey, new CommandWrapper(command, descKey));
-        LOGGER.debug("Registered command \"{}\"", commandNameKey);
+    public void registerCommand(String commandNameBaseKey, Command command) {
+        Localizer localizer = bot.getLocalizer();
+        String commandStr = localizer.localize(commandNameBaseKey + ".command").toUpperCase();
+        String helpStr = localizer.localize(commandNameBaseKey + ".help");
+        String detailedHelpStr = localizer.localize(commandNameBaseKey + ".detailed_help");
+        String argumentsStr = localizer.localize(commandNameBaseKey + ".arguments");
+        commands.put(commandStr, new CommandWrapper(command,
+                helpStr, detailedHelpStr, argumentsStr));
+        LOGGER.debug("Registered command \"{}\"", commandNameBaseKey);
     }
 
-    public void registerAlwaysActiveCommand(String commandNameKey, Command command, String descKey) {
-        commandNameKey = bot.getLocalizer().localize(commandNameKey).toUpperCase();
-        descKey = bot.getLocalizer().localize(descKey);
-        commands.put(commandNameKey, new CommandWrapper(command, descKey, true));
-        LOGGER.debug("Registered command \"{}\"", commandNameKey);
+    public void registerAlwaysActiveCommand(String commandNameBaseKey, Command command) {
+        Localizer localizer = bot.getLocalizer();
+        String commandStr = localizer.localize(commandNameBaseKey + ".command").toUpperCase();
+        String helpStr = localizer.localize(commandNameBaseKey + ".help");
+        String detailedHelpStr = localizer.localize(commandNameBaseKey + ".detailed_help");
+        String argumentsStr = localizer.localize(commandNameBaseKey + ".arguments");
+        commands.put(commandStr, new CommandWrapper(command,
+                helpStr, detailedHelpStr, argumentsStr, true));
+        LOGGER.debug("Registered command \"{}\"", commandNameBaseKey);
     }
 
     public void handleCommand(Message msg) {
@@ -153,15 +174,19 @@ public class CommandDispatcher {
     public static class CommandWrapper {
         final Command command;
         final String helpDesc;
+        final String detailedHelp;
+        final String argumentsHelp;
         final boolean alwaysActive;
 
-        public CommandWrapper(Command command, String helpDesc) {
-            this(command, helpDesc, false);
+        public CommandWrapper(Command command, String helpDesc, String detailedHelp, String argumentsHelp) {
+            this(command, helpDesc, detailedHelp, argumentsHelp, false);
         }
 
-        public CommandWrapper(Command command, String helpDesc, boolean alwaysActive) {
+        public CommandWrapper(Command command, String helpDesc, String detailedHelp, String argumentsHelp, boolean alwaysActive) {
             this.command = command;
             this.helpDesc = helpDesc;
+            this.detailedHelp = detailedHelp;
+            this.argumentsHelp = argumentsHelp;
             this.alwaysActive = alwaysActive;
         }
 

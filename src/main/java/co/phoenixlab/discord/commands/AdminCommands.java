@@ -6,7 +6,6 @@ import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.VahrhedralBot;
 import co.phoenixlab.discord.api.ApiConst;
 import co.phoenixlab.discord.api.DiscordApiClient;
-import co.phoenixlab.discord.api.DiscordWebSocketClient;
 import co.phoenixlab.discord.api.entities.OutboundMessage;
 import co.phoenixlab.discord.api.entities.Server;
 import co.phoenixlab.discord.api.entities.User;
@@ -44,28 +43,17 @@ public class AdminCommands {
 
     public void registerAdminCommands() {
         CommandDispatcher d = dispatcher;
-        d.registerAlwaysActiveCommand("commands.admin.start.command", this::adminStart,
-                "commands.admin.start.help");
-        d.registerAlwaysActiveCommand("commands.admin.stop.command", this::adminStop,
-                "commands.admin.stop.help");
-        d.registerAlwaysActiveCommand("commands.admin.status.command", this::adminStatus,
-                "commands.admin.status.help");
-        d.registerAlwaysActiveCommand("commands.admin.kill.command", this::adminKill,
-                "commands.admin.kill.help");
-        d.registerAlwaysActiveCommand("commands.admin.restart.command", this::adminRestart,
-                "commands.admin.restart.help");
-        d.registerAlwaysActiveCommand("commands.admin.blacklist.command", this::adminBlacklist,
-                "commands.admin.blacklist.help");
-        d.registerAlwaysActiveCommand("commands.admin.pardon.command", this::adminPardon,
-                "commands.admin.pardon.help");
-        d.registerAlwaysActiveCommand("commands.admin.join.command", this::adminJoin,
-                "commands.admin.join.help");
-        d.registerAlwaysActiveCommand("commands.admin.telegram.command", this::adminTelegram,
-                "commands.admin.telegram.help");
-        d.registerAlwaysActiveCommand("commands.admin.raw.command", this::adminRaw,
-                "commands.admin.raw.help");
-        d.registerAlwaysActiveCommand("commands.admin.prefix.command", this::adminPrefix,
-                "commands.admin.prefix.help");
+        d.registerAlwaysActiveCommand("commands.admin.start", this::adminStart);
+        d.registerAlwaysActiveCommand("commands.admin.stop", this::adminStop);
+        d.registerAlwaysActiveCommand("commands.admin.status", this::adminStatus);
+        d.registerAlwaysActiveCommand("commands.admin.kill", this::adminKill);
+        d.registerAlwaysActiveCommand("commands.admin.restart", this::adminRestart);
+        d.registerAlwaysActiveCommand("commands.admin.blacklist", this::adminBlacklist);
+        d.registerAlwaysActiveCommand("commands.admin.pardon", this::adminPardon);
+        d.registerAlwaysActiveCommand("commands.admin.join", this::adminJoin);
+        d.registerAlwaysActiveCommand("commands.admin.telegram", this::adminTelegram);
+        d.registerAlwaysActiveCommand("commands.admin.raw", this::adminRaw);
+        d.registerAlwaysActiveCommand("commands.admin.prefix", this::adminPrefix);
     }
 
     private void adminStart(MessageContext context, String args) {

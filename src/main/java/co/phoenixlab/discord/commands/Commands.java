@@ -39,14 +39,14 @@ public class Commands {
 
     public void register(CommandDispatcher d) {
         adminCommands.registerAdminCommands();
-        d.registerAlwaysActiveCommand("commands.general.admin.command", this::admin, "commands.general.admin.help");
-        d.registerCommand("commands.general.admins.command", this::listAdmins, "commands.general.admins.help");
-        d.registerCommand("commands.general.info.command", this::info, "commands.general.info.help");
-        d.registerCommand("commands.general.avatar.command", this::avatar, "commands.general.avatar.help");
-        d.registerCommand("commands.general.version.command", this::version, "commands.general.version.help");
-        d.registerCommand("commands.general.stats.command", this::stats, "commands.general.stats.help");
-        d.registerCommand("commands.general.roles.command", this::roles, "commands.general.roles.help");
-        d.registerCommand("commands.general.rolecolor.command", this::roleColor, "commands.general.rolecolor.help");
+        d.registerAlwaysActiveCommand("commands.general.admin", this::admin);
+        d.registerCommand("commands.general.admins", this::listAdmins);
+        d.registerCommand("commands.general.info", this::info);
+        d.registerCommand("commands.general.avatar", this::avatar);
+        d.registerCommand("commands.general.version", this::version);
+        d.registerCommand("commands.general.stats", this::stats);
+        d.registerCommand("commands.general.roles", this::roles);
+        d.registerCommand("commands.general.rolecolor", this::roleColor);
     }
 
     private void admin(MessageContext context, String args) {
