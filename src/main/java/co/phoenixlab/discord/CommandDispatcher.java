@@ -52,32 +52,36 @@ public class CommandDispatcher {
     }
 
     private void addHelpCommand() {
-        Command helpCommand = (context, args) -> {
-            Localizer l = context.getBot().getLocalizer();
-            if (!args.isEmpty()) {
-                CommandWrapper wrapper = commands.get(args.toUpperCase());
-                if (wrapper != null) {
-                    context.getBot().getApiClient().sendMessage(l.localize("commands.help.response.detailed",
-                            args, wrapper.detailedHelp, wrapper.argumentsHelp),
-                            context.getMessage().getChannelId());
-                } else {
-                    context.getBot().getApiClient().sendMessage(l.localize("commands.help.response.not_found",
-                            args),
-                            context.getMessage().getChannelId());
-                }
-                return;
-            }
-            String header = l.localize("commands.help.response.head", commands.size());
+        registerCommand("commands.help", this::help);
+    }
 
-            StringJoiner joiner = new StringJoiner("\n", header, "");
-            for (Map.Entry<String, CommandWrapper> entry : commands.entrySet()) {
-                joiner.add(l.localize("commands.help.response.entry",
-                        commandPrefix, entry.getKey().toLowerCase(), entry.getValue().helpDesc));
-            }
-            final String result = joiner.toString();
-            context.getBot().getApiClient().sendMessage(result, context.getMessage().getChannelId());
-        };
-        registerCommand("commands.help", helpCommand);
+    private void help(MessageContext context, String args) {
+        Localizer l = context.getBot().getLocalizer();
+        if (!args.isEmpty()) {
+            showDetailedCommandHelp(context, args, l);
+            return;
+        }
+        String header = l.localize("commands.help.response.head", commands.size());
+        StringJoiner joiner = new StringJoiner("\n", header, "");
+        for (Map.Entry<String, CommandWrapper> entry : commands.entrySet()) {
+            joiner.add(l.localize("commands.help.response.entry",
+                    commandPrefix, entry.getKey().toLowerCase(), entry.getValue().helpDesc));
+        }
+        final String result = joiner.toString();
+        context.getBot().getApiClient().sendMessage(result, context.getMessage().getChannelId());
+    }
+
+    private void showDetailedCommandHelp(MessageContext context, String args, Localizer l) {
+        CommandWrapper wrapper = commands.get(args.toUpperCase());
+        if (wrapper != null) {
+            context.getBot().getApiClient().sendMessage(l.localize("commands.help.response.detailed",
+                    args, wrapper.detailedHelp, wrapper.argumentsHelp),
+                    context.getMessage().getChannelId());
+        } else {
+            context.getBot().getApiClient().sendMessage(l.localize("commands.help.response.not_found",
+                    args),
+                    context.getMessage().getChannelId());
+        }
     }
 
     public void registerCommand(String commandNameBaseKey, Command command) {
