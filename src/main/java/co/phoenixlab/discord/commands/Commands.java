@@ -207,7 +207,7 @@ public class Commands {
         StringJoiner joiner = new StringJoiner(", ");
         member.getRoles().stream().
                 map(s -> client.getRole(s, server)).
-                filter(r -> r == NO_ROLE).
+                filter(r -> r != NO_ROLE).
                 map(r -> loc.localize("commands.general.roles.response.role.format", r.getName(), r.getId())).
                 forEach(joiner::add);
         return joiner.toString();
