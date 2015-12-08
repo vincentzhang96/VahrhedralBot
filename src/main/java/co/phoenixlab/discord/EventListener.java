@@ -23,12 +23,17 @@ public class EventListener {
         User me = bot.getApiClient().getClientUser();
         for (User user : message.getMentions()) {
             if (me.equals(user)) {
-                String otherId = message.getAuthor().getId();
-                bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.mention.response", otherId),
-                        message.getChannelId(), new String[] {otherId});
+                handleMention(message);
                 return;
             }
         }
     }
+
+    private void handleMention(Message message) {
+        String otherId = message.getAuthor().getId();
+        bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.mention.response", otherId),
+                message.getChannelId(), new String[] {otherId});
+    }
+
 
 }
