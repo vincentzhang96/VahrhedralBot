@@ -19,10 +19,7 @@ import org.apache.http.entity.ContentType;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.OptionalInt;
-import java.util.StringJoiner;
+import java.util.*;
 
 import static co.phoenixlab.discord.api.DiscordApiClient.*;
 import static co.phoenixlab.discord.commands.CommandUtil.findUser;
@@ -324,7 +321,8 @@ public class Commands {
 
     private void makeSandwich(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
-        if (loc.localize("commands.general.sandwich.magic_word").equalsIgnoreCase(args)) {
+        if (loc.localize("commands.general.sandwich.magic_word").equalsIgnoreCase(args) ||
+                new Random().nextBoolean()) {
             apiClient.sendMessage(loc.localize("commands.general.sandwich.response.deny"),
                     context.getMessage().getChannelId());
         } else {

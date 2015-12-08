@@ -21,6 +21,7 @@ import java.lang.management.MemoryUsage;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Random;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
@@ -290,11 +291,12 @@ public class AdminCommands {
 
     private void makeSandwich(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
-        if (loc.localize("commands.admin.sandwich.magic_word").equalsIgnoreCase(args)) {
-            apiClient.sendMessage(loc.localize("commands.general.sandwich.response"),
+        if (loc.localize("commands.admin.sandwich.magic_word").equalsIgnoreCase(args) ||
+                new Random().nextBoolean()) {
+            apiClient.sendMessage(loc.localize("commands.admin.sandwich.response"),
                     context.getMessage().getChannelId());
         } else {
-            apiClient.sendMessage(loc.localize("commands.general.sandwich.response.magic"),
+            apiClient.sendMessage(loc.localize("commands.admin.sandwich.response.magic"),
                     context.getMessage().getChannelId());
         }
     }
