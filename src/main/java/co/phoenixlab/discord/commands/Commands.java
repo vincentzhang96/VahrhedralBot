@@ -47,6 +47,7 @@ public class Commands {
         d.registerCommand("commands.general.stats", this::stats);
         d.registerCommand("commands.general.roles", this::roles);
         d.registerCommand("commands.general.rolecolor", this::roleColor);
+        d.registerCommand("commands.general.sandwich", this::makeSandwich);
     }
 
     private void admin(MessageContext context, String args) {
@@ -318,6 +319,17 @@ public class Commands {
             VahrhedralBot.LOGGER.warn("Unable to PATCH role", e);
             apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.general_error"),
                     message.getChannelId());
+        }
+    }
+
+    private void makeSandwich(MessageContext context, String args) {
+        DiscordApiClient apiClient = context.getApiClient();
+        if (loc.localize("commands.general.sandwich.magic_word").equalsIgnoreCase(args)) {
+            apiClient.sendMessage(loc.localize("commands.general.sandwich.response.deny"),
+                    context.getMessage().getChannelId());
+        } else {
+            apiClient.sendMessage(loc.localize("commands.general.sandwich.response.magic"),
+                    context.getMessage().getChannelId());
         }
     }
 

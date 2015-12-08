@@ -54,6 +54,7 @@ public class AdminCommands {
         d.registerAlwaysActiveCommand("commands.admin.telegram", this::adminTelegram);
         d.registerAlwaysActiveCommand("commands.admin.raw", this::adminRaw);
         d.registerAlwaysActiveCommand("commands.admin.prefix", this::adminPrefix);
+        d.registerAlwaysActiveCommand("commands.admin.sandwich", this::makeSandwich);
     }
 
     private void adminStart(MessageContext context, String args) {
@@ -283,6 +284,17 @@ public class AdminCommands {
             bot.saveConfig();
             apiClient.sendMessage(loc.localize("commands.admin.prefix.response.set",
                     bot.getConfig().getCommandPrefix()),
+                    context.getMessage().getChannelId());
+        }
+    }
+
+    private void makeSandwich(MessageContext context, String args) {
+        DiscordApiClient apiClient = context.getApiClient();
+        if (loc.localize("commands.admin.sandwich.magic_word").equalsIgnoreCase(args)) {
+            apiClient.sendMessage(loc.localize("commands.general.sandwich.response"),
+                    context.getMessage().getChannelId());
+        } else {
+            apiClient.sendMessage(loc.localize("commands.general.sandwich.response.magic"),
                     context.getMessage().getChannelId());
         }
     }
