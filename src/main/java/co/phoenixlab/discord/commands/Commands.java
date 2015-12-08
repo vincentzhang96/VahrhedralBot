@@ -283,9 +283,15 @@ public class Commands {
             Map<String, String> headers = new HashMap<>();
             headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
             headers.put(HttpHeaders.AUTHORIZATION, apiClient.getToken());
+            JSONObject requestBody = new JSONObject();
+            requestBody.put("color", color);
+            requestBody.put("hoist", role.isHoist());
+            requestBody.put("name", role.getName());
+            requestBody.put("permissions", role.getPermissions());
             HttpResponse<JsonNode> response = Unirest.
                     patch(ApiConst.SERVERS_ENDPOINT + server.getId() + "/roles/" + role.getId()).
                     headers(headers).
+                    body(new JsonNode(requestBody.toString())).
                     asJson();
             if (response.getStatus() != 200) {
                 VahrhedralBot.LOGGER.warn("Unable to PATCH role: HTTP {}: {}",
