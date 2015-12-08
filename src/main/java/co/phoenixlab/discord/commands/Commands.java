@@ -8,15 +8,11 @@ import co.phoenixlab.discord.VahrhedralBot;
 import co.phoenixlab.discord.api.ApiConst;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.DiscordWebSocketClient;
-import co.phoenixlab.discord.api.entities.Channel;
-import co.phoenixlab.discord.api.entities.Message;
-import co.phoenixlab.discord.api.entities.Server;
-import co.phoenixlab.discord.api.entities.User;
+import co.phoenixlab.discord.api.entities.*;
 
 import java.util.StringJoiner;
 
-import static co.phoenixlab.discord.api.DiscordApiClient.NO_SERVER;
-import static co.phoenixlab.discord.api.DiscordApiClient.NO_USER;
+import static co.phoenixlab.discord.api.DiscordApiClient.*;
 import static co.phoenixlab.discord.commands.CommandUtil.findUser;
 
 public class Commands {
@@ -37,6 +33,7 @@ public class Commands {
         d.registerCommand("commands.general.avatar.command", this::avatar, "commands.general.avatar.help");
         d.registerCommand("commands.general.version.command", this::version, "commands.general.version.help");
         d.registerCommand("commands.general.stats.command", this::stats, "commands.general.stats.help");
+        d.registerCommand("commands.general.roles.command", this::roles, "commands.general.roles.help");
     }
 
     private void admin(MessageContext context, String args) {
@@ -173,6 +170,47 @@ public class Commands {
                 wsStats.keepAliveCount.sum(),
                 wsStats.errorCount.sum()),
                 context.getMessage().getChannelId());
+    }
+
+    private void roles(MessageContext context, String args) {
+        DiscordApiClient apiClient = context.getApiClient();
+        Message message = context.getMessage();
+        User user;
+        if (!args.isEmpty()) {
+            user = findUser(context, args);
+            selfCheck(context, user);
+        } else {
+            user = message.getAuthor();
+        }
+        if (user == NO_USER) {
+            context.getApiClient().sendMessage(loc.localize("commands.general.roles.response.not_found"),
+                    message.getChannelId());
+        } else {
+            Channel channel = apiClient.getChannelById(context.getMessage().getChannelId());
+            Server server = channel.getParent();
+            Member member = apiClient.getUserMember(user, server);
+            if (member != NO_MEMBER) {
+                context.getApiClient().sendMessage(loc.localize("commands.general.roles.response.not_found"),
+                        message.getChannelId());
+            } else {
+                context.getApiClient().sendMessage(loc.localize("commands.general.roles.response.format",
+                        user.getUsername(), listRoles(member, server, apiClient)),
+                        message.getChannelId());
+            }
+        }
+    }
+
+    private String listRoles(Member member, Server server, DiscordApiClient client) {
+        if (member.getRoles().isEmpty()) {
+            return loc.localize("commands.general.roles.response.no_roles");
+        }
+        StringJoiner joiner = new StringJoiner(", ");
+        member.getRoles().stream().
+                map(s -> client.getRole(s, server)).
+                filter(r -> r == NO_ROLE).
+                map(r -> loc.localize("commands.general.roles.response.role.format", r.getName(), r.getId())).
+                forEach(joiner::add);
+        return joiner.toString();
     }
 
     private void selfCheck(MessageContext context, User user) {
