@@ -225,7 +225,8 @@ public class Commands {
         member.getRoles().stream().
                 map(s -> client.getRole(s, server)).
                 filter(r -> r != NO_ROLE).
-                map(r -> loc.localize("commands.general.roles.response.role.format", r.getName(), r.getId())).
+                map(r -> loc.localize("commands.general.roles.response.role.format",
+                        r.getName(), r.getId(), r.getColor())).
                 forEach(joiner::add);
         return joiner.toString();
     }
@@ -260,7 +261,7 @@ public class Commands {
             return;
         }
         String colorStr = split[1];
-        OptionalInt colorOpt = ParseInt.parseHexOptional(colorStr);
+        OptionalInt colorOpt = ParseInt.parseOptional(colorStr);
         if (!colorOpt.isPresent()) {
             apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.help_format"),
                     message.getChannelId());
