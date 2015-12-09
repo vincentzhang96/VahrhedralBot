@@ -419,6 +419,8 @@ public class DiscordWebSocketClient extends WebSocketClient {
         if (keepAliveFuture != null) {
             keepAliveFuture.cancel(true);
         }
+        statistics.deathCount.increment();
+        apiClient.getEventBus().post(new WebSocketCloseEvent(code, reason, remote));
     }
 
     @Override
@@ -444,5 +446,6 @@ public class DiscordWebSocketClient extends WebSocketClient {
         public final LongAdder messageReceiveCount = new LongAdder();
         public final LongAdder keepAliveCount = new LongAdder();
         public final LongAdder errorCount = new LongAdder();
+        public final LongAdder deathCount = new LongAdder();
     }
 }

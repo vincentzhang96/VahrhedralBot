@@ -191,6 +191,9 @@ public class VahrhedralBot implements Runnable {
     }
 
     public void shutdown(int code) {
+        if (apiClient != null) {
+            apiClient.stop();
+        }
         try {
             Unirest.shutdown();
         } catch (IOException e) {

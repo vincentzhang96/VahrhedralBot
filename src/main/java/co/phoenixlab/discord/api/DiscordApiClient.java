@@ -2,6 +2,7 @@ package co.phoenixlab.discord.api;
 
 import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.LogInEvent;
+import co.phoenixlab.discord.api.event.WebSocketCloseEvent;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.gson.Gson;
@@ -23,9 +24,13 @@ import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class DiscordApiClient {
 
@@ -64,6 +69,8 @@ public class DiscordApiClient {
     private final Map<String, PrivateChannel> privateChannels;
     private final Map<User, PrivateChannel> privateChannelsByUser;
 
+    private final AtomicBoolean active;
+
     public DiscordApiClient() {
         sessionId = new AtomicReference<>();
         clientUser = new AtomicReference<>();
@@ -72,6 +79,7 @@ public class DiscordApiClient {
         serverMap = new HashMap<>();
         privateChannels = new HashMap<>();
         privateChannelsByUser = new HashMap<>();
+        active = new AtomicBoolean();
         eventBus = new EventBus((e, c) -> {
             LOGGER.warn("Error while handling event {} when calling {}",
                     c.getEvent(), c.getSubscriberMethod().toGenericString());
@@ -123,8 +131,19 @@ public class DiscordApiClient {
             LOGGER.warn("Bad gateway", e);
             throw new IOException(e);
         }
-        webSocketClient.connect();
-
+        try {
+            int retryTimeSec = 0;
+            do {
+                active.set(webSocketClient.connectBlocking());
+                if (!active.get()) {
+                    LOGGER.warn("Unable to connect, retrying in {}s...", retryTimeSec);
+                    Thread.sleep(MILLISECONDS.convert(retryTimeSec, SECONDS));
+                    retryTimeSec = Math.min(retryTimeSec + 2, 30);  //  Cap at 30 interval
+                }
+            } while (!active.get());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private String getWebSocketGateway() throws IOException {
@@ -364,5 +383,27 @@ public class DiscordApiClient {
 
     public DiscordWebSocketClient getWebSocketClient() {
         return webSocketClient;
+    }
+
+    @Subscribe
+    private void onWebSocketClose(WebSocketCloseEvent event) {
+        if (!active.get()) {
+            //  Ignore
+            return;
+        }
+        //  Reconnect
+        active.set(false);
+        try {
+            openWebSocket();
+        } catch (IOException e) {
+            LOGGER.warn("Unable to reopen WebSocket", e);
+        }
+    }
+
+    public void stop() {
+        active.set(false);
+        executorService.shutdown();
+        eventBus.unregister(this);
+        webSocketClient.close();
     }
 }
