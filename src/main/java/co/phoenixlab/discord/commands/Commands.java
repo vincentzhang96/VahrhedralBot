@@ -172,6 +172,7 @@ public class Commands {
         CommandDispatcher mainDispatcher = context.getBot().getMainCommandDispatcher();
         CommandDispatcher.Statistics mdStats = mainDispatcher.getStatistics();
         DiscordWebSocketClient.Statistics wsStats = apiClient.getWebSocketClient().getStatistics();
+        DiscordApiClient.Statistics apiStats = apiClient.getStatistics();
         apiClient.sendMessage(loc.localize("commands.general.stats.response.format",
                 mdStats.commandHandleTime.summary(),
                 mdStats.acceptedCommandHandleTime.summary(),
@@ -181,7 +182,11 @@ public class Commands {
                 wsStats.avgMessageHandleTime.summary(),
                 wsStats.messageReceiveCount.sum(),
                 wsStats.keepAliveCount.sum(),
-                wsStats.errorCount.sum()),
+                wsStats.errorCount.sum(),
+                apiStats.connectAttemptCount.sum(),
+                apiStats.eventCount.sum(),
+                apiStats.eventDispatchErrorCount.sum(),
+                apiStats.restErrorCount.sum()),
                 context.getMessage().getChannelId());
     }
 

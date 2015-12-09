@@ -26,6 +26,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -71,7 +72,10 @@ public class DiscordApiClient {
 
     private final AtomicBoolean active;
 
+    private final Statistics statistics;
+
     public DiscordApiClient() {
+        statistics = new Statistics();
         sessionId = new AtomicReference<>();
         clientUser = new AtomicReference<>();
         executorService = Executors.newScheduledThreadPool(4);
@@ -84,9 +88,15 @@ public class DiscordApiClient {
             LOGGER.warn("Error while handling event {} when calling {}",
                     c.getEvent(), c.getSubscriberMethod().toGenericString());
             LOGGER.warn("EventBus dispatch exception", e);
+            statistics.eventDispatchErrorCount.increment();
         });
         gson = new GsonBuilder().serializeNulls().create();
         eventBus.register(this);
+    }
+
+    @Subscribe
+    private void countEvent(Object object) {
+        statistics.eventCount.increment();
     }
 
     public void logIn(String email, String password) throws IOException {
@@ -105,6 +115,7 @@ public class DiscordApiClient {
                     body(auth.toJSONString()).
                     asJson();
         } catch (UnirestException e) {
+            statistics.restErrorCount.increment();
             throw new IOException("Unable to log in", e);
         }
         int status = response.getStatus();
@@ -116,6 +127,7 @@ public class DiscordApiClient {
             } else {
                 LOGGER.warn("Unable to log in, Discord may be having issues");
             }
+            statistics.restErrorCount.increment();
             throw new IOException("Unable to log in: HTTP " + response.getStatus() + ": " + response.getStatusText());
         }
         token = response.getBody().getObject().getString("token");
@@ -134,6 +146,7 @@ public class DiscordApiClient {
         try {
             int retryTimeSec = 0;
             do {
+                statistics.connectAttemptCount.increment();
                 active.set(webSocketClient.connectBlocking());
                 if (!active.get()) {
                     LOGGER.warn("Unable to connect, retrying in {}s...", retryTimeSec);
@@ -153,10 +166,12 @@ public class DiscordApiClient {
                     header("authorization", token).
                     asJson();
         } catch (UnirestException e) {
+            statistics.restErrorCount.increment();
             throw new IOException("Unable to retrieve websocket gateway", e);
         }
         int status = response.getStatus();
         if (status != HttpURLConnection.HTTP_OK) {
+            statistics.restErrorCount.increment();
             LOGGER.warn("Unable to retrieve websocket gateway: HTTP {}: {}", status, response.getStatusText());
             throw new IOException("Unable to retrieve websocket : HTTP " + status + ": " + response.getStatusText());
         }
@@ -205,11 +220,13 @@ public class DiscordApiClient {
                     body(content).
                     asJson();
         } catch (UnirestException e) {
+            statistics.restErrorCount.increment();
             LOGGER.warn("Unable to send message", e);
             return;
         }
         int status = response.getStatus();
         if (status != 200) {
+            statistics.restErrorCount.increment();
             LOGGER.warn("Unable to send message: HTTP {}: {}", status, response.getStatusText());
             return;
         }
@@ -385,6 +402,14 @@ public class DiscordApiClient {
         return webSocketClient;
     }
 
+    public Statistics getStatistics() {
+        return statistics;
+    }
+
+    public boolean isActive() {
+        return active.get();
+    }
+
     @Subscribe
     private void onWebSocketClose(WebSocketCloseEvent event) {
         if (!active.get()) {
@@ -405,5 +430,12 @@ public class DiscordApiClient {
         executorService.shutdown();
         eventBus.unregister(this);
         webSocketClient.close();
+    }
+
+    public static class Statistics {
+        public final LongAdder eventCount = new LongAdder();
+        public final LongAdder eventDispatchErrorCount = new LongAdder();
+        public final LongAdder connectAttemptCount = new LongAdder();
+        public final LongAdder restErrorCount = new LongAdder();
     }
 }
