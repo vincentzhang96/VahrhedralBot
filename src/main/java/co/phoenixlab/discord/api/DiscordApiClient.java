@@ -95,7 +95,7 @@ public class DiscordApiClient {
     }
 
     @Subscribe
-    private void countEvent(Object object) {
+    public void countEvent(Object object) {
         statistics.eventCount.increment();
     }
 
@@ -411,7 +411,7 @@ public class DiscordApiClient {
     }
 
     @Subscribe
-    private void onWebSocketClose(WebSocketCloseEvent event) {
+    public void onWebSocketClose(WebSocketCloseEvent event) {
         if (!active.get()) {
             //  Ignore
             return;
