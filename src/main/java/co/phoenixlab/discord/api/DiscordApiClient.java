@@ -356,7 +356,7 @@ public class DiscordApiClient {
 
     public User getUserById(String userId, Server server) {
         if (server == null || server == NO_SERVER) {
-            getUserById(userId);
+            return getUserById(userId);
         }
         for (Member member : server.getMembers()) {
             User user = member.getUser();
