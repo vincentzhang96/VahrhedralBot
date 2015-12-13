@@ -58,6 +58,11 @@ public class EventListener {
     public void onMemberChangeEvent(MemberChangeEvent event) {
         if (event.getMemberChange() == MemberChangeEvent.MemberChange.ADDED) {
             Server server = event.getServer();
+            //  TODO TEMPORARY Disable for servers with more than 100 people
+            //  until per-server feature controls are implemented
+            if (server.getMembers().size() > 100) {
+                return;
+            }
             //  Default channel has same ID as server
             Channel channel = bot.getApiClient().getChannelById(server.getId());
             if (channel != DiscordApiClient.NO_CHANNEL) {
