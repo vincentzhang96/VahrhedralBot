@@ -11,6 +11,7 @@ import co.phoenixlab.discord.api.entities.OutboundMessage;
 import co.phoenixlab.discord.api.entities.Server;
 import co.phoenixlab.discord.api.entities.User;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
@@ -336,11 +337,10 @@ public class AdminCommands {
         }
     }
 
-    class ScriptHelper {
+    public class ScriptHelper {
 
         private final MessageContext context;
         private boolean suppressOutput;
-
 
         public ScriptHelper(MessageContext context) {
             this.context = context;
@@ -348,15 +348,19 @@ public class AdminCommands {
         }
 
         public void sendMessage(String content) {
-            context.getApiClient().sendMessage(content, context.getMessage().getChannelId());
+            sendMessageCid(content, context.getMessage().getChannelId());
         }
 
-        public void sendMessage(String content, String cid) {
+        public void sendMessageCid(String content, String cid) {
             context.getApiClient().sendMessage(content, cid);
         }
 
         public void suppress() {
             suppressOutput = true;
+        }
+
+        public Gson gson() {
+            return new GsonBuilder().setPrettyPrinting().create();
         }
 
     }
