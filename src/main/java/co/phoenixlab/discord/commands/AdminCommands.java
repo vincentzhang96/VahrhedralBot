@@ -339,7 +339,7 @@ public class AdminCommands {
                 apiClient.sendMessage("```" + retStr + "```",
                         message.getChannelId());
             }
-        } catch (ScriptException e) {
+        } catch (Exception e) {
             VahrhedralBot.LOGGER.warn("Unable to evaluate script", e);
             apiClient.sendMessage("```" + e.getMessage() + "```", message.getChannelId());
         }
