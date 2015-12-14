@@ -359,8 +359,8 @@ public class AdminCommands {
             suppressOutput = true;
         }
 
-        public Gson gson() {
-            return new GsonBuilder().setPrettyPrinting().create();
+        public String toJson(Object o) {
+            return new GsonBuilder().setPrettyPrinting().create().toJson(o);
         }
 
     }
