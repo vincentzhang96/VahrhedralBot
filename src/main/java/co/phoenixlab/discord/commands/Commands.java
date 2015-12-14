@@ -27,15 +27,18 @@ import static co.phoenixlab.discord.commands.CommandUtil.findUser;
 public class Commands {
 
     private final AdminCommands adminCommands;
+    private final DnCommands dnCommands;
     private final Localizer loc;
 
     public Commands(VahrhedralBot bot) {
         adminCommands = new AdminCommands(bot);
+        dnCommands = new DnCommands(bot);
         loc = bot.getLocalizer();
     }
 
     public void register(CommandDispatcher d) {
         adminCommands.registerAdminCommands();
+        dnCommands.registerDnCommands();
         d.registerAlwaysActiveCommand("commands.general.admin", this::admin);
         d.registerCommand("commands.general.admins", this::listAdmins);
         d.registerCommand("commands.general.info", this::info);
@@ -45,6 +48,7 @@ public class Commands {
         d.registerCommand("commands.general.roles", this::roles);
         d.registerCommand("commands.general.rolecolor", this::roleColor);
         d.registerCommand("commands.general.sandwich", this::makeSandwich);
+        d.registerCommand("commands.general.dn", this::dnCommands);
     }
 
     private void admin(MessageContext context, String args) {
@@ -336,6 +340,16 @@ public class Commands {
             apiClient.sendMessage(loc.localize("commands.general.sandwich.response.magic"),
                     context.getMessage().getChannelId());
         }
+    }
+
+    private void dnCommands(MessageContext context, String args) {
+        Message message = context.getMessage();
+        if (args.isEmpty()) {
+            args = "help";
+        }
+        dnCommands.getDispatcher().
+                handleCommand(new Message(message.getAuthor(), message.getChannelId(), args,
+                        message.getChannelId(), message.getMentions(), message.getTime()));
     }
 
     private boolean checkPermission(Permission permission, Member member, Server server, DiscordApiClient apiClient) {
