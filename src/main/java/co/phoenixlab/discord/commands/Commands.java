@@ -365,7 +365,7 @@ public class Commands {
         if (!context.getBot().getConfig().isAdmin(message.getAuthor().getId())) {
             if (lastInsultTime != null) {
                 Instant now = Instant.now();
-                if (now.toEpochMilli() - lastInsultTime.toEpochMilli() < TimeUnit.MINUTES.toMillis(5)) {
+                if (now.toEpochMilli() - lastInsultTime.toEpochMilli() < TimeUnit.MINUTES.toMillis(1)) {
                     apiClient.sendMessage(loc.localize("commands.general.insult.response.timeout"),
                             message.getChannelId());
                     return;
