@@ -41,7 +41,9 @@ public class DnCommands {
                 double rawHp = parseStat(split[0]);
                 double rawDef = parseStat(split[1]);
                 double rawMDef = parseStat(split[2]);
-
+                if (rawHp < 0 || rawDef < 0 || rawMDef < 0) {
+                    throw new NumberFormatException();
+                }
                 double def = DEFENSE_80_SCALAR * rawDef + DEFENSE_80_CONSTANT;
                 double mDef = DEFENSE_80_SCALAR * rawMDef + DEFENSE_80_CONSTANT;
                 //  Prevent div0 by forcing defs to not be 100
