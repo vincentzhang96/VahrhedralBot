@@ -376,23 +376,22 @@ public class Commands {
         User user;
         if (!args.isEmpty()) {
             user = findUser(context, args);
-            selfCheck(context, user);
         } else {
-            context.getApiClient().sendMessage(loc.localize("commands.general.insult.response.missing"),
+            apiClient.sendMessage(loc.localize("commands.general.insult.response.missing"),
                     message.getChannelId());
             return;
         }
         if (user == NO_USER) {
-            context.getApiClient().sendMessage(loc.localize("commands.general.insult.response.not_found"),
+            apiClient.sendMessage(loc.localize("commands.general.insult.response.not_found"),
                     message.getChannelId());
             return;
         }
         String insult = getInsult();
         if (insult == null) {
-            context.getApiClient().sendMessage(loc.localize("commands.general.insult.response.error"),
+            apiClient.sendMessage(loc.localize("commands.general.insult.response.error"),
                     message.getChannelId());
         } else {
-            context.getApiClient().sendMessage(loc.localize("commands.general.insult.response.format",
+            apiClient.sendMessage(loc.localize("commands.general.insult.response.format",
                     user.getUsername(), insult),
                     message.getChannelId(), new String[]{user.getId()});
         }
