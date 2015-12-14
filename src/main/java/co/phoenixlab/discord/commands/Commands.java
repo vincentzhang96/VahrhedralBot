@@ -1,5 +1,6 @@
 package co.phoenixlab.discord.commands;
 
+import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.common.lang.number.ParseInt;
 import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.CommandDispatcher;
@@ -19,7 +20,9 @@ import org.apache.http.entity.ContentType;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static co.phoenixlab.discord.api.DiscordApiClient.*;
 import static co.phoenixlab.discord.commands.CommandUtil.findUser;
@@ -29,6 +32,9 @@ public class Commands {
     private final AdminCommands adminCommands;
     private final DnCommands dnCommands;
     private final Localizer loc;
+
+    //  Temporary until command throttling is implemented
+    private Instant lastInsultTime;
 
     public Commands(VahrhedralBot bot) {
         adminCommands = new AdminCommands(bot);
@@ -49,6 +55,7 @@ public class Commands {
         d.registerCommand("commands.general.rolecolor", this::roleColor);
         d.registerCommand("commands.general.sandwich", this::makeSandwich);
         d.registerCommand("commands.general.dn", this::dnCommands);
+        d.registerCommand("commands.general.insult", this::insult);
     }
 
     private void admin(MessageContext context, String args) {
@@ -350,6 +357,64 @@ public class Commands {
         dnCommands.getDispatcher().
                 handleCommand(new Message(message.getAuthor(), message.getChannelId(), args,
                         message.getChannelId(), message.getMentions(), message.getTime()));
+    }
+
+    private void insult(MessageContext context, String args) {
+        DiscordApiClient apiClient = context.getApiClient();
+        Message message = context.getMessage();
+        if (lastInsultTime != null) {
+            Instant now = Instant.now();
+            if (now.toEpochMilli() - lastInsultTime.toEpochMilli() < TimeUnit.MINUTES.toMillis(5)) {
+                apiClient.sendMessage(loc.localize("commands.general.insult.response.timeout"),
+                        message.getChannelId());
+                return;
+            }
+        }
+        lastInsultTime = Instant.now();
+        User user;
+        if (!args.isEmpty()) {
+            user = findUser(context, args);
+            selfCheck(context, user);
+        } else {
+            context.getApiClient().sendMessage(loc.localize("commands.general.insult.response.missing"),
+                    message.getChannelId());
+            return;
+        }
+        if (user == NO_USER) {
+            context.getApiClient().sendMessage(loc.localize("commands.general.insult.response.not_found"),
+                    message.getChannelId());
+            return;
+        }
+        String insult = getInsult();
+        if (insult == null) {
+            context.getApiClient().sendMessage(loc.localize("commands.general.insult.response.error"),
+                    message.getChannelId());
+        } else {
+            context.getApiClient().sendMessage(loc.localize("commands.general.insult.response.format",
+                    user.getUsername(), insult),
+                    message.getChannelId(), new String[]{user.getId()});
+        }
+
+    }
+
+    private String getInsult() {
+        try {
+            HttpResponse<JsonNode> response = Unirest.get("http://quandyfactory.com/insult/json").
+                    asJson();
+            if (response.getStatus() != 200) {
+                VahrhedralBot.LOGGER.warn("Unable to load insult, HTTP {}: {}",
+                        response.getStatus(), response.getStatusText());
+                return null;
+            }
+            JsonNode node = response.getBody();
+            return SafeNav.of(node).
+                    next(JsonNode::getObject).
+                    next(o -> o.getString("insult")).
+                    get();
+        } catch (UnirestException e) {
+            VahrhedralBot.LOGGER.warn("Unable to load insult", e);
+            return null;
+        }
     }
 
     private boolean checkPermission(Permission permission, Member member, Server server, DiscordApiClient apiClient) {
