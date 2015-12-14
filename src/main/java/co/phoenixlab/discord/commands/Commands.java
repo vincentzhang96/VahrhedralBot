@@ -362,15 +362,17 @@ public class Commands {
     private void insult(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
         Message message = context.getMessage();
-        if (lastInsultTime != null) {
-            Instant now = Instant.now();
-            if (now.toEpochMilli() - lastInsultTime.toEpochMilli() < TimeUnit.MINUTES.toMillis(5)) {
-                apiClient.sendMessage(loc.localize("commands.general.insult.response.timeout"),
-                        message.getChannelId());
-                return;
+        if (!context.getBot().getConfig().isAdmin(message.getAuthor().getId())) {
+            if (lastInsultTime != null) {
+                Instant now = Instant.now();
+                if (now.toEpochMilli() - lastInsultTime.toEpochMilli() < TimeUnit.MINUTES.toMillis(5)) {
+                    apiClient.sendMessage(loc.localize("commands.general.insult.response.timeout"),
+                            message.getChannelId());
+                    return;
+                }
             }
+            lastInsultTime = Instant.now();
         }
-        lastInsultTime = Instant.now();
         User user;
         if (!args.isEmpty()) {
             user = findUser(context, args);
