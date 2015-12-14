@@ -1,6 +1,5 @@
 package co.phoenixlab.discord.commands;
 
-import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.CommandDispatcher;
 import co.phoenixlab.discord.MessageContext;
@@ -41,13 +40,6 @@ public class AdminCommands {
         dispatcher = new CommandDispatcher(bot, "");
         loc = bot.getLocalizer();
         scriptEngine = new ScriptEngineManager().getEngineByName("nashorn");
-        setUpEngine(bot);
-    }
-
-    private void setUpEngine(VahrhedralBot bot) {
-        scriptEngine.put("bot", bot);
-        scriptEngine.put("api", bot.getApiClient());
-        scriptEngine.put("loc", loc);
     }
 
     public CommandDispatcher getAdminCommandDispatcher() {
@@ -322,21 +314,50 @@ public class AdminCommands {
             return;
         }
         try {
+            ScriptHelper helper = new ScriptHelper(context);
             ScriptContext scriptContext = new SimpleScriptContext();
             Bindings bindings = scriptContext.getBindings(ScriptContext.ENGINE_SCOPE);
+            bindings.put("_", helper);
             bindings.put("ctx", context);
             bindings.put("msg", context.getMessage());
             bindings.put("cid", context.getMessage().getChannelId());
             bindings.put("author", context.getMessage().getAuthor());
-            Object ret = scriptEngine.eval(args.substring(3, args.length() - 4), scriptContext);
-            apiClient.sendMessage("```" +
-                            SafeNav.of(ret).next(Object::toString).orElse("null") +
-                            "```",
-                    message.getChannelId());
+            bindings.put("bot", context.getBot());
+            bindings.put("loc", loc);
+            bindings.put("api", context.getApiClient());
+            Object ret = scriptEngine.eval(args.substring(3, args.length() - 3), scriptContext);
+            if (!helper.suppressOutput) {
+                apiClient.sendMessage("```" + ret + "```",
+                        message.getChannelId());
+            }
         } catch (ScriptException e) {
             VahrhedralBot.LOGGER.warn("Unable to evaluate script", e);
-            apiClient.sendMessage(e.toString(), message.getChannelId());
+            apiClient.sendMessage("```" + e.getMessage() + "```", message.getChannelId());
         }
     }
 
+    class ScriptHelper {
+
+        private final MessageContext context;
+        private boolean suppressOutput;
+
+
+        public ScriptHelper(MessageContext context) {
+            this.context = context;
+            suppressOutput = false;
+        }
+
+        public void sendMessage(String content) {
+            context.getApiClient().sendMessage(content, context.getMessage().getChannelId());
+        }
+
+        public void sendMessage(String content, String cid) {
+            context.getApiClient().sendMessage(content, cid);
+        }
+
+        public void suppress() {
+            suppressOutput = true;
+        }
+
+    }
 }
