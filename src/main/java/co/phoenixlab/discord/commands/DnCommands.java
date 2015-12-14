@@ -1,5 +1,6 @@
 package co.phoenixlab.discord.commands;
 
+import co.phoenixlab.common.lang.number.ParseLong;
 import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.CommandDispatcher;
 import co.phoenixlab.discord.MessageContext;
@@ -37,9 +38,9 @@ public class DnCommands {
         String[] split = args.split(" ");
         if (split.length == 3) {
             try {
-                double rawHp = parseStatInt(split[0]);
-                double rawDef = parseStatInt(split[1]);
-                double rawMDef = parseStatInt(split[2]);
+                double rawHp = parseStat(split[0]);
+                double rawDef = parseStat(split[1]);
+                double rawMDef = parseStat(split[2]);
 
                 double def = DEFENSE_80_SCALAR * rawDef + DEFENSE_80_CONSTANT;
                 double mDef = DEFENSE_80_SCALAR * rawMDef + DEFENSE_80_CONSTANT;
@@ -51,7 +52,7 @@ public class DnCommands {
                 double eMHp = rawHp / (1D - (mDef / 100D));
 
                 apiClient.sendMessage(loc.localize("commands.dn.defense.response.format",
-                        (int) def, (int) mDef, (int) eDHp, (int) eMHp),
+                        (int) def, (int) mDef, (long) eDHp, (long) eMHp),
                         message.getChannelId());
 
                 return;
@@ -63,12 +64,12 @@ public class DnCommands {
                 message.getChannelId());
     }
 
-    private int parseStatInt(String s) throws NumberFormatException {
+    private double parseStat(String s) throws NumberFormatException {
         //  Check if it ends in thousand or million
         String thousandSuffix = loc.localize("commands.dn.defense.suffix.thousand");
         int start = s.indexOf(thousandSuffix);
-        double working = 0;
-        int ret = 0;
+        double working;
+        double ret = 0;
         if (start == 0) {
             //  Invalid, cannot be just "k"
             throw new NumberFormatException();
@@ -80,7 +81,7 @@ public class DnCommands {
             } catch (NumberFormatException nfe) {
                 throw new NumberFormatException();
             }
-            ret = (int) (working * 1000.0);
+            ret = working * 1000.0;
         } else {
             String millionSuffix = loc.localize("commands.dn.defense.suffix.million");
             start = s.indexOf(millionSuffix);
@@ -95,7 +96,25 @@ public class DnCommands {
                 } catch (NumberFormatException nfe) {
                     throw new NumberFormatException();
                 }
-                ret = (int) (working * 1000000.0);
+                ret = working * 1000000.0;
+            } else {
+                String billionSuffix = loc.localize("commands.dn.defense.suffix.billion");
+                start = s.indexOf(billionSuffix);
+                if (start == 0) {
+                    //  Invalid, cannot be just "b"
+                    throw new NumberFormatException();
+                }
+                if (start != -1) {
+                    String num = s.substring(0, start);
+                    try {
+                        working = Double.parseDouble(num);
+                    } catch (NumberFormatException nfe) {
+                        throw new NumberFormatException();
+                    }
+                    ret = working * 1000000000.0;
+                } else {
+                    ret = ParseLong.parseDec(s);
+                }
             }
         }
         return ret;
