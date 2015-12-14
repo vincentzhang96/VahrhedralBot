@@ -328,7 +328,15 @@ public class AdminCommands {
             bindings.put("api", context.getApiClient());
             Object ret = scriptEngine.eval(args.substring(3, args.length() - 3), scriptContext);
             if (!helper.suppressOutput) {
-                apiClient.sendMessage("```" + ret + "```",
+                String retStr = "null";
+                if (ret != null) {
+                    if (helper.outputAsJson) {
+                        retStr = new GsonBuilder().setPrettyPrinting().create().toJson(ret);
+                    } else {
+                        retStr = ret.toString();
+                    }
+                }
+                apiClient.sendMessage("```" + retStr + "```",
                         message.getChannelId());
             }
         } catch (ScriptException e) {
@@ -340,7 +348,8 @@ public class AdminCommands {
     public class ScriptHelper {
 
         private final MessageContext context;
-        private boolean suppressOutput;
+        public boolean suppressOutput;
+        public boolean outputAsJson;
 
         public ScriptHelper(MessageContext context) {
             this.context = context;
@@ -359,9 +368,8 @@ public class AdminCommands {
             suppressOutput = true;
         }
 
-        public String toJson(Object o) {
-            return new GsonBuilder().setPrettyPrinting().create().toJson(o);
+        public void outputAsJson() {
+            outputAsJson = true;
         }
-
     }
 }
