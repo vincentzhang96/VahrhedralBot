@@ -18,9 +18,7 @@ import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.http.HttpHeaders;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
+import javax.script.*;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
 import java.net.MalformedURLException;
@@ -324,8 +322,13 @@ public class AdminCommands {
             return;
         }
         try {
-            scriptEngine.put("ctx", context);
-            Object ret = scriptEngine.eval(args.substring(3, args.length() - 4));
+            ScriptContext scriptContext = new SimpleScriptContext();
+            Bindings bindings = scriptContext.getBindings(ScriptContext.ENGINE_SCOPE);
+            bindings.put("ctx", context);
+            bindings.put("msg", context.getMessage());
+            bindings.put("cid", context.getMessage().getChannelId());
+            bindings.put("author", context.getMessage().getAuthor());
+            Object ret = scriptEngine.eval(args.substring(3, args.length() - 4), scriptContext);
             apiClient.sendMessage("```" +
                             SafeNav.of(ret).next(Object::toString).orElse("null") +
                             "```",
