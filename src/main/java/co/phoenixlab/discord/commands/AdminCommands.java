@@ -1,11 +1,13 @@
 package co.phoenixlab.discord.commands;
 
+import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.CommandDispatcher;
 import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.VahrhedralBot;
 import co.phoenixlab.discord.api.ApiConst;
 import co.phoenixlab.discord.api.DiscordApiClient;
+import co.phoenixlab.discord.api.entities.Message;
 import co.phoenixlab.discord.api.entities.OutboundMessage;
 import co.phoenixlab.discord.api.entities.Server;
 import co.phoenixlab.discord.api.entities.User;
@@ -16,6 +18,9 @@ import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.http.HttpHeaders;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
 import java.net.MalformedURLException;
@@ -32,10 +37,19 @@ public class AdminCommands {
 
     private final CommandDispatcher dispatcher;
     private Localizer loc;
+    private final ScriptEngine scriptEngine;
 
     public AdminCommands(VahrhedralBot bot) {
         dispatcher = new CommandDispatcher(bot, "");
         loc = bot.getLocalizer();
+        scriptEngine = new ScriptEngineManager().getEngineByName("nashorn");
+        setUpEngine(bot);
+    }
+
+    private void setUpEngine(VahrhedralBot bot) {
+        scriptEngine.put("bot", bot);
+        scriptEngine.put("api", bot.getApiClient());
+        scriptEngine.put("loc", loc);
     }
 
     public CommandDispatcher getAdminCommandDispatcher() {
@@ -56,6 +70,7 @@ public class AdminCommands {
         d.registerAlwaysActiveCommand("commands.admin.raw", this::adminRaw);
         d.registerAlwaysActiveCommand("commands.admin.prefix", this::adminPrefix);
         d.registerAlwaysActiveCommand("commands.admin.sandwich", this::makeSandwich);
+        d.registerAlwaysActiveCommand("commands.admin.eval", this::eval);
     }
 
     private void adminStart(MessageContext context, String args) {
@@ -298,6 +313,26 @@ public class AdminCommands {
         } else {
             apiClient.sendMessage(loc.localize("commands.admin.sandwich.response.magic"),
                     context.getMessage().getChannelId());
+        }
+    }
+
+    private void eval(MessageContext context, String args) {
+        DiscordApiClient apiClient = context.getApiClient();
+        Message message = context.getMessage();
+        if (!args.startsWith("```") || !args.endsWith("```")) {
+            apiClient.sendMessage("##TEMPORARY_MSG##Use triple backtick code block", message.getChannelId());
+            return;
+        }
+        try {
+            scriptEngine.put("ctx", context);
+            Object ret = scriptEngine.eval(args.substring(3, args.length() - 4));
+            apiClient.sendMessage("```" +
+                            SafeNav.of(ret).next(Object::toString).orElse("null") +
+                            "```",
+                    message.getChannelId());
+        } catch (ScriptException e) {
+            VahrhedralBot.LOGGER.warn("Unable to evaluate script", e);
+            apiClient.sendMessage(e.toString(), message.getChannelId());
         }
     }
 
