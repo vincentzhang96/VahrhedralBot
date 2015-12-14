@@ -46,12 +46,12 @@ public class DnCommands {
                 //  Prevent div0 by forcing defs to not be 100
                 def = Math.min(def, 99D);
                 mDef = Math.min(mDef, 99D);
-                
+
                 double eDHp = rawHp / (1D - (def / 100D));
                 double eMHp = rawHp / (1D - (mDef / 100D));
 
                 apiClient.sendMessage(loc.localize("commands.dn.defense.response.format",
-                        def, mDef,  eDHp, eMHp),
+                        (int) def, (int) mDef, (int) eDHp, (int) eMHp),
                         message.getChannelId());
 
                 return;
