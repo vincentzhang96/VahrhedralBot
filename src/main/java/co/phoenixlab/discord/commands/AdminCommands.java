@@ -46,6 +46,7 @@ public class AdminCommands {
         scriptEngine = new ScriptEngineManager().getEngineByName("nashorn");
         gson = new GsonBuilder().
                 setPrettyPrinting().
+                disableInnerClassSerialization().
                 create();
     }
 
