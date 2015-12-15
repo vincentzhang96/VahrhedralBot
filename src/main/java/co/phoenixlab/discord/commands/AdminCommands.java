@@ -407,6 +407,7 @@ public class AdminCommands {
                             return null;
                         }
                     }
+                    method.setAccessible(true);
                     return method;
                 }
             }
