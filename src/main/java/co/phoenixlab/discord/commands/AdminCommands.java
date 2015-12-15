@@ -6,17 +6,17 @@ import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.VahrhedralBot;
 import co.phoenixlab.discord.api.ApiConst;
 import co.phoenixlab.discord.api.DiscordApiClient;
-import co.phoenixlab.discord.api.DiscordWebSocketClient;
 import co.phoenixlab.discord.api.entities.Message;
 import co.phoenixlab.discord.api.entities.OutboundMessage;
 import co.phoenixlab.discord.api.entities.Server;
 import co.phoenixlab.discord.api.entities.User;
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.http.HttpHeaders;
-import org.slf4j.Logger;
 
 import javax.script.*;
 import java.lang.management.ManagementFactory;
@@ -25,25 +25,15 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Random;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 import static co.phoenixlab.discord.api.DiscordApiClient.NO_USER;
 import static co.phoenixlab.discord.commands.CommandUtil.findUser;
 
 public class AdminCommands {
-
-    private static final Set<Class<?>> excludedClasses = new HashSet<>();
-    private static final Set<Class<?>> excludedFieldTypes = new HashSet<>();
-
-    static {
-        excludedClasses.add(VahrhedralBot.class);
-        excludedClasses.add(DiscordApiClient.class);
-        excludedClasses.add(DiscordWebSocketClient.class);
-        excludedClasses.add(Logger.class);
-        excludedClasses.add(Localizer.class);
-        excludedFieldTypes.addAll(excludedClasses);
-    }
 
     private final CommandDispatcher dispatcher;
     private Localizer loc;
@@ -55,20 +45,6 @@ public class AdminCommands {
         loc = bot.getLocalizer();
         scriptEngine = new ScriptEngineManager().getEngineByName("nashorn");
         gson = new GsonBuilder().
-                setExclusionStrategies(new ExclusionStrategy() {
-                    @Override
-                    public boolean shouldSkipField(FieldAttributes f) {
-                        Class<?> clazz = f.getDeclaredClass();
-                        return excludedFieldTypes.contains(clazz) &&
-                                clazz.isAnnotationPresent(FunctionalInterface.class);
-                    }
-
-                    @Override
-                    public boolean shouldSkipClass(Class<?> clazz) {
-                        return excludedClasses.contains(clazz) &&
-                                clazz.isAnnotationPresent(FunctionalInterface.class);
-                    }
-                }).
                 setPrettyPrinting().
                 create();
     }
@@ -369,7 +345,7 @@ public class AdminCommands {
                 apiClient.sendMessage("```" + retStr + "```",
                         message.getChannelId());
             }
-        } catch (Exception e) {
+        } catch (Exception | StackOverflowError e) {
             VahrhedralBot.LOGGER.warn("Unable to evaluate script", e);
             apiClient.sendMessage("```" + e.getMessage() + "```", message.getChannelId());
         }
