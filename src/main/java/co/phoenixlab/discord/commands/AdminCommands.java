@@ -347,7 +347,11 @@ public class AdminCommands {
             }
         } catch (Exception | StackOverflowError e) {
             VahrhedralBot.LOGGER.warn("Unable to evaluate script", e);
-            apiClient.sendMessage("```" + e.getMessage() + "```", message.getChannelId());
+            String msg = e.getLocalizedMessage();
+            if (msg == null) {
+                msg = e.getClass().getSimpleName();
+            }
+            apiClient.sendMessage("```" + msg + "```", message.getChannelId());
         }
     }
 
