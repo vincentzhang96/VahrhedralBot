@@ -400,13 +400,13 @@ public class AdminCommands {
         }
 
         public Object field(Object object, String fieldName) throws Exception {
-            Field field = object.getClass().getField(fieldName);
+            Field field = object.getClass().getDeclaredField(fieldName);
             field.setAccessible(true);
             return field.get(object);
         }
 
         public Method method(Object object, String methodName, String[] argSimpleClassNames) {
-            for (Method method : object.getClass().getMethods()) {
+            for (Method method : object.getClass().getDeclaredMethods()) {
                 if (method.getName().equals(methodName) &&
                         method.getParameterCount() == argSimpleClassNames.length) {
                     Class<?>[] parameterTypes = method.getParameterTypes();
