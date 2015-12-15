@@ -362,7 +362,8 @@ public class Commands {
     private void insult(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
         Message message = context.getMessage();
-        if (!context.getBot().getConfig().isAdmin(message.getAuthor().getId())) {
+        boolean isNotAdmin = !context.getBot().getConfig().isAdmin(message.getAuthor().getId());
+        if (isNotAdmin) {
             if (lastInsultTime != null) {
                 Instant now = Instant.now();
                 if (now.toEpochMilli() - lastInsultTime.toEpochMilli() < TimeUnit.MINUTES.toMillis(1)) {
@@ -371,7 +372,6 @@ public class Commands {
                     return;
                 }
             }
-            lastInsultTime = Instant.now();
         }
         User user;
         if (!args.isEmpty()) {
@@ -394,6 +394,9 @@ public class Commands {
             apiClient.sendMessage(loc.localize("commands.general.insult.response.format",
                     user.getUsername(), insult),
                     message.getChannelId(), new String[]{user.getId()});
+            if (isNotAdmin) {
+                lastInsultTime = Instant.now();
+            }
         }
 
     }
