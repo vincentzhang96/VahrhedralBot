@@ -417,7 +417,7 @@ public class AdminCommands {
             Field[] fields = object.getClass().getDeclaredFields();
             StringJoiner j = new StringJoiner("\n");
             for (Field field : fields) {
-                j.add(field.getName() + " " + field.getType().getName());
+                j.add(field.getType().getName() + " " + field.getName());
             }
             return j.toString();
         }
