@@ -58,12 +58,15 @@ public class AdminCommands {
                 setExclusionStrategies(new ExclusionStrategy() {
                     @Override
                     public boolean shouldSkipField(FieldAttributes f) {
-                        return excludedFieldTypes.contains(f.getDeclaredClass());
+                        Class<?> clazz = f.getDeclaredClass();
+                        return excludedFieldTypes.contains(clazz) &&
+                                clazz.isAnnotationPresent(FunctionalInterface.class);
                     }
 
                     @Override
                     public boolean shouldSkipClass(Class<?> clazz) {
-                        return excludedClasses.contains(clazz);
+                        return excludedClasses.contains(clazz) &&
+                                clazz.isAnnotationPresent(FunctionalInterface.class);
                     }
                 }).
                 setPrettyPrinting().
