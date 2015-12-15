@@ -412,5 +412,23 @@ public class AdminCommands {
             }
             return null;
         }
+
+        public String fields(Object object) {
+            Field[] fields = object.getClass().getDeclaredFields();
+            StringJoiner j = new StringJoiner("\n");
+            for (Field field : fields) {
+                j.add(field.getName() + " " + field.getType().getName());
+            }
+            return j.toString();
+        }
+
+        public String methods(Object object) {
+            Method[] methods = object.getClass().getDeclaredMethods();
+            StringJoiner j = new StringJoiner("\n");
+            for (Method method : methods) {
+                j.add(method.toString());
+            }
+            return j.toString();
+        }
     }
 }
