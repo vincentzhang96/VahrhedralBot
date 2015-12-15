@@ -6,26 +6,26 @@ import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.VahrhedralBot;
 import co.phoenixlab.discord.api.ApiConst;
 import co.phoenixlab.discord.api.DiscordApiClient;
+import co.phoenixlab.discord.api.DiscordWebSocketClient;
 import co.phoenixlab.discord.api.entities.Message;
 import co.phoenixlab.discord.api.entities.OutboundMessage;
 import co.phoenixlab.discord.api.entities.Server;
 import co.phoenixlab.discord.api.entities.User;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
+import com.google.gson.*;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.http.HttpHeaders;
+import org.slf4j.Logger;
 
 import javax.script.*;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Random;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static co.phoenixlab.discord.api.DiscordApiClient.NO_USER;
@@ -33,14 +33,41 @@ import static co.phoenixlab.discord.commands.CommandUtil.findUser;
 
 public class AdminCommands {
 
+    private static final Set<Class<?>> excludedClasses = new HashSet<>();
+    private static final Set<Class<?>> excludedFieldTypes = new HashSet<>();
+
+    static {
+        excludedClasses.add(VahrhedralBot.class);
+        excludedClasses.add(DiscordApiClient.class);
+        excludedClasses.add(DiscordWebSocketClient.class);
+        excludedClasses.add(Logger.class);
+        excludedClasses.add(Localizer.class);
+        excludedFieldTypes.addAll(excludedClasses);
+    }
+
     private final CommandDispatcher dispatcher;
     private Localizer loc;
     private final ScriptEngine scriptEngine;
+    private final Gson gson;
 
     public AdminCommands(VahrhedralBot bot) {
         dispatcher = new CommandDispatcher(bot, "");
         loc = bot.getLocalizer();
         scriptEngine = new ScriptEngineManager().getEngineByName("nashorn");
+        gson = new GsonBuilder().
+                setExclusionStrategies(new ExclusionStrategy() {
+                    @Override
+                    public boolean shouldSkipField(FieldAttributes f) {
+                        return excludedFieldTypes.contains(f.getDeclaredClass());
+                    }
+
+                    @Override
+                    public boolean shouldSkipClass(Class<?> clazz) {
+                        return excludedClasses.contains(clazz);
+                    }
+                }).
+                setPrettyPrinting().
+                create();
     }
 
     public CommandDispatcher getAdminCommandDispatcher() {
@@ -331,7 +358,7 @@ public class AdminCommands {
                 String retStr = "null";
                 if (ret != null) {
                     if (helper.outputAsJson) {
-                        retStr = new GsonBuilder().setPrettyPrinting().create().toJson(ret);
+                        retStr = gson.toJson(ret);
                     } else {
                         retStr = ret.toString();
                     }
@@ -370,6 +397,28 @@ public class AdminCommands {
 
         public void outputAsJson() {
             outputAsJson = true;
+        }
+
+        public Object field(Object object, String fieldName) throws Exception {
+            Field field = object.getClass().getField(fieldName);
+            field.setAccessible(true);
+            return field.get(object);
+        }
+
+        public Method method(Object object, String methodName, String[] argSimpleClassNames) {
+            for (Method method : object.getClass().getMethods()) {
+                if (method.getName().equals(methodName) &&
+                        method.getParameterCount() == argSimpleClassNames.length) {
+                    Class<?>[] parameterTypes = method.getParameterTypes();
+                    for (int i = 0; i < argSimpleClassNames.length; i++) {
+                        if (!argSimpleClassNames[i].equals(parameterTypes[i].getSimpleName())) {
+                            return null;
+                        }
+                    }
+                    return method;
+                }
+            }
+            return null;
         }
     }
 }
