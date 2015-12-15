@@ -400,6 +400,14 @@ public class AdminCommands {
         }
 
         public Object field(Object object, String fieldName) throws Exception {
+            if (fieldName.contains(".")) {
+                String[] split = fieldName.split("\\.");
+                Object ret = object;
+                for (int i = 0; i < split.length; i++) {
+                    ret = field(ret, split[i]);
+                }
+                return ret;
+            }
             Field field = object.getClass().getDeclaredField(fieldName);
             field.setAccessible(true);
             return field.get(object);
