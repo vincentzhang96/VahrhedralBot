@@ -46,9 +46,9 @@ public class DnCommands {
                 }
                 double def = DEFENSE_80_SCALAR * rawDef + DEFENSE_80_CONSTANT;
                 double mDef = DEFENSE_80_SCALAR * rawMDef + DEFENSE_80_CONSTANT;
-                //  Prevent div0 by forcing defs to not be 100
-                def = Math.min(def, 99D);
-                mDef = Math.min(mDef, 99D);
+                //  Cap defense is 85%
+                def = Math.min(def, 85D);
+                mDef = Math.min(mDef, 85D);
 
                 double eDHp = rawHp / (1D - (def / 100D));
                 double eMHp = rawHp / (1D - (mDef / 100D));
