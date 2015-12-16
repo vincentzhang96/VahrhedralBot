@@ -39,6 +39,7 @@ public class AdminCommands {
     private Localizer loc;
     private final ScriptEngine scriptEngine;
     private final Gson gson;
+    public static final String TRIPLE_BACKTICK = "```";
 
     public AdminCommands(VahrhedralBot bot) {
         dispatcher = new CommandDispatcher(bot, "");
@@ -317,7 +318,7 @@ public class AdminCommands {
     private void eval(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
         Message message = context.getMessage();
-        if (!args.startsWith("```") || !args.endsWith("```")) {
+        if (!args.startsWith(TRIPLE_BACKTICK) || !args.endsWith(TRIPLE_BACKTICK)) {
             apiClient.sendMessage("##TEMPORARY_MSG##Use triple backtick code block", message.getChannelId());
             return;
         }
@@ -333,7 +334,9 @@ public class AdminCommands {
             bindings.put("bot", context.getBot());
             bindings.put("loc", loc);
             bindings.put("api", context.getApiClient());
-            Object ret = scriptEngine.eval(args.substring(3, args.length() - 3), scriptContext);
+            String baseScript = args.substring(TRIPLE_BACKTICK.length(),
+                    args.length() - TRIPLE_BACKTICK.length());
+            Object ret = scriptEngine.eval(baseScript, scriptContext);
             if (!helper.suppressOutput) {
                 String retStr = "null";
                 if (ret != null) {
@@ -343,7 +346,7 @@ public class AdminCommands {
                         retStr = ret.toString();
                     }
                 }
-                apiClient.sendMessage("```" + retStr + "```",
+                apiClient.sendMessage(TRIPLE_BACKTICK + retStr + TRIPLE_BACKTICK,
                         message.getChannelId());
             }
         } catch (Exception | StackOverflowError e) {
@@ -352,7 +355,7 @@ public class AdminCommands {
             if (msg == null) {
                 msg = e.getClass().getSimpleName();
             }
-            apiClient.sendMessage("```" + msg + "```", message.getChannelId());
+            apiClient.sendMessage(TRIPLE_BACKTICK + msg + TRIPLE_BACKTICK, message.getChannelId());
         }
     }
 
