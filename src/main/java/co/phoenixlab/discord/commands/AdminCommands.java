@@ -25,9 +25,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Random;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static co.phoenixlab.discord.api.DiscordApiClient.NO_USER;
@@ -433,6 +431,19 @@ public class AdminCommands {
                 j.add(method.toString());
             }
             return j.toString();
+        }
+
+        public String imports() {
+            List<String> packages = new ArrayList<>();
+            packages.add("co.phoenixlab.discord");
+            packages.add("co.phoenixlab.discord.commands");
+            packages.add("co.phoenixlab.discord.stats");
+            packages.add("co.phoenixlab.discord.api");
+            packages.add("co.phoenixlab.discord.api.entities");
+            packages.add("co.phoenixlab.discord.api.event");
+            packages.add("co.phoenixlab.discord.api.util");
+            packages.add("com.mashape.unirest.http");
+            return packages.stream().collect(Collectors.joining(", ", "new JavaImporter(", ")"));
         }
 
     }
