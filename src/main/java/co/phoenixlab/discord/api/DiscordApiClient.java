@@ -136,16 +136,16 @@ public class DiscordApiClient {
     }
 
     private void openWebSocket() throws IOException {
-        final String gateway = getWebSocketGateway();
-        try {
-            webSocketClient = new DiscordWebSocketClient(this, new URI(gateway));
-        } catch (URISyntaxException e) {
-            LOGGER.warn("Bad gateway", e);
-            throw new IOException(e);
-        }
         try {
             int retryTimeSec = 0;
             do {
+                final String gateway = getWebSocketGateway();
+                try {
+                    webSocketClient = new DiscordWebSocketClient(this, new URI(gateway));
+                } catch (URISyntaxException e) {
+                    LOGGER.warn("Bad gateway", e);
+                    throw new IOException(e);
+                }
                 statistics.connectAttemptCount.increment();
                 active.set(webSocketClient.connectBlocking());
                 if (!active.get()) {
