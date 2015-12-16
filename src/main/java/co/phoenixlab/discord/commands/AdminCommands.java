@@ -340,7 +340,7 @@ public class AdminCommands {
             if (!helper.suppressOutput) {
                 String retStr = "null";
                 if (ret != null) {
-                    if (helper.outputAsJson) {
+                    if (helper.asJson) {
                         retStr = gson.toJson(ret);
                     } else {
                         retStr = ret.toString();
@@ -363,7 +363,7 @@ public class AdminCommands {
 
         private final MessageContext context;
         public boolean suppressOutput;
-        public boolean outputAsJson;
+        public boolean asJson;
 
         public ScriptHelper(MessageContext context) {
             this.context = context;
@@ -382,8 +382,8 @@ public class AdminCommands {
             suppressOutput = true;
         }
 
-        public void outputAsJson() {
-            outputAsJson = true;
+        public void asJson() {
+            asJson = true;
         }
 
         public Object field(Object object, String fieldName) throws Exception {
@@ -434,5 +434,7 @@ public class AdminCommands {
             }
             return j.toString();
         }
+
+        public
     }
 }
