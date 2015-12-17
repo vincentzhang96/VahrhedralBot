@@ -433,18 +433,5 @@ public class AdminCommands {
             return j.toString();
         }
 
-        public String imports() {
-            List<String> packages = new ArrayList<>();
-            packages.add("co.phoenixlab.discord");
-            packages.add("co.phoenixlab.discord.commands");
-            packages.add("co.phoenixlab.discord.stats");
-            packages.add("co.phoenixlab.discord.api");
-            packages.add("co.phoenixlab.discord.api.entities");
-            packages.add("co.phoenixlab.discord.api.event");
-            packages.add("co.phoenixlab.discord.api.util");
-            packages.add("com.mashape.unirest.http");
-            return packages.stream().collect(Collectors.joining(", ", "new JavaImporter(", ")"));
-        }
-
     }
 }
