@@ -53,7 +53,7 @@ public class DnCommands {
             }
             double a = 0.00774 * fd;
             double b = 0.0000009093 * Math.pow(fd, 2.2);
-            double fdPercent = Math.max(a, b);
+            double fdPercent = Math.min(100, Math.max(a, b));
             apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.format",
                     level, (int) fdPercent),
                     context.getChannel());
