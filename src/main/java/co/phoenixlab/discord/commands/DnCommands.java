@@ -1,5 +1,6 @@
 package co.phoenixlab.discord.commands;
 
+import co.phoenixlab.common.lang.number.ParseInt;
 import co.phoenixlab.common.lang.number.ParseLong;
 import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.CommandDispatcher;
@@ -11,7 +12,9 @@ import co.phoenixlab.discord.api.entities.Message;
 public class DnCommands {
 
     public static final double DEFENSE_80_SCALAR = 0.0009326D;
+    public static final double DEFENSE_90_SCALAR = 0.0006D;
     public static final double DEFENSE_80_CONSTANT = 0.0037D;
+    public static final double DEFENSE_90_CONSTANT = 0D;
     private final CommandDispatcher dispatcher;
     private final VahrhedralBot bot;
     private Localizer loc;
@@ -36,7 +39,7 @@ public class DnCommands {
         //  Strip commas
         args = args.replace(",", "");
         String[] split = args.split(" ");
-        if (split.length == 3) {
+        if (split.length >= 3) {
             try {
                 double rawHp = parseStat(split[0]);
                 double rawDef = parseStat(split[1]);
@@ -44,8 +47,18 @@ public class DnCommands {
                 if (rawHp < 0 || rawDef < 0 || rawMDef < 0) {
                     throw new NumberFormatException();
                 }
-                double def = DEFENSE_80_SCALAR * rawDef + DEFENSE_80_CONSTANT;
-                double mDef = DEFENSE_80_SCALAR * rawMDef + DEFENSE_80_CONSTANT;
+                int level = 80;
+                if (split.length >= 4) {
+                    level = ParseInt.parseOrDefault(split[3], level);
+                }
+                double def = calculateDef(rawDef, level);
+                double mDef = calculateDef(rawMDef, level);
+                if (def < 0 || mDef < 0) {
+                    apiClient.sendMessage(loc.localize("commands.dn.defense.response.level_out_of_range",
+                            80, 90),
+                            context.getChannel());
+                    return;
+                }
                 //  Cap defense is 85%
                 def = Math.min(def, 85D);
                 mDef = Math.min(mDef, 85D);
@@ -54,7 +67,7 @@ public class DnCommands {
                 double eMHp = rawHp / (1D - (mDef / 100D));
 
                 apiClient.sendMessage(loc.localize("commands.dn.defense.response.format",
-                        (int) def, (int) mDef, (long) eDHp, (long) eMHp),
+                        level, (int) def, (int) mDef, (long) eDHp, (long) eMHp),
                         context.getChannel());
 
                 return;
@@ -64,6 +77,20 @@ public class DnCommands {
         apiClient.sendMessage(loc.localize("commands.dn.defense.response.invalid",
                 bot.getMainCommandDispatcher().getCommandPrefix()),
                 context.getChannel());
+    }
+
+    private double calculateDef(double def, int level) {
+        if (level < 80 || level > 90) {
+            return -1;
+        }
+        double alpha = (double)(level - 80) / 10D;
+        double scalar = lerp(DEFENSE_80_SCALAR, DEFENSE_90_SCALAR, alpha);
+        double constant = lerp(DEFENSE_80_CONSTANT, DEFENSE_90_CONSTANT, alpha);
+        return scalar * def + constant;
+    }
+
+    private double lerp(double a, double b, double alpha) {
+        return a + (b - a) * alpha;
     }
 
     private double parseStat(String s) throws NumberFormatException {
