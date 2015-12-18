@@ -67,7 +67,7 @@ public class DnCommands {
                 double eMHp = rawHp / (1D - (mDef / 100D));
 
                 apiClient.sendMessage(loc.localize("commands.dn.defense.response.format",
-                        level, (int) def, (int) mDef, (long) eDHp, (long) eMHp),
+                        (int) def, (int) mDef, (long) eDHp, (long) eMHp, level),
                         context.getChannel());
 
                 return;
