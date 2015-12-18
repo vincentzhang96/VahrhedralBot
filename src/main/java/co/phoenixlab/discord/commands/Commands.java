@@ -32,6 +32,7 @@ public class Commands {
     private final AdminCommands adminCommands;
     private final DnCommands dnCommands;
     private final Localizer loc;
+    private final Random random;
 
     //  Temporary until command throttling is implemented
     private Instant lastInsultTime;
@@ -40,6 +41,7 @@ public class Commands {
         adminCommands = new AdminCommands(bot);
         dnCommands = new DnCommands(bot);
         loc = bot.getLocalizer();
+        random = new Random();
     }
 
     public void register(CommandDispatcher d) {
@@ -59,11 +61,45 @@ public class Commands {
     }
 
     private void admin(MessageContext context, String args) {
-        //  Permission check
+        DiscordApiClient apiClient = context.getApiClient();
         Message message = context.getMessage();
+        //  Easter egg
+        if ("ku".equalsIgnoreCase(args)) {
+            int number = random.nextInt(9) + 1;
+            int spotY = random.nextInt(2);
+            String spotYKey;
+            String spotXKey;
+            if (spotY == 0) {
+                spotYKey = "commands.general.admin.response.easter_egg.center";
+            } else if (spotY == 1) {
+                spotYKey = "commands.general.admin.response.easter_egg.top";
+            } else {
+                spotYKey = "commands.general.admin.response.easter_egg.bottom";
+            }
+            int spotX = random.nextInt(2);
+            if (spotX == 0) {
+                spotXKey = "commands.general.admin.response.easter_egg.center";
+            } else if (spotX == 1) {
+                spotXKey = "commands.general.admin.response.easter_egg.right";
+            } else {
+                spotXKey = "commands.general.admin.response.easter_egg.left";
+            }
+            String pos;
+            if (spotX == 0 && spotY == 0) {
+                pos = loc.localize("commands.general.admin.response.easter_egg.center");
+            } else {
+                pos = loc.localize("commands.general.admin.response.easter_egg.tuple",
+                        loc.localize(spotYKey), loc.localize(spotXKey));
+            }
+            apiClient.sendMessage(
+                    loc.localize("commands.general.admin.response.easter_egg.format", pos),
+                    message.getChannelId());
+            return;
+        }
+        //  Permission check
         if (!context.getBot().getConfig().isAdmin(message.getAuthor().getId())) {
             if (context.getDispatcher().active().get()) {
-                context.getApiClient().sendMessage(
+                apiClient.sendMessage(
                         loc.localize("commands.general.admin.response.reject", message.getAuthor().getUsername()),
                         message.getChannelId());
             }
