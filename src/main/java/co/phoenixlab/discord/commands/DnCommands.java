@@ -56,6 +56,7 @@ public class DnCommands {
             apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.format",
                     level, (int) fdPercent),
                     context.getChannel());
+            return;
         }
         apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.invalid",
                 bot.getMainCommandDispatcher().getCommandPrefix()),
