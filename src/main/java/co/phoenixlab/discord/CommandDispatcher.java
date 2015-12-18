@@ -26,7 +26,7 @@ public class CommandDispatcher {
     private AtomicBoolean active;
 
     private String commandPrefix;
-    private BiPredicate<CommandWrapper, Message> customCommandDispatchChecker;
+    private BiPredicate<CommandWrapper, MessageContext> customCommandDispatchChecker;
     private final Statistics statistics;
 
     public CommandDispatcher(VahrhedralBot bot, String commandPrefix) {
@@ -47,7 +47,7 @@ public class CommandDispatcher {
         this.commandPrefix = commandPrefix;
     }
 
-    public void setCustomCommandDispatchChecker(BiPredicate<CommandWrapper, Message> customCommandDispatchChecker) {
+    public void setCustomCommandDispatchChecker(BiPredicate<CommandWrapper, MessageContext> customCommandDispatchChecker) {
         this.customCommandDispatchChecker = customCommandDispatchChecker;
     }
 
@@ -68,19 +68,19 @@ public class CommandDispatcher {
                     commandPrefix, entry.getKey().toLowerCase(), entry.getValue().helpDesc));
         }
         final String result = joiner.toString();
-        context.getBot().getApiClient().sendMessage(result, context.getMessage().getChannelId());
+        context.getApiClient().sendMessage(result, context.getChannel());
     }
 
     private void showDetailedCommandHelp(MessageContext context, String args, Localizer l) {
         CommandWrapper wrapper = commands.get(args.toUpperCase());
         if (wrapper != null) {
-            context.getBot().getApiClient().sendMessage(l.localize("commands.help.response.detailed",
+            context.getApiClient().sendMessage(l.localize("commands.help.response.detailed",
                     args, wrapper.detailedHelp, wrapper.argumentsHelp),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
         } else {
-            context.getBot().getApiClient().sendMessage(l.localize("commands.help.response.not_found",
+            context.getApiClient().sendMessage(l.localize("commands.help.response.not_found",
                     args),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
         }
     }
 
@@ -127,10 +127,11 @@ public class CommandDispatcher {
             String args = (split.length > 1 ? split[1] : "").trim();
             CommandWrapper wrapper = commands.get(cmd);
             if (wrapper != null) {
-                if (shouldCommandBeDispatched(wrapper, msg)) {
+                MessageContext messageContext = new MessageContext(msg, bot, this);
+                if (shouldCommandBeDispatched(wrapper, messageContext)) {
                     LOGGER.debug("Dispatching command {}", cmd);
                     long handleStartTime = System.nanoTime();
-                    wrapper.command.handleCommand(new MessageContext(msg, bot, this), args);
+                    wrapper.command.handleCommand(messageContext, args);
                     statistics.acceptedCommandHandleTime.
                             add(MILLISECONDS.convert(System.nanoTime() - handleStartTime, NANOSECONDS));
                     statistics.commandsHandledSuccessfully.increment();
@@ -153,10 +154,10 @@ public class CommandDispatcher {
         return active;
     }
 
-    public boolean shouldCommandBeDispatched(CommandWrapper command, Message msg) {
+    public boolean shouldCommandBeDispatched(CommandWrapper command, MessageContext context) {
         return (command.alwaysActive || active().get()) &&
-                !bot.getConfig().getBlacklist().contains(msg.getAuthor().getId()) &&
-                customCommandDispatchChecker.test(command, msg);
+                !bot.getConfig().getBlacklist().contains(context.getAuthor().getId()) &&
+                customCommandDispatchChecker.test(command, context);
     }
 
     public static class Statistics {

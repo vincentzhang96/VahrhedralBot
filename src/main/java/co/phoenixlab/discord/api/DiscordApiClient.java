@@ -42,6 +42,7 @@ public class DiscordApiClient {
     public static final User NO_USER = new User("NO_USER", "NO_USER", "NO_USER", null);
     public static final Member NO_MEMBER = new Member(NO_USER, Collections.emptyList());
     public static final Role NO_ROLE = new Role(0, 0, "NO_ROLE", false, "", false, 0);
+    public static final String[] EMPTY_STR_ARRAY = new String[0];
 
     static {
         NO_CHANNEL.setParent(NO_SERVER);
@@ -203,7 +204,15 @@ public class DiscordApiClient {
     }
 
     public void sendMessage(String body, String channelId) {
-        sendMessage(body, channelId, new String[0]);
+        sendMessage(body, channelId, EMPTY_STR_ARRAY);
+    }
+
+    public void sendMessage(String body, Channel channel) {
+        sendMessage(body, channel, EMPTY_STR_ARRAY);
+    }
+
+    public void sendMessage(String body, Channel channel, String[] mentions) {
+        sendMessage(body, channel.getId(), mentions);
     }
 
     public void sendMessage(String body, String channelId, String[] mentions) {

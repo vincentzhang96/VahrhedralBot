@@ -92,7 +92,7 @@ public class Commands {
                         loc.localize(spotYKey), loc.localize(spotXKey));
             }
             apiClient.sendMessage(
-                    loc.localize("commands.general.admin.response.easter_egg.format", pos),
+                    loc.localize("commands.general.admin.response.easter_egg.format", number, pos),
                     message.getChannelId());
             return;
         }
