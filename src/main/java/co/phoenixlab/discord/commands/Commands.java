@@ -93,7 +93,7 @@ public class Commands {
             }
             apiClient.sendMessage(
                     loc.localize("commands.general.admin.response.easter_egg.format", number, pos),
-                    message.getChannelId());
+                    context.getChannel());
             return;
         }
         //  Permission check
@@ -101,7 +101,7 @@ public class Commands {
             if (context.getDispatcher().active().get()) {
                 apiClient.sendMessage(
                         loc.localize("commands.general.admin.response.reject", message.getAuthor().getUsername()),
-                        message.getChannelId());
+                        context.getChannel());
             }
             return;
         }
@@ -124,7 +124,7 @@ public class Commands {
             res = loc.localize("commands.general.admins.response.none");
         }
         apiClient.sendMessage(loc.localize("commands.general.admins.response.format", res),
-                context.getMessage().getChannelId());
+                context.getChannel());
     }
 
     private void info(MessageContext context, String args) {
@@ -150,7 +150,7 @@ public class Commands {
                     config.getAdmins().contains(user.getId()) ?
                             loc.localize("commands.general.info.response.admin") : "",
                     avatar);
-            context.getApiClient().sendMessage(response, message.getChannelId());
+            context.getApiClient().sendMessage(response, context.getChannel());
         }
     }
 
@@ -176,7 +176,7 @@ public class Commands {
                     loc.localize("commands.general.avatar.response.no_avatar") : user.getAvatarUrl().toExternalForm());
             context.getApiClient().sendMessage(loc.localize("commands.general.avatar.response.format",
                     user.getUsername(), avatar),
-                    message.getChannelId());
+                    context.getChannel());
         }
     }
 
@@ -189,11 +189,11 @@ public class Commands {
             server = apiClient.getServerByID(args);
             if (server == NO_SERVER) {
                 apiClient.sendMessage(loc.localize("commands.general.avatar.response.server.not_member"),
-                        message.getChannelId());
+                        context.getChannel());
             }
         } else if (c == null || c.getParent() == NO_SERVER) {
             apiClient.sendMessage(loc.localize("commands.general.avatar.response.server.private"),
-                    message.getChannelId());
+                    context.getChannel());
             return;
         } else {
             server = c.getParent();
@@ -202,16 +202,16 @@ public class Commands {
         if (icon == null) {
             apiClient.sendMessage(loc.localize("commands.general.avatar.response.server.format.none",
                     server.getName()),
-                    message.getChannelId());
+                    context.getChannel());
         } else {
             apiClient.sendMessage(loc.localize("commands.general.avatar.response.server.format",
                     server.getName(), String.format(ApiConst.ICON_URL_PATTERN, server.getId(), icon)),
-                    message.getChannelId());
+                    context.getChannel());
         }
     }
 
     private void version(MessageContext context, String args) {
-        context.getApiClient().sendMessage(context.getBot().getVersionInfo(), context.getMessage().getChannelId());
+        context.getApiClient().sendMessage(context.getBot().getVersionInfo(), context.getChannel());
     }
 
     private void stats(MessageContext context, String s) {
@@ -234,7 +234,7 @@ public class Commands {
                 apiStats.eventCount.sum(),
                 apiStats.eventDispatchErrorCount.sum(),
                 apiStats.restErrorCount.sum()),
-                context.getMessage().getChannelId());
+                context.getChannel());
     }
 
     private void roles(MessageContext context, String args) {
@@ -251,20 +251,19 @@ public class Commands {
             context.getApiClient().sendMessage(loc.localize("commands.general.roles.response.not_found"),
                     message.getChannelId());
         } else {
-            Channel channel = apiClient.getChannelById(context.getMessage().getChannelId());
-            Server server = channel.getParent();
+            Server server = context.getServer();
             if (server == NO_SERVER) {
-                apiClient.sendMessage(loc.localize("commands.general.roles.response.private"), message.getChannelId());
+                apiClient.sendMessage(loc.localize("commands.general.roles.response.private"), context.getChannel());
                 return;
             }
             Member member = apiClient.getUserMember(user, server);
             if (member != NO_MEMBER) {
                 context.getApiClient().sendMessage(loc.localize("commands.general.roles.response.format",
                         user.getUsername(), listRoles(member, server, apiClient)),
-                        message.getChannelId());
+                        context.getChannel());
             } else {
                 context.getApiClient().sendMessage(loc.localize("commands.general.roles.response.member_not_found"),
-                        message.getChannelId());
+                        context.getChannel());
             }
         }
     }
@@ -287,37 +286,36 @@ public class Commands {
         DiscordApiClient apiClient = context.getApiClient();
         Message message = context.getMessage();
         //  Check permissions first
-        Channel channel = apiClient.getChannelById(context.getMessage().getChannelId());
-        Server server = channel.getParent();
+        Server server = context.getServer();
         if (server == NO_SERVER) {
             apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.private"),
-                    message.getChannelId());
+                    context.getChannel());
             return;
         }
         Member issuer = apiClient.getUserMember(message.getAuthor(), server);
         if (!(checkPermission(Permission.GEN_MANAGE_ROLES, issuer, server, apiClient) ||
                 context.getBot().getConfig().isAdmin(message.getAuthor().getId()))) {
             apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.no_user_perms"),
-                    message.getChannelId());
+                    context.getChannel());
             return;
         }
         Member bot = apiClient.getUserMember(apiClient.getClientUser(), server);
         if (!checkPermission(Permission.GEN_MANAGE_ROLES, bot, server, apiClient)) {
             apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.no_bot_perms"),
-                    message.getChannelId());
+                    context.getChannel());
             return;
         }
         String[] split = args.split(" ");
         if (split.length != 2) {
             apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.help_format"),
-                    message.getChannelId());
+                    context.getChannel());
             return;
         }
         String colorStr = split[1];
         OptionalInt colorOpt = ParseInt.parseOptional(colorStr);
         if (!colorOpt.isPresent()) {
             apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.help_format"),
-                    message.getChannelId());
+                    context.getChannel());
             return;
         }
         int color = colorOpt.getAsInt();
@@ -325,7 +323,7 @@ public class Commands {
         Role role = apiClient.getRole(roleId, server);
         if (role == NO_ROLE) {
             apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.role_not_found"),
-                    message.getChannelId());
+                    context.getChannel());
             return;
         }
 
@@ -378,10 +376,10 @@ public class Commands {
         if (loc.localize("commands.general.sandwich.magic_word").equalsIgnoreCase(args) ||
                 new Random().nextBoolean()) {
             apiClient.sendMessage(loc.localize("commands.general.sandwich.response.deny"),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
         } else {
             apiClient.sendMessage(loc.localize("commands.general.sandwich.response.magic"),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
         }
     }
 
@@ -414,22 +412,22 @@ public class Commands {
             user = findUser(context, args);
         } else {
             apiClient.sendMessage(loc.localize("commands.general.insult.response.missing"),
-                    message.getChannelId());
+                    context.getChannel());
             return;
         }
         if (user == NO_USER) {
             apiClient.sendMessage(loc.localize("commands.general.insult.response.not_found"),
-                    message.getChannelId());
+                    context.getChannel());
             return;
         }
         String insult = getInsult();
         if (insult == null) {
             apiClient.sendMessage(loc.localize("commands.general.insult.response.error"),
-                    message.getChannelId());
+                    context.getChannel());
         } else {
             apiClient.sendMessage(loc.localize("commands.general.insult.response.format",
                     user.getUsername(), insult),
-                    message.getChannelId(), new String[]{user.getId()});
+                    context.getChannel(), new String[]{user.getId()});
             if (isNotAdmin) {
                 lastInsultTime = Instant.now();
             }
@@ -470,7 +468,7 @@ public class Commands {
     private void selfCheck(MessageContext context, User user) {
         if (context.getMessage().getAuthor().equals(user)) {
             context.getApiClient().sendMessage(loc.localize("commands.common.self_reference", user.getUsername()),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
         }
     }
 }

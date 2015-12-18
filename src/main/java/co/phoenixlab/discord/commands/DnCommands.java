@@ -55,7 +55,7 @@ public class DnCommands {
 
                 apiClient.sendMessage(loc.localize("commands.dn.defense.response.format",
                         (int) def, (int) mDef, (long) eDHp, (long) eMHp),
-                        message.getChannelId());
+                        context.getChannel());
 
                 return;
             } catch (NumberFormatException ignored) {
@@ -63,7 +63,7 @@ public class DnCommands {
         }
         apiClient.sendMessage(loc.localize("commands.dn.defense.response.invalid",
                 bot.getMainCommandDispatcher().getCommandPrefix()),
-                message.getChannelId());
+                context.getChannel());
     }
 
     private double parseStat(String s) throws NumberFormatException {

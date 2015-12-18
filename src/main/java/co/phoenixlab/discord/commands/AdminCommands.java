@@ -75,10 +75,10 @@ public class AdminCommands {
         CommandDispatcher mainDispatcher = context.getBot().getMainCommandDispatcher();
         if (mainDispatcher.active().compareAndSet(false, true)) {
             apiClient.sendMessage(loc.localize("commands.admin.start.response.ok"),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
         } else {
             apiClient.sendMessage(loc.localize("commands.admin.start.response.already_started"),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
         }
     }
 
@@ -87,10 +87,10 @@ public class AdminCommands {
         CommandDispatcher mainDispatcher = context.getBot().getMainCommandDispatcher();
         if (mainDispatcher.active().compareAndSet(true, false)) {
             apiClient.sendMessage(loc.localize("commands.admin.stop.response.ok"),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
         } else {
             apiClient.sendMessage(loc.localize("commands.admin.stop.response.already_stopped"),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
         }
     }
 
@@ -113,7 +113,7 @@ public class AdminCommands {
                 memory,
                 ManagementFactory.getOperatingSystemMXBean().getSystemLoadAverage(),
                 ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors());
-        apiClient.sendMessage(response, context.getMessage().getChannelId());
+        apiClient.sendMessage(response, context.getChannel());
     }
 
     private String listServers(DiscordApiClient apiClient) {
@@ -136,13 +136,13 @@ public class AdminCommands {
 
     private void adminKill(MessageContext context, String args) {
         context.getApiClient().sendMessage(loc.localize("commands.admin.kill.response"),
-                context.getMessage().getChannelId());
+                context.getChannel());
         context.getBot().shutdown();
     }
 
     private void adminRestart(MessageContext context, String args) {
         context.getApiClient().sendMessage(loc.localize("commands.admin.restart.response"),
-                context.getMessage().getChannelId());
+                context.getChannel());
         context.getBot().shutdown(20);
     }
 
@@ -156,19 +156,19 @@ public class AdminCommands {
         User user = findUser(context, args);
         if (user == NO_USER) {
             apiClient.sendMessage(loc.localize("commands.admin.blacklist.response.not_found"),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
             return;
         }
         if (bot.getConfig().getAdmins().contains(user.getId())) {
             apiClient.sendMessage(loc.localize("commands.admin.blacklist.response.admin"),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
             return;
         }
         bot.getConfig().getBlacklist().add(user.getId());
         bot.saveConfig();
         apiClient.sendMessage(loc.localize("commands.admin.blacklist.response.format",
                 user.getUsername()),
-                context.getMessage().getChannelId());
+                context.getChannel());
     }
 
     private void listBlacklistedUsers(MessageContext context, DiscordApiClient apiClient, VahrhedralBot bot) {
@@ -183,20 +183,20 @@ public class AdminCommands {
             res = loc.localize("commands.admin.blacklist.response.list.none");
         }
         apiClient.sendMessage(loc.localize("commands.admin.blacklist.response.list.format", res),
-                context.getMessage().getChannelId());
+                context.getChannel());
     }
 
     private void adminPardon(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
         if (args.isEmpty()) {
             apiClient.sendMessage(loc.localize("commands.admin.pardon.response.no_user"),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
             return;
         }
         User user = findUser(context, args);
         if (user == NO_USER) {
             apiClient.sendMessage(loc.localize("commands.admin.pardon.response.not_found"),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
             return;
         }
         boolean removed = context.getBot().getConfig().getBlacklist().remove(user.getId());
@@ -204,11 +204,11 @@ public class AdminCommands {
         if (removed) {
             apiClient.sendMessage(loc.localize("commands.admin.pardon.response.format",
                     user.getUsername()),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
         } else {
             apiClient.sendMessage(loc.localize("commands.admin.pardon.response.not_blacklisted",
                     user.getUsername()),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
         }
     }
 
@@ -220,7 +220,7 @@ public class AdminCommands {
         } catch (MalformedURLException e) {
             VahrhedralBot.LOGGER.warn("Invalid invite link received", e);
             apiClient.sendMessage(loc.localize("commands.admin.join.response.invalid"),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
             return;
         }
         String path = inviteUrl.getPath();
@@ -236,12 +236,12 @@ public class AdminCommands {
                 VahrhedralBot.LOGGER.warn("Unable to join using invite link: HTTP {}: {}: {}",
                         response.getStatus(), response.getStatusText(), response.getBody());
                 apiClient.sendMessage(loc.localize("commands.admin.join.response.http_error", response.getStatus()),
-                        context.getMessage().getChannelId());
+                        context.getChannel());
             }
         } catch (UnirestException e) {
             VahrhedralBot.LOGGER.warn("Unable to join using invite link", e);
             apiClient.sendMessage(loc.localize("commands.admin.join.response.network_error"),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
         }
     }
 
@@ -250,7 +250,7 @@ public class AdminCommands {
         String[] split = s.split(" ", 2);
         if (split.length != 2) {
             apiClient.sendMessage(loc.localize("commands.admin.telegram.response.invalid"),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
             return;
         }
         User[] mentions = context.getMessage().getMentions();
@@ -270,7 +270,7 @@ public class AdminCommands {
             }
         }
         if (channel == null || raw == null) {
-            channel = context.getMessage().getChannelId();
+            channel = context.getChannel().getId();
             raw = args;
         }
         try {
@@ -280,7 +280,7 @@ public class AdminCommands {
                     outboundMessage.getMentions());
         } catch (JsonParseException e) {
             context.getApiClient().sendMessage(loc.localize("commands.admin.raw.response.invalid"),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
         }
     }
 
@@ -290,14 +290,14 @@ public class AdminCommands {
         if (s.isEmpty()) {
             apiClient.sendMessage(loc.localize("commands.admin.prefix.response.get",
                     bot.getConfig().getCommandPrefix()),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
         } else {
             context.getBot().getMainCommandDispatcher().setCommandPrefix(s);
             bot.getConfig().setCommandPrefix(s);
             bot.saveConfig();
             apiClient.sendMessage(loc.localize("commands.admin.prefix.response.set",
                     bot.getConfig().getCommandPrefix()),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
         }
     }
 
@@ -306,10 +306,10 @@ public class AdminCommands {
         if (loc.localize("commands.admin.sandwich.magic_word").equalsIgnoreCase(args) ||
                 new Random().nextBoolean()) {
             apiClient.sendMessage(loc.localize("commands.admin.sandwich.response"),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
         } else {
             apiClient.sendMessage(loc.localize("commands.admin.sandwich.response.magic"),
-                    context.getMessage().getChannelId());
+                    context.getChannel());
         }
     }
 
@@ -327,7 +327,7 @@ public class AdminCommands {
             bindings.put("_", helper);
             bindings.put("ctx", context);
             bindings.put("msg", context.getMessage());
-            bindings.put("cid", context.getMessage().getChannelId());
+            bindings.put("cid", context.getChannel());
             bindings.put("author", context.getMessage().getAuthor());
             bindings.put("bot", context.getBot());
             bindings.put("loc", loc);
@@ -345,7 +345,7 @@ public class AdminCommands {
                     }
                 }
                 apiClient.sendMessage(TRIPLE_BACKTICK + retStr + TRIPLE_BACKTICK,
-                        message.getChannelId());
+                        context.getChannel());
             }
         } catch (Exception | StackOverflowError e) {
             VahrhedralBot.LOGGER.warn("Unable to evaluate script", e);
@@ -353,7 +353,7 @@ public class AdminCommands {
             if (msg == null) {
                 msg = e.getClass().getSimpleName();
             }
-            apiClient.sendMessage(TRIPLE_BACKTICK + msg + TRIPLE_BACKTICK, message.getChannelId());
+            apiClient.sendMessage(TRIPLE_BACKTICK + msg + TRIPLE_BACKTICK, context.getChannel());
         }
     }
 
@@ -369,7 +369,7 @@ public class AdminCommands {
         }
 
         public void sendMessage(String content) {
-            sendMessageCid(content, context.getMessage().getChannelId());
+            sendMessageCid(content, context.getChannel().getId());
         }
 
         public void sendMessageCid(String content, String cid) {
