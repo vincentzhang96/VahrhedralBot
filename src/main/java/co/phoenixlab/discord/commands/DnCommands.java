@@ -49,6 +49,7 @@ public class DnCommands {
                 apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.level_out_of_range",
                         80, 80),
                         context.getChannel());
+                return;
             }
             double a = 0.00774 * fd;
             double b = 0.0000009093 * Math.pow(fd, 2.2);
