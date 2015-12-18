@@ -27,10 +27,39 @@ public class DnCommands {
 
     public void registerDnCommands() {
         dispatcher.registerCommand("commands.dn.defense", this::defenseCalculator);
+        dispatcher.registerCommand("commands.dn.finaldamage", this::finalDamageCalculator);
     }
 
     public CommandDispatcher getDispatcher() {
         return dispatcher;
+    }
+
+    private void finalDamageCalculator(MessageContext context, String args) {
+        DiscordApiClient apiClient = context.getApiClient();
+        //  Strip commas
+        args = args.replace(",", "");
+        String[] split = args.split(" ");
+        if (split.length >= 1) {
+            int fd = (int) parseStat(split[0]);
+            int level = 80;
+            if (split.length >= 2) {
+                level = ParseInt.parseOrDefault(split[1], level);
+            }
+            if (level != 80) {
+                apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.level_out_of_range",
+                        80, 80),
+                        context.getChannel());
+            }
+            double a = 0.00774 * fd;
+            double b = 0.0000009093 * Math.pow(fd, 2.2);
+            double fdPercent = Math.max(a, b);
+            apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.format",
+                    level, (int) fdPercent),
+                    context.getChannel());
+        }
+        apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.invalid",
+                bot.getMainCommandDispatcher().getCommandPrefix()),
+                context.getChannel());
     }
 
     private void defenseCalculator(MessageContext context, String args) {
