@@ -19,7 +19,9 @@ public class Channel {
 
     private String topic;
 
-    private Server parent;
+    private ChannelType type;
+
+    private transient Server parent;
 
     public Channel(String id, String name) {
         this.id = id;
@@ -62,6 +64,10 @@ public class Channel {
 
     public void setTopic(String topic) {
         this.topic = topic;
+    }
+
+    public ChannelType getType() {
+        return type;
     }
 
     @Override
