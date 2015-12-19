@@ -312,6 +312,12 @@ public class DiscordApiClient {
                 findFirst().orElse(NO_CHANNEL);
     }
 
+    public Channel getChannelById(String id, Server server) {
+        return server.getChannels().stream().
+                filter(c -> id.equals(c.getId())).
+                findFirst().orElse(NO_CHANNEL);
+    }
+
     public User findUser(String username) {
         username = username.toLowerCase();
         for (Server server : servers) {
@@ -347,6 +353,12 @@ public class DiscordApiClient {
         if (temp != null) {
             return temp;
         }
+        //  ID match
+        temp = getUserById(username, server);
+        if (temp != null) {
+            return temp;
+        }
+        
         //  Still no match? Try fuzzy match
         //  TODO
 
@@ -397,6 +409,47 @@ public class DiscordApiClient {
             }
         }
         return NO_ROLE;
+    }
+
+    public Role findRole(String roleName, Server server) {
+        //  Exact (case insensitive) match
+        for (Role role : server.getRoles()) {
+            if (roleName.equalsIgnoreCase(role.getName())) {
+                return role;
+            }
+        }
+        //  No match? Try matching start
+        Role temp = null;
+        for (Role role : server.getRoles()) {
+            if (role.getName().toLowerCase().startsWith(roleName)) {
+                if (temp == null || temp.getName().length() <= temp.getName().length()) {
+                    temp = role;
+                }
+            }
+        }
+        if (temp != null) {
+            return temp;
+        }
+        //  Fuzzy match
+        //  TODO
+
+        //  ID match
+        temp = getRole(roleName, server);
+        if (temp != null) {
+            return temp;
+        }
+        return NO_ROLE;
+    }
+
+    public Set<Role> getMemberRoles(Member member, Server server) {
+        Set<Role> ret = member.getRoles().stream().
+                map(r -> getRole(r, server)).
+                collect(Collectors.toSet());
+        Role everyone = findRole("@everyone", server);
+        if (everyone != null) {
+            ret.add(everyone);
+        }
+        return ret;
     }
 
     public ScheduledExecutorService getExecutorService() {
