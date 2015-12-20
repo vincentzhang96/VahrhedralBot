@@ -25,7 +25,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public class DiscordWebSocketClient extends WebSocketClient {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger("DiscordApiClient");
+    private static final Logger LOGGER = LoggerFactory.getLogger("DiscordApiWebSocketClient");
 
     private final DiscordApiClient apiClient;
     private final JSONParser parser;
