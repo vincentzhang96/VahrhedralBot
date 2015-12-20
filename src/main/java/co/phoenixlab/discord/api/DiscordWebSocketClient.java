@@ -61,10 +61,11 @@ public class DiscordWebSocketClient extends WebSocketClient {
                 String errorMessage = (String) msg.get("message");
                 if (errorMessage != null) {
                     if (errorMessage.isEmpty()) {
-                        LOGGER.warn("Discord returned an unknown error");
+                        LOGGER.warn("[0] '': Discord returned an unknown error");
                     } else {
-                        LOGGER.warn("Discord returned error: {}", errorMessage);
+                        LOGGER.warn("[0] '': Discord returned error: {}", errorMessage);
                     }
+                    statistics.errorCount.increment();
                     return;
                 }
                 String type = (String) msg.get("t");
@@ -126,10 +127,10 @@ public class DiscordWebSocketClient extends WebSocketClient {
                         break;
                     //  TODO
                     default:
-                        LOGGER.warn("Unknown message type {}:\n{}", type, data.toJSONString());
+                        LOGGER.warn("[0] '': Unknown message type {}:\n{}", type, data.toJSONString());
                 }
             } catch (ParseException e) {
-                LOGGER.warn("Unable to parse message", e);
+                LOGGER.warn("[0] '': Unable to parse message", e);
             }
         } finally {
             statistics.avgMessageHandleTime.add(MILLISECONDS.convert(System.nanoTime() - start, NANOSECONDS));
@@ -144,13 +145,15 @@ public class DiscordWebSocketClient extends WebSocketClient {
             //  Literally just shove it in because Set
             server.getRoles().remove(role);
             server.getRoles().add(role);
-            LOGGER.debug("Updated role {} ({}) to {} ({})",
-                    role.getName(), role.getId(), server.getName(), server.getId());
+            LOGGER.debug("[{}] '{}': Updated role {} ({})",
+                    server.getId(), server.getName(),
+                    role.getName(), role.getId());
             apiClient.getEventBus().post(new RoleChangeEvent(role, server,
                     RoleChangeEvent.RoleChange.UPDATED));
         } else {
-            LOGGER.warn("Orphan role update received, ignored (roleid={} rolename={} serverid={}",
-                    role.getId(), role.getName(), serverId);
+            LOGGER.warn("[{}] '': Orphan role update received, ignored (roleid={} rolename={})",
+                    serverId,
+                    role.getId(), role.getName());
         }
     }
 
@@ -169,17 +172,20 @@ public class DiscordWebSocketClient extends WebSocketClient {
                 }
             }
             if (removed != null) {
-                LOGGER.debug("Deleted role {} ({}) to {} ({})",
-                        removed.getName(), removed.getId(), server.getName(), server.getId());
+                LOGGER.debug("[{}] '{}': Deleted role {} ({})",
+                        server.getId(), server.getName(),
+                        removed.getName(), removed.getId());
                 apiClient.getEventBus().post(new RoleChangeEvent(removed, server,
                         RoleChangeEvent.RoleChange.DELETED));
             } else {
-                LOGGER.warn("No such role to delete (roleid={} serverid={})",
-                        roleId, serverId);
+                LOGGER.warn("[{}] '{}': No such role to delete (roleid={})",
+                        server.getId(), server.getName(),
+                        roleId);
             }
         } else {
-            LOGGER.warn("Orphan role delete received, ignored (roleid={} serverid={})",
-                    roleId, serverId);
+            LOGGER.warn("[{}] '': Orphan role delete received, ignored (roleid={})",
+                    serverId,
+                    roleId);
         }
     }
 
@@ -189,13 +195,15 @@ public class DiscordWebSocketClient extends WebSocketClient {
         Server server = apiClient.getServerByID(serverId);
         if (server != NO_SERVER) {
             server.getRoles().add(role);
-            LOGGER.debug("Added new role {} ({}) to {} ({})",
-                    role.getName(), role.getId(), server.getName(), server.getId());
+            LOGGER.debug("[{}] '{}': Added new role {} ({})",
+                    server.getId(), server.getName(),
+                    role.getName(), role.getId());
             apiClient.getEventBus().post(new RoleChangeEvent(role, server,
                     RoleChangeEvent.RoleChange.CREATED));
         } else {
-            LOGGER.warn("Orphan role create received, ignored (roleid={} rolename={} serverid={}",
-                    role.getId(), role.getName(), serverId);
+            LOGGER.warn("[{}] '': Orphan role create received, ignored (roleid={} rolename={})",
+                    serverId,
+                    role.getId(), role.getName());
         }
     }
 
@@ -211,17 +219,19 @@ public class DiscordWebSocketClient extends WebSocketClient {
             if (member != NO_MEMBER && member.getUser().equals(user)) {
                 member.getRoles().clear();
                 member.getRoles().addAll(update.getRoles());
-                LOGGER.debug("{}'s ({}) presence changed in {} ({})",
-                        user.getUsername(), user.getId(),
-                        server.getName(), server.getId());
+                LOGGER.debug("[{}] '{}': {}'s ({}) presence changed",
+                        server.getId(), server.getName(),
+                        user.getUsername(), user.getId());
                 apiClient.getEventBus().post(new PresenceUpdateEvent(update, server));
             } else {
-                LOGGER.info("Orphan presence update received, ignored (userid={} username={} serverid={}): Not found",
-                        update.getUser().getId(), update.getUser().getUsername(), update.getServerId());
+                LOGGER.warn("[{}] '{}': Orphan presence update received, ignored (userid={} username={}): Not found",
+                        server.getId(), server.getName(),
+                        update.getUser().getId(), update.getUser().getUsername());
             }
         } else {
-            LOGGER.info("Orphan presence update received, ignored (userid={} username={} serverid={})",
-                    update.getUser().getId(), update.getUser().getUsername(), update.getServerId());
+            LOGGER.warn("[{}] '': Orphan presence update received, ignored (userid={} username={})",
+                    update.getServerId(),
+                    update.getUser().getId(), update.getUser().getUsername());
         }
     }
 
@@ -232,14 +242,15 @@ public class DiscordWebSocketClient extends WebSocketClient {
         if (server != NO_SERVER) {
             server.getMembers().remove(member);
             server.getMembers().add(member);
-            LOGGER.debug("Updated {}'s ({}) membership in {} ({})",
-                    member.getUser().getUsername(), member.getUser().getId(),
-                    server.getName(), server.getId());
+            LOGGER.debug("[{}] '{}': Updated {}'s ({}) membership",
+                    server.getId(), server.getName(),
+                    member.getUser().getUsername(), member.getUser().getId());
             apiClient.getEventBus().post(new MemberChangeEvent(member, server,
                     MemberChangeEvent.MemberChange.UPDATED));
         } else {
-            LOGGER.info("Orphan member update received, ignored (userid={} username={} serverid={}",
-                    member.getUser().getId(), member.getUser().getUsername(), serverId);
+            LOGGER.warn("[{}] '': Orphan member update received, ignored (userid={} username={})",
+                    serverId,
+                    member.getUser().getId(), member.getUser().getUsername());
         }
     }
 
@@ -249,19 +260,20 @@ public class DiscordWebSocketClient extends WebSocketClient {
         Server server = apiClient.getServerByID(serverId);
         if (server != NO_SERVER) {
             if (server.getMembers().remove(member)) {
-                LOGGER.debug("Removed {}'s ({}) membership in {} ({})",
-                        member.getUser().getUsername(), member.getUser().getId(),
-                        server.getName(), server.getId());
+                LOGGER.debug("[{}] '{}': Removed {}'s ({}) membership",
+                        server.getId(), server.getName(),
+                        member.getUser().getUsername(), member.getUser().getId());
                 apiClient.getEventBus().post(new MemberChangeEvent(member, server,
                         MemberChangeEvent.MemberChange.DELETED));
             } else {
-                LOGGER.warn("Member {} ({}) could not be removed from {} ({}): Not found",
-                        member.getUser().getId(), member.getUser().getUsername(),
-                        server.getName(), server.getId());
+                LOGGER.warn("[{}] '{}': Member {} ({}) could not be removed: Not found",
+                        server.getId(), server.getName(),
+                        member.getUser().getId(), member.getUser().getUsername());
             }
         } else {
-            LOGGER.warn("Orphan member remove received, ignored (userid={} username={} serverid={}",
-                    member.getUser().getId(), member.getUser().getUsername(), serverId);
+            LOGGER.warn("[{}] '': Orphan member remove received, ignored (userid={} username={})",
+                    serverId,
+                    member.getUser().getId(), member.getUser().getUsername());
         }
     }
 
@@ -271,14 +283,16 @@ public class DiscordWebSocketClient extends WebSocketClient {
         Server server = apiClient.getServerByID(serverId);
         if (server != NO_SERVER) {
             server.getMembers().add(member);
-            LOGGER.info("Added {}'s ({}) membership in {} ({})",
-                    member.getUser().getUsername(), member.getUser().getId(),
-                    server.getName(), server.getId());
+            LOGGER.debug("[{}] '{}': Added {}'s ({}) membership",
+                    server.getId(), server.getName(),
+                    member.getUser().getUsername(),
+                    member.getUser().getId());
             apiClient.getEventBus().post(new MemberChangeEvent(member, server,
                     MemberChangeEvent.MemberChange.ADDED));
         } else {
-            LOGGER.warn("Orphan member add received, ignored (userid={} username={} serverid={}",
-                    member.getUser().getId(), member.getUser().getUsername(), serverId);
+            LOGGER.warn("[{}] '': Orphan member add received, ignored (userid={} username={})",
+                    serverId,
+                    member.getUser().getId(), member.getUser().getUsername());
         }
     }
 
@@ -286,7 +300,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         if (Boolean.TRUE.equals(data.get("is_private"))) {
             PrivateChannel channel = jsonObjectToObject(data, PrivateChannel.class);
             //  TODO
-            LOGGER.info("Updated private channel with {}", channel.getRecipient().getUsername());
+            LOGGER.debug("[0] '': Updated private channel with {}", channel.getRecipient().getUsername());
         } else {
             Channel channel = jsonObjectToObject(data, Channel.class);
             String parentServerId = (String) data.get("guild_id");
@@ -294,13 +308,15 @@ public class DiscordWebSocketClient extends WebSocketClient {
             if (server != NO_SERVER) {
                 channel.setParent(server);
                 server.getChannels().add(channel);
-                LOGGER.debug("Channel {} ({}) in server {} ({}) updated",
-                        channel.getName(), channel.getId(), server.getName(), server.getId());
+                LOGGER.debug("[{}] '{}': Channel {} ({}) updated",
+                        server.getId(), server.getName(),
+                        channel.getName(), channel.getId());
                 apiClient.getEventBus().post(new ChannelChangeEvent(channel,
                         ChannelChangeEvent.ChannelChange.UPDATED));
             } else {
-                LOGGER.warn("Orphan update channel received, ignored (id={}, name={}, parentServerId={}",
-                        channel.getId(), channel.getName(), parentServerId);
+                LOGGER.warn("[{}] '': Orphan update channel received, ignored (id={}, name={})",
+                        parentServerId,
+                        channel.getId(), channel.getName());
             }
         }
     }
@@ -309,7 +325,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         if (Boolean.TRUE.equals(data.get("is_private"))) {
             PrivateChannel channel = jsonObjectToObject(data, PrivateChannel.class);
             //  TODO
-            LOGGER.info("Delete private channel with {}", channel.getRecipient().getUsername());
+            LOGGER.debug("[0] '': Delete private channel with {}", channel.getRecipient().getUsername());
         } else {
             Channel channel = jsonObjectToObject(data, Channel.class);
             String parentServerId = (String) data.get("guild_id");
@@ -317,17 +333,20 @@ public class DiscordWebSocketClient extends WebSocketClient {
             if (server != NO_SERVER) {
                 channel.setParent(server);
                 if (server.getChannels().remove(channel)) {
-                    LOGGER.debug("Channel {} ({}) in server {} ({}) deleted",
-                            channel.getName(), channel.getId(), server.getName(), server.getId());
+                    LOGGER.debug("[{}] '{}': Channel {} ({}) deleted",
+                            server.getId(), server.getName(),
+                            channel.getName(), channel.getId());
                     apiClient.getEventBus().post(new ChannelChangeEvent(channel,
                             ChannelChangeEvent.ChannelChange.DELETED));
                 } else {
-                    LOGGER.warn("Channel {} ({}) in server {} ({}) could not be deleted (not found)",
-                            channel.getName(), channel.getId(), server.getName(), server.getId());
+                    LOGGER.warn("[{}] '{}': Channel {} ({}) could not be deleted (not found)",
+                            server.getId(), server.getName(),
+                            channel.getName(), channel.getId());
                 }
             } else {
-                LOGGER.warn("Orphan delete channel received, ignored (id={}, name={}, parentServerId={}",
-                        channel.getId(), channel.getName(), parentServerId);
+                LOGGER.warn("[{}] '': Orphan delete channel received, ignored (id={}, name={})",
+                        parentServerId,
+                        channel.getId(), channel.getName());
             }
         }
     }
@@ -336,7 +355,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         if (Boolean.TRUE.equals(data.get("is_private"))) {
             PrivateChannel channel = jsonObjectToObject(data, PrivateChannel.class);
             //  TODO
-            LOGGER.info("New private channel with {}", channel.getRecipient().getUsername());
+            LOGGER.debug("[0] '': New private channel with {}", channel.getRecipient().getUsername());
         } else {
             Channel channel = jsonObjectToObject(data, Channel.class);
             String parentServerId = (String) data.get("guild_id");
@@ -344,13 +363,15 @@ public class DiscordWebSocketClient extends WebSocketClient {
             if (server != NO_SERVER) {
                 channel.setParent(server);
                 server.getChannels().add(channel);
-                LOGGER.debug("New channel {} ({}) in server {} ({}) added",
-                        channel.getName(), channel.getId(), server.getName(), server.getId());
+                LOGGER.debug("[{}] '{}': New channel {} ({})",
+                        server.getId(), server.getName(),
+                        channel.getName(), channel.getId());
                 apiClient.getEventBus().post(new ChannelChangeEvent(channel,
                         ChannelChangeEvent.ChannelChange.ADDED));
             } else {
-                LOGGER.warn("Orphan create channel received, ignored (id={}, name={}, parentServerId={}",
-                        channel.getId(), channel.getName(), parentServerId);
+                LOGGER.warn("[{}] '': Orphan create channel received, ignored (id={}, name={})",
+                        parentServerId,
+                        channel.getId(), channel.getName());
             }
         }
     }
@@ -358,7 +379,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
     private void handleReadyMessage(JSONObject data) {
         ReadyMessage readyMessage = jsonObjectToObject(data, ReadyMessage.class);
         startKeepAlive(readyMessage.getHeartbeatInterval());
-        LOGGER.info("Sending keepAlive every {} ms", readyMessage.getHeartbeatInterval());
+        LOGGER.info("[0] '': Sending keepAlive every {} ms", readyMessage.getHeartbeatInterval());
         apiClient.getEventBus().post(new LogInEvent(readyMessage));
     }
 
@@ -367,15 +388,17 @@ public class DiscordWebSocketClient extends WebSocketClient {
         server.getChannels().forEach(channel -> channel.setParent(server));
         apiClient.getServers().add(server);
         apiClient.getServerMap().put(server.getId(), server);
-        LOGGER.info("Added to server {}", server.getName());
+        LOGGER.info("[{}] '{}': Joined server",
+                server.getId(), server.getName());
         apiClient.getEventBus().post(new ServerJoinLeaveEvent(server, true));
     }
 
     private void handleGuildDelete(JSONObject data) {
         Server server = jsonObjectToObject(data, Server.class);
         apiClient.getServers().remove(server);
-        apiClient.getServerMap().remove(server.getId());
-        LOGGER.info("Left server {}", server.getName());
+        Server removed = apiClient.getServerMap().remove(server.getId());
+        LOGGER.info("[{}] '{}': Left server",
+                removed.getId(), removed.getName());
         apiClient.getEventBus().post(new ServerJoinLeaveEvent(server, false));
     }
 
@@ -388,7 +411,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
             JSONObject keepAlive = new JSONObject();
             keepAlive.put("op", 1);
             keepAlive.put("d", System.currentTimeMillis());
-            LOGGER.debug("Sending keepAlive");
+            LOGGER.debug("[0] '': Sending keepAlive");
             send(keepAlive.toJSONString());
             statistics.keepAliveCount.increment();
         }, 0, keepAliveInterval, MILLISECONDS);
@@ -400,11 +423,12 @@ public class DiscordWebSocketClient extends WebSocketClient {
         if (!message.getAuthor().equals(apiClient.getClientUser())) {
             Channel channel = apiClient.getChannelById(message.getChannelId());
             if (channel == null) {
-                LOGGER.debug("Recieved direct message from {}: {}",
+                LOGGER.debug("[0] '': Recieved direct message from {}: {}",
                         message.getAuthor().getUsername(),
                         message.getContent());
             } else {
-                LOGGER.debug("Recieved message from {} in #{}: {}",
+                LOGGER.debug("[{}] '{}': Recieved message from {} in #{}: {}",
+                        channel.getParent().getId(), channel.getParent().getName(),
                         message.getAuthor().getUsername(),
                         channel.getName(),
                         message.getContent());
@@ -415,7 +439,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        LOGGER.info("Closing WebSocket {}: {} {}", code, reason, remote ? "remote" : "local");
+        LOGGER.info("[0] '': Closing WebSocket {}: {} {}", code, reason, remote ? "remote" : "local");
         if (keepAliveFuture != null) {
             keepAliveFuture.cancel(true);
         }
@@ -425,7 +449,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
 
     @Override
     public void onError(Exception ex) {
-        LOGGER.warn("WebSocket error", ex);
+        LOGGER.warn("[0] '': WebSocket error", ex);
         statistics.errorCount.increment();
     }
 
