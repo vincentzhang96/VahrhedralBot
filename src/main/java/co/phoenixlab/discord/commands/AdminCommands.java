@@ -1,6 +1,8 @@
 package co.phoenixlab.discord.commands;
 
+import co.phoenixlab.common.localization.LocaleStringProvider;
 import co.phoenixlab.common.localization.Localizer;
+import co.phoenixlab.discord.Command;
 import co.phoenixlab.discord.CommandDispatcher;
 import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.VahrhedralBot;
@@ -37,9 +39,11 @@ public class AdminCommands {
     private Localizer loc;
     private final ScriptEngine scriptEngine;
     private final Gson gson;
+    private final VahrhedralBot bot;
     public static final String TRIPLE_BACKTICK = "```";
 
     public AdminCommands(VahrhedralBot bot) {
+        this.bot = bot;
         dispatcher = new CommandDispatcher(bot, "");
         loc = bot.getLocalizer();
         scriptEngine = new ScriptEngineManager().getEngineByName("nashorn");
@@ -433,5 +437,45 @@ public class AdminCommands {
             return j.toString();
         }
 
+        public String newCommand(String cmd, String desc, String args, Command command) {
+            String namespace = "temp.js." + cmd;
+            loc.addLocaleStringProvider(new TempCommandLocaleProvider(namespace, cmd, desc, desc,  args));
+            bot.getMainCommandDispatcher().registerCommand(namespace, command);
+            return String.format("Command `%s` registered in namespace `%s`", cmd, namespace);
+        }
+
+    }
+
+    private class TempCommandLocaleProvider implements LocaleStringProvider {
+
+        private final Map<String, String> storage;
+
+        public TempCommandLocaleProvider(String namespace, String cmd, String help,
+                                         String detailedHelp, String arguments) {
+            storage = new HashMap<>(4);
+            storage.put(namespace + ".command", cmd);
+            storage.put(namespace + ".help", help);
+            storage.put(namespace + ".detailed_help", detailedHelp);
+            storage.put(namespace + ".arguments", arguments);
+        }
+
+        @Override
+        public void setActiveLocale(Locale locale) {
+            //  Ignore
+        }
+
+        @Override
+        public String get(String key) {
+            String ret = storage.get(key);
+            if (ret == null) {
+                ret = key;
+            }
+            return ret;
+        }
+
+        @Override
+        public boolean contains(String key) {
+            return storage.containsKey(key);
+        }
     }
 }
