@@ -270,11 +270,11 @@ public class DiscordApiClient {
         return g.fromJson(response.getBody().getObject().toString(), Message.class);
     }
 
-    public void deleteMessage(String messageId, String channelId) {
+    public void deleteMessage(String channelId, String messageId) {
         deleteMessage(messageId, channelId, true);
     }
 
-    public void deleteMessage(String messageId, String channelId, boolean async) {
+    public void deleteMessage(String channelId, String messageId, boolean async) {
         if (async) {
             executorService.submit(() -> deleteMessage(messageId, channelId, false));
             return;
