@@ -204,11 +204,19 @@ public class DiscordApiClient {
     }
 
     public void sendMessage(String body, String channelId) {
-        sendMessage(body, channelId, EMPTY_STR_ARRAY);
+        sendMessage(body, channelId, EMPTY_STR_ARRAY, true);
     }
 
     public void sendMessage(String body, Channel channel) {
-        sendMessage(body, channel, EMPTY_STR_ARRAY);
+        sendMessage(body, channel, EMPTY_STR_ARRAY, true);
+    }
+
+    public void sendMessage(String body, String channelId, boolean async) {
+        sendMessage(body, channelId, EMPTY_STR_ARRAY, async);
+    }
+
+    public void sendMessage(String body, Channel channel, boolean async) {
+        sendMessage(body, channel, EMPTY_STR_ARRAY, async);
     }
 
     public void sendMessage(String body, Channel channel, String[] mentions) {
@@ -217,6 +225,10 @@ public class DiscordApiClient {
 
     public void sendMessage(String body, String channelId, String[] mentions) {
         sendMessage(body, channelId, mentions, true);
+    }
+
+    public void sendMessage(String body, Channel channel, String[] mentions, boolean async) {
+        sendMessage(body, channel.getId(), mentions, async);
     }
 
     public void sendMessage(String body, String channelId, String[] mentions, boolean async) {
@@ -250,6 +262,10 @@ public class DiscordApiClient {
         }
     }
 
+    public void deleteMessage(String messageId, String channelId) {
+        deleteMessage(messageId, channelId, true);
+    }
+
     public void deleteMessage(String messageId, String channelId, boolean async) {
         if (async) {
             executorService.submit(() -> deleteMessage(messageId, channelId, false));
@@ -279,6 +295,10 @@ public class DiscordApiClient {
 
     public void editMessage(String channelId, String messageId, String content) {
         editMessage(channelId, messageId, content, null);
+    }
+
+    public void editMessage(String channelId, String messageId, String content, boolean async) {
+        editMessage(channelId, messageId, content, null, async);
     }
 
     public void editMessage(String channelId, String messageId, String content, String[] mentions) {
