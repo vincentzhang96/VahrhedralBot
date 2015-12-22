@@ -22,8 +22,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
@@ -203,44 +202,51 @@ public class DiscordApiClient {
         }
     }
 
-    public void sendMessage(String body, String channelId) {
-        sendMessage(body, channelId, EMPTY_STR_ARRAY, true);
+    public Future<Message> sendMessage(String body, String channelId) {
+        return sendMessage(body, channelId, EMPTY_STR_ARRAY, true);
     }
 
-    public void sendMessage(String body, Channel channel) {
-        sendMessage(body, channel, EMPTY_STR_ARRAY, true);
+    public Future<Message> sendMessage(String body, Channel channel) {
+        return sendMessage(body, channel, EMPTY_STR_ARRAY, true);
     }
 
-    public void sendMessage(String body, String channelId, boolean async) {
-        sendMessage(body, channelId, EMPTY_STR_ARRAY, async);
+    public Future<Message> sendMessage(String body, String channelId, boolean async) {
+        return sendMessage(body, channelId, EMPTY_STR_ARRAY, async);
     }
 
-    public void sendMessage(String body, Channel channel, boolean async) {
-        sendMessage(body, channel, EMPTY_STR_ARRAY, async);
+    public Future<Message> sendMessage(String body, Channel channel, boolean async) {
+        return sendMessage(body, channel, EMPTY_STR_ARRAY, async);
     }
 
-    public void sendMessage(String body, Channel channel, String[] mentions) {
-        sendMessage(body, channel.getId(), mentions);
+    public Future<Message> sendMessage(String body, Channel channel, String[] mentions) {
+        return sendMessage(body, channel.getId(), mentions);
     }
 
-    public void sendMessage(String body, String channelId, String[] mentions) {
-        sendMessage(body, channelId, mentions, true);
+    public Future<Message> sendMessage(String body, String channelId, String[] mentions) {
+        return sendMessage(body, channelId, mentions, true);
     }
 
-    public void sendMessage(String body, Channel channel, String[] mentions, boolean async) {
-        sendMessage(body, channel.getId(), mentions, async);
+    public Future<Message> sendMessage(String body, Channel channel, String[] mentions, boolean async) {
+        return sendMessage(body, channel.getId(), mentions, async);
     }
 
-    public void sendMessage(String body, String channelId, String[] mentions, boolean async) {
-        if (async) {
-            executorService.submit(() -> sendMessage(body, channelId, mentions, false));
-            return;
+    public Future<Message> sendMessage(String body, String channelId, String[] mentions, boolean async) {
+        Future<Message> future = executorService.submit(() -> sendMessageInternal(body, channelId, mentions));
+        if (!async) {
+            try {
+                future.get();
+            } catch (InterruptedException | ExecutionException e) {
+                LOGGER.warn("Exception while waiting for sendMessage result", e);
+            }
         }
+        return future;
+    }
 
+    Message sendMessageInternal(String body, String channelId, String[] mentions) {
         OutboundMessage outboundMessage = new OutboundMessage(body, false, mentions);
         String content = new GsonBuilder().serializeNulls().create().toJson(outboundMessage);
 
-        HttpResponse<JsonNode> response;
+        HttpResponse<Message> response;
         Map<String, String> headers = new HashMap<>();
         headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
         headers.put(HttpHeaders.AUTHORIZATION, token);
@@ -248,18 +254,19 @@ public class DiscordApiClient {
             response = Unirest.post(ApiConst.CHANNELS_ENDPOINT + channelId + "/messages").
                     headers(headers).
                     body(content).
-                    asJson();
+                    asObject(Message.class);
         } catch (UnirestException e) {
             statistics.restErrorCount.increment();
             LOGGER.warn("Unable to send message", e);
-            return;
+            return null;
         }
         int status = response.getStatus();
         if (status != 200) {
             statistics.restErrorCount.increment();
             LOGGER.warn("Unable to send message: HTTP {}: {}", status, response.getStatusText());
-            return;
+            return null;
         }
+        return response.getBody();
     }
 
     public void deleteMessage(String messageId, String channelId) {
@@ -274,7 +281,6 @@ public class DiscordApiClient {
 
         HttpResponse<String> response;
         Map<String, String> headers = new HashMap<>();
-        headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
         headers.put(HttpHeaders.AUTHORIZATION, token);
         try {
             response = Unirest.delete(ApiConst.CHANNELS_ENDPOINT + channelId + "/messages/" + messageId).
@@ -282,13 +288,13 @@ public class DiscordApiClient {
                     asString();
         } catch (UnirestException e) {
             statistics.restErrorCount.increment();
-            LOGGER.warn("Unable to edit message", e);
+            LOGGER.warn("Unable to delete message", e);
             return;
         }
         int status = response.getStatus();
         if (status != 200) {
             statistics.restErrorCount.increment();
-            LOGGER.warn("Unable to edit message: HTTP {}: {}", status, response.getStatusText());
+            LOGGER.warn("Unable to delete message: HTTP {}: {}", status, response.getStatusText());
             return;
         }
     }
