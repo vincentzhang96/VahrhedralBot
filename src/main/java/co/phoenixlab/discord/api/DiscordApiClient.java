@@ -293,7 +293,7 @@ public class DiscordApiClient {
             return;
         }
         int status = response.getStatus();
-        if (status != 200) {
+        if (status != 204) {
             statistics.restErrorCount.increment();
             LOGGER.warn("Unable to delete message: HTTP {}: {}", status, response.getStatusText());
             return;
