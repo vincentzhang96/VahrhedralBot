@@ -41,6 +41,7 @@ public class AdminCommands {
     private final ScriptEngine scriptEngine;
     private final Gson gson;
     private final VahrhedralBot bot;
+    private final Map<String, Object> storage;
     public static final String TRIPLE_BACKTICK = "```";
 
     public AdminCommands(VahrhedralBot bot) {
@@ -48,6 +49,7 @@ public class AdminCommands {
         dispatcher = new CommandDispatcher(bot, "");
         loc = bot.getLocalizer();
         scriptEngine = new ScriptEngineManager().getEngineByName("nashorn");
+        storage = new HashMap<>();
         gson = new GsonBuilder().
                 setPrettyPrinting().
                 disableInnerClassSerialization().
@@ -445,6 +447,21 @@ public class AdminCommands {
             return String.format("Command `%s` registered in namespace `%s`", cmd, namespace);
         }
 
+        public void store(String key, Object object) {
+            storage.put(key, object);
+        }
+
+        public Object get(String key) {
+            return storage.get(key);
+        }
+
+        public Object delete(String key) {
+            return storage.remove(key);
+        }
+
+        public long time() {
+            return System.currentTimeMillis();
+        }
     }
 
     private class TempCommandLocaleProvider implements LocaleStringProvider {
