@@ -250,8 +250,71 @@ public class DiscordApiClient {
         }
     }
 
-    public void deleteMessage(String messageId, String channelId) throws IOException {
-        //  TODO
+    public void deleteMessage(String messageId, String channelId, boolean async) {
+        if (async) {
+            executorService.submit(() -> deleteMessage(messageId, channelId, false));
+            return;
+        }
+
+        HttpResponse<String> response;
+        Map<String, String> headers = new HashMap<>();
+        headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+        headers.put(HttpHeaders.AUTHORIZATION, token);
+        try {
+            response = Unirest.delete(ApiConst.CHANNELS_ENDPOINT + channelId + "/messages/" + messageId).
+                    headers(headers).
+                    asString();
+        } catch (UnirestException e) {
+            statistics.restErrorCount.increment();
+            LOGGER.warn("Unable to edit message", e);
+            return;
+        }
+        int status = response.getStatus();
+        if (status != 200) {
+            statistics.restErrorCount.increment();
+            LOGGER.warn("Unable to edit message: HTTP {}: {}", status, response.getStatusText());
+            return;
+        }
+    }
+
+    public void editMessage(String channelId, String messageId, String content) {
+        editMessage(channelId, messageId, content, null);
+    }
+
+    public void editMessage(String channelId, String messageId, String content, String[] mentions) {
+        editMessage(channelId, messageId, content, mentions, true);
+    }
+
+    public void editMessage(String channelId, String messageId, String content, String[] mentions, boolean async) {
+        if (async) {
+            executorService.submit(() -> editMessage(channelId, messageId, content, mentions, false));
+            return;
+        }
+        //  TODO Add support for mention changes
+        Map<String, Object> ret = new HashMap<>();
+        ret.put("content", content);
+        JSONObject object = new JSONObject(ret);
+        HttpResponse<JsonNode> response;
+        Map<String, String> headers = new HashMap<>();
+        headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+        headers.put(HttpHeaders.AUTHORIZATION, token);
+        try {
+            response = Unirest.patch(ApiConst.CHANNELS_ENDPOINT + channelId + "/messages/" + messageId).
+                    headers(headers).
+                    body(object.toJSONString()).
+                    asJson();
+        } catch (UnirestException e) {
+            statistics.restErrorCount.increment();
+            LOGGER.warn("Unable to edit message", e);
+            return;
+        }
+        int status = response.getStatus();
+        if (status != 200) {
+            statistics.restErrorCount.increment();
+            LOGGER.warn("Unable to edit message: HTTP {}: {}", status, response.getStatusText());
+            return;
+        }
+
     }
 
     public String getToken() {
