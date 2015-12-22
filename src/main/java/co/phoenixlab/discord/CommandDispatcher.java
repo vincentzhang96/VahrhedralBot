@@ -106,6 +106,31 @@ public class CommandDispatcher {
         LOGGER.debug("Registered command \"{}\"", commandNameBaseKey);
     }
 
+    public boolean deleteCommandByName(String commandName) {
+        if (commandName != null) {
+            CommandWrapper wrapper = commands.remove(commandName.toUpperCase());
+            if (wrapper != null) {
+                LOGGER.debug("Deleted command \"{}\"", wrapper.command);
+                return true;
+            }
+        }
+        LOGGER.debug("Unable to delete command \"{}\"", commandName);
+        return false;
+    }
+
+    public boolean deleteCommandByBaseKey(String baseKey) {
+        String name = bot.getLocalizer().localize(baseKey + ".command");
+        if (name != null) {
+            CommandWrapper wrapper = commands.remove(name.toUpperCase());
+            if (wrapper != null) {
+                LOGGER.debug("Deleted command \"{}\"", wrapper.command);
+                return true;
+            }
+        }
+        LOGGER.debug("Unable to delete command key \"{}\"", baseKey);
+        return false;
+    }
+
     public void handleCommand(Message msg) {
         long cmdStartTime = System.nanoTime();
         try {
