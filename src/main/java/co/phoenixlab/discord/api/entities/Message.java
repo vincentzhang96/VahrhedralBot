@@ -50,6 +50,10 @@ public class Message {
         this.editedTimestamp = editedTimestamp;
     }
 
+    public Message(User author, String channelId, String content, String id, User[] mentions, String timestamp) {
+        this(author, channelId, null, null, null, false, content, id, mentions, timestamp, null);
+    }
+
     public Message() {
         this(null, null, null, null, null, false, null, null, null, null, null);
     }
