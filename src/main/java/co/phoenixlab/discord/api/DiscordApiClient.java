@@ -216,8 +216,17 @@ public class DiscordApiClient {
     }
 
     public void sendMessage(String body, String channelId, String[] mentions) {
+        sendMessage(body, channelId, mentions, true);
+    }
+
+    public void sendMessage(String body, String channelId, String[] mentions, boolean async) {
+        if (async) {
+            executorService.submit(() -> sendMessage(body, channelId, mentions, false));
+            return;
+        }
+
         OutboundMessage outboundMessage = new OutboundMessage(body, false, mentions);
-        String content = gson.toJson(outboundMessage);
+        String content = new GsonBuilder().serializeNulls().create().toJson(outboundMessage);
 
         HttpResponse<JsonNode> response;
         Map<String, String> headers = new HashMap<>();
@@ -358,7 +367,7 @@ public class DiscordApiClient {
         if (temp != null) {
             return temp;
         }
-        
+
         //  Still no match? Try fuzzy match
         //  TODO
 
