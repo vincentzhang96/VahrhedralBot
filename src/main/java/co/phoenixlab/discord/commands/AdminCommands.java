@@ -28,6 +28,7 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import static co.phoenixlab.discord.api.DiscordApiClient.NO_USER;
@@ -372,12 +373,12 @@ public class AdminCommands {
             suppressOutput = false;
         }
 
-        public void sendMessage(String content) {
-            sendMessageCid(content, context.getChannel().getId());
+        public Future<Message> sendMessage(String content) {
+            return sendMessageCid(content, context.getChannel().getId());
         }
 
-        public void sendMessageCid(String content, String cid) {
-            context.getApiClient().sendMessage(content, cid);
+        public Future<Message> sendMessageCid(String content, String cid) {
+            return context.getApiClient().sendMessage(content, cid);
         }
 
         public void suppress() {
