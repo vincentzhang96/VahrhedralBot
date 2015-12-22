@@ -466,11 +466,7 @@ public class AdminCommands {
 
         @Override
         public String get(String key) {
-            String ret = storage.get(key);
-            if (ret == null) {
-                ret = key;
-            }
-            return ret;
+            return storage.get(key);
         }
 
         @Override
