@@ -108,7 +108,7 @@ public class Commands {
         if (args.isEmpty()) {
             args = "help";
         }
-        dnCommands.getDispatcher().
+        adminCommands.getAdminCommandDispatcher().
                 handleCommand(new Message(message.getAuthor(), message.getChannelId(),
                         args, message.getId(), message.getMentions(), message.getTimestamp()));
     }
