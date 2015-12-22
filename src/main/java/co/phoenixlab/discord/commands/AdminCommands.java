@@ -140,13 +140,13 @@ public class AdminCommands {
 
     private void adminKill(MessageContext context, String args) {
         context.getApiClient().sendMessage(loc.localize("commands.admin.kill.response"),
-                context.getChannel());
+                context.getChannel(), false);
         context.getBot().shutdown();
     }
 
     private void adminRestart(MessageContext context, String args) {
         context.getApiClient().sendMessage(loc.localize("commands.admin.restart.response"),
-                context.getChannel());
+                context.getChannel(), false);
         context.getBot().shutdown(20);
     }
 
