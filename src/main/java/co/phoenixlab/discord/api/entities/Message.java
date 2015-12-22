@@ -16,9 +16,9 @@ public class Message {
 
     private final String nonce;
 
-    private final String[] attachments;
+    private final Object[] attachments;
 
-    private final String[] embeds;
+    private final Object[] embeds;
 
     @SerializedName("mention_everyone")
     private final boolean mentionEveryone;
@@ -34,7 +34,7 @@ public class Message {
     @SerializedName("edited_timestamp")
     private final String editedTimestamp;
 
-    public Message(User author, String channelId, String nonce, String[] attachments, String[] embeds,
+    public Message(User author, String channelId, String nonce, Object[] attachments, Object[] embeds,
                    boolean mentionEveryone, String content, String id, User[] mentions, String timestamp,
                    String editedTimestamp) {
         this.author = author;
@@ -86,11 +86,11 @@ public class Message {
         return nonce;
     }
 
-    public String[] getAttachments() {
+    public Object[] getAttachments() {
         return attachments;
     }
 
-    public String[] getEmbeds() {
+    public Object[] getEmbeds() {
         return embeds;
     }
 
