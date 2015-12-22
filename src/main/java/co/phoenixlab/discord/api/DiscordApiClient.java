@@ -243,10 +243,11 @@ public class DiscordApiClient {
     }
 
     Message sendMessageInternal(String body, String channelId, String[] mentions) {
+        Gson g = new GsonBuilder().serializeNulls().create();
         OutboundMessage outboundMessage = new OutboundMessage(body, false, mentions);
-        String content = new GsonBuilder().serializeNulls().create().toJson(outboundMessage);
+        String content = g.toJson(outboundMessage);
 
-        HttpResponse<Message> response;
+        HttpResponse<JsonNode> response;
         Map<String, String> headers = new HashMap<>();
         headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
         headers.put(HttpHeaders.AUTHORIZATION, token);
@@ -254,7 +255,7 @@ public class DiscordApiClient {
             response = Unirest.post(ApiConst.CHANNELS_ENDPOINT + channelId + "/messages").
                     headers(headers).
                     body(content).
-                    asObject(Message.class);
+                    asJson();
         } catch (UnirestException e) {
             statistics.restErrorCount.increment();
             LOGGER.warn("Unable to send message", e);
@@ -266,7 +267,7 @@ public class DiscordApiClient {
             LOGGER.warn("Unable to send message: HTTP {}: {}", status, response.getStatusText());
             return null;
         }
-        return response.getBody();
+        return g.fromJson(response.getBody().getObject().toString(), Message.class);
     }
 
     public void deleteMessage(String messageId, String channelId) {
