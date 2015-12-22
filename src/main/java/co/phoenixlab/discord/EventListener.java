@@ -10,12 +10,29 @@ import co.phoenixlab.discord.api.event.MessageReceivedEvent;
 import co.phoenixlab.discord.api.event.ServerJoinLeaveEvent;
 import com.google.common.eventbus.Subscribe;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Consumer;
+
 public class EventListener {
 
     private final VahrhedralBot bot;
 
+    private Map<String, Consumer<Message>> messageListeners;
+
     public EventListener(VahrhedralBot bot) {
         this.bot = bot;
+        messageListeners = new HashMap<>();
+        messageListeners.put("mention-bot", message -> {
+            User me = bot.getApiClient().getClientUser();
+            for (User user : message.getMentions()) {
+                if (me.equals(user)) {
+                    handleMention(message);
+                    return;
+                }
+            }
+        });
     }
 
     @Subscribe
@@ -25,13 +42,7 @@ public class EventListener {
             bot.getMainCommandDispatcher().handleCommand(message);
             return;
         }
-        User me = bot.getApiClient().getClientUser();
-        for (User user : message.getMentions()) {
-            if (me.equals(user)) {
-                handleMention(message);
-                return;
-            }
-        }
+        messageListeners.values().forEach(c -> c.accept(message));
     }
 
     private void handleMention(Message message) {
@@ -72,6 +83,14 @@ public class EventListener {
                         channel.getId());
             }
         }
+    }
+
+    public void registerMessageListner(String name, Consumer<Message> listener) {
+        messageListeners.put(Objects.requireNonNull(name), Objects.requireNonNull(listener));
+    }
+
+    public void deleteMessageListener(String name) {
+        messageListeners.remove(Objects.requireNonNull(name));
     }
 
 
