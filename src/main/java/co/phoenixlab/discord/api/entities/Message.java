@@ -14,25 +14,44 @@ public class Message {
     @SerializedName("channel_id")
     private final String channelId;
 
+    private final String nonce;
+
+    private final String[] attachments;
+
+    private final String[] embeds;
+
+    @SerializedName("mention_everyone")
+    private final boolean mentionEveryone;
+
     private final String content;
 
     private final String id;
 
     private final User[] mentions;
 
-    private final String time;
+    private final String timestamp;
 
-    public Message(User author, String channelId, String content, String id, User[] mentions, String time) {
+    @SerializedName("edited_timestamp")
+    private final String editedTimestamp;
+
+    public Message(User author, String channelId, String nonce, String[] attachments, String[] embeds,
+                   boolean mentionEveryone, String content, String id, User[] mentions, String timestamp,
+                   String editedTimestamp) {
         this.author = author;
         this.channelId = channelId;
+        this.nonce = nonce;
+        this.attachments = attachments;
+        this.embeds = embeds;
+        this.mentionEveryone = mentionEveryone;
         this.content = content;
         this.id = id;
         this.mentions = mentions;
-        this.time = time;
+        this.timestamp = timestamp;
+        this.editedTimestamp = editedTimestamp;
     }
 
     public Message() {
-        this(null, null, null, null, null, null);
+        this(null, null, null, null, null, false, null, null, null, null, null);
     }
 
     public User getAuthor() {
@@ -55,8 +74,28 @@ public class Message {
         return mentions;
     }
 
-    public String getTime() {
-        return time;
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public String getNonce() {
+        return nonce;
+    }
+
+    public String[] getAttachments() {
+        return attachments;
+    }
+
+    public String[] getEmbeds() {
+        return embeds;
+    }
+
+    public boolean isMentionEveryone() {
+        return mentionEveryone;
+    }
+
+    public String getEditedTimestamp() {
+        return editedTimestamp;
     }
 
     @Override

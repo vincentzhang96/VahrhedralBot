@@ -105,9 +105,12 @@ public class Commands {
             }
             return;
         }
-        adminCommands.getAdminCommandDispatcher().
-                handleCommand(new Message(message.getAuthor(), message.getChannelId(), args,
-                        message.getChannelId(), message.getMentions(), message.getTime()));
+        dnCommands.getDispatcher().
+                handleCommand(new Message(message.getAuthor(), message.getChannelId(),
+                        message.getNonce(), message.getAttachments(), message.getEmbeds(),
+                        message.isMentionEveryone(), args,
+                        message.getChannelId(), message.getMentions(), message.getTimestamp(),
+                        message.getEditedTimestamp()));
     }
 
     private void listAdmins(MessageContext context, String s) {
@@ -389,8 +392,11 @@ public class Commands {
             args = "help";
         }
         dnCommands.getDispatcher().
-                handleCommand(new Message(message.getAuthor(), message.getChannelId(), args,
-                        message.getChannelId(), message.getMentions(), message.getTime()));
+                handleCommand(new Message(message.getAuthor(), message.getChannelId(),
+                        message.getNonce(), message.getAttachments(), message.getEmbeds(),
+                        message.isMentionEveryone(), args,
+                        message.getChannelId(), message.getMentions(), message.getTimestamp(),
+                        message.getEditedTimestamp()));
     }
 
     private void insult(MessageContext context, String args) {
