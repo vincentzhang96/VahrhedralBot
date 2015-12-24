@@ -231,6 +231,9 @@ public class DiscordApiClient {
     }
 
     public Future<Message> sendMessage(String body, String channelId, String[] mentions, boolean async) {
+        if (body == null || channelId == null || mentions == null) {
+            throw new IllegalArgumentException("Arguments may not be null");
+        }
         Future<Message> future = executorService.submit(() -> sendMessageInternal(body, channelId, mentions));
         if (!async) {
             try {
@@ -275,6 +278,10 @@ public class DiscordApiClient {
     }
 
     public void deleteMessage(String channelId, String messageId, boolean async) {
+        if (channelId == null || messageId == null) {
+            return;
+        }
+
         if (async) {
             executorService.submit(() -> deleteMessage(messageId, channelId, false));
             return;
@@ -313,6 +320,9 @@ public class DiscordApiClient {
     }
 
     public void editMessage(String channelId, String messageId, String content, String[] mentions, boolean async) {
+        if (channelId == null || messageId == null || content == null) {
+            return;
+        }
         if (async) {
             executorService.submit(() -> editMessage(channelId, messageId, content, mentions, false));
             return;
@@ -404,6 +414,9 @@ public class DiscordApiClient {
     }
 
     public Channel getChannelById(String id) {
+        if (id == null) {
+            return NO_CHANNEL;
+        }
         return servers.stream().
                 map(Server::getChannels).
                 flatMap(Set::stream).
@@ -412,12 +425,21 @@ public class DiscordApiClient {
     }
 
     public Channel getChannelById(String id, Server server) {
+        if (id == null) {
+            return NO_CHANNEL;
+        }
+        if (server == null || server == NO_SERVER) {
+            return getChannelById(id);
+        }
         return server.getChannels().stream().
                 filter(c -> id.equals(c.getId())).
                 findFirst().orElse(NO_CHANNEL);
     }
 
     public User findUser(String username) {
+        if (username == null) {
+            return NO_USER;
+        }
         username = username.toLowerCase();
         for (Server server : servers) {
             User user = findUser(username, server);
@@ -429,6 +451,9 @@ public class DiscordApiClient {
     }
 
     public User findUser(String username, Server server) {
+        if (username == null) {
+            return NO_USER;
+        }
         if (server == null || server == NO_SERVER) {
             return findUser(username);
         }
@@ -465,6 +490,9 @@ public class DiscordApiClient {
     }
 
     public User getUserById(String userId) {
+        if (userId == null) {
+            return NO_USER;
+        }
         for (Server server : servers) {
             User user = getUserById(userId, server);
             if (user != NO_USER) {
@@ -475,6 +503,9 @@ public class DiscordApiClient {
     }
 
     public User getUserById(String userId, Server server) {
+        if (userId == null) {
+            return NO_USER;
+        }
         if (server == null || server == NO_SERVER) {
             return getUserById(userId);
         }
@@ -488,10 +519,16 @@ public class DiscordApiClient {
     }
 
     public Member getUserMember(User user, Server server) {
+        if (user == null) {
+            return NO_MEMBER;
+        }
         return getUserMember(user.getId(), server);
     }
 
     public Member getUserMember(String userId, Server server) {
+        if (userId == null || server == null) {
+            return NO_MEMBER;
+        }
         for (Member member : server.getMembers()) {
             User user = member.getUser();
             if (user.getId().equals(userId)) {
@@ -502,6 +539,9 @@ public class DiscordApiClient {
     }
 
     public Role getRole(String roleId, Server server) {
+        if (roleId == null || server == null) {
+            return NO_ROLE;
+        }
         for (Role role : server.getRoles()) {
             if (roleId.equals(role.getId())) {
                 return role;
@@ -511,6 +551,9 @@ public class DiscordApiClient {
     }
 
     public Role findRole(String roleName, Server server) {
+        if (roleName == null || server == null) {
+            return NO_ROLE;
+        }
         //  Exact (case insensitive) match
         for (Role role : server.getRoles()) {
             if (roleName.equalsIgnoreCase(role.getName())) {
@@ -541,6 +584,9 @@ public class DiscordApiClient {
     }
 
     public Set<Role> getMemberRoles(Member member, Server server) {
+        if (member == null || server == null) {
+            return Collections.emptySet();
+        }
         Set<Role> ret = member.getRoles().stream().
                 map(r -> getRole(r, server)).
                 collect(Collectors.toSet());
