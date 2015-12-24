@@ -31,6 +31,15 @@
             </Policies>
             <DefaultRolloverStrategy max="20"/>
         </RollingRandomAccessFile>
+        <RollingRandomAccessFile name="VoiceFile" fileName="logs/voice.log" filePattern="logs/voice_%i.log">
+            <PatternLayout>
+                <Pattern>%d{HH:mm:ss.SSS} [%t] [%-5level] %msg%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <OnStartupTriggeringPolicy />
+            </Policies>
+            <DefaultRolloverStrategy max="20"/>
+        </RollingRandomAccessFile>
     </Appenders>
     <Loggers>
         <Logger name="VahrhedralBot" level="trace" additivity="false">
@@ -44,6 +53,10 @@
         <Logger name="DiscordApiWebSocketClient" level="trace" additivity="false">
             <AppenderRef ref="Console" level="info"/>
             <AppenderRef ref="WebSocketFile" level="debug"/>
+        </Logger>
+        <Logger name="VoiceClient" level="trace" additivity="false">
+            <AppenderRef ref="Console" level="info"/>
+            <AppenderRef ref="VoiceFile" level="debug"/>
         </Logger>
         <Root level="error">
             <AppenderRef ref="Console"/>

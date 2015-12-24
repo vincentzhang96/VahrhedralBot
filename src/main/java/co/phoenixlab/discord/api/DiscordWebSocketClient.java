@@ -2,7 +2,11 @@ package co.phoenixlab.discord.api;
 
 import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.discord.api.entities.*;
+import co.phoenixlab.discord.api.entities.voice.VoiceServerUpdate;
+import co.phoenixlab.discord.api.entities.voice.VoiceStateUpdate;
 import co.phoenixlab.discord.api.event.*;
+import co.phoenixlab.discord.api.event.voice.VoiceServerUpdateEvent;
+import co.phoenixlab.discord.api.event.voice.VoiceStateUpdateEvent;
 import co.phoenixlab.discord.stats.RunningAverage;
 import com.google.gson.Gson;
 import org.java_websocket.client.WebSocketClient;
@@ -123,7 +127,10 @@ public class DiscordWebSocketClient extends WebSocketClient {
                         handlePresenceUpdate(data);
                         break;
                     case "VOICE_STATE_UPDATE":
-                        //  TODO
+                        handleVoiceStateUpdate(data);
+                        break;
+                    case "VOICE_SERVER_UPDATE":
+                        handleVoiceServerUpdate(data);
                         break;
                     //  TODO
                     default:
@@ -135,6 +142,26 @@ public class DiscordWebSocketClient extends WebSocketClient {
         } finally {
             statistics.avgMessageHandleTime.add(MILLISECONDS.convert(System.nanoTime() - start, NANOSECONDS));
         }
+    }
+
+    private void handleVoiceStateUpdate(JSONObject data) {
+        VoiceStateUpdate update = jsonObjectToObject(data, VoiceStateUpdate.class);
+        update.fix(apiClient);
+        Server server = update.getServer();
+        LOGGER.debug("[{}] '{}': Received voice status update for {} ({})",
+                server.getId(), server.getName(),
+                update.getUser().getUsername(), update.getUser().getId());
+        apiClient.getEventBus().post(new VoiceStateUpdateEvent(update));
+    }
+
+    private void handleVoiceServerUpdate(JSONObject data) {
+        VoiceServerUpdate update = jsonObjectToObject(data, VoiceServerUpdate.class);
+        update.fix(apiClient);
+        Server server = update.getServer();
+        LOGGER.debug("[{}] '{}': Received voice server update: endpoint={} token={}",
+                server.getId(), server.getName(),
+                update.getEndpoint(), update.getToken());
+        apiClient.getEventBus().post(new VoiceServerUpdateEvent(update));
     }
 
     private void handleGuildRoleUpdate(JSONObject data) {
