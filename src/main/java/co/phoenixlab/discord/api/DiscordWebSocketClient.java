@@ -78,6 +78,12 @@ public class DiscordWebSocketClient extends WebSocketClient {
                     case "READY":
                         handleReadyMessage(data);
                         break;
+                    case "USER_UPDATE":
+                        handleUserUpdate(data);
+                        break;
+                    case "USER_SETTINGS_UPDATE":
+                        //  Don't care
+                        break;
                     case "MESSAGE_CREATE":
                         handleMessageCreate(data);
                         break;
@@ -142,6 +148,13 @@ public class DiscordWebSocketClient extends WebSocketClient {
         } finally {
             statistics.avgMessageHandleTime.add(MILLISECONDS.convert(System.nanoTime() - start, NANOSECONDS));
         }
+    }
+
+    private void handleUserUpdate(JSONObject data) {
+        UserUpdate update = jsonObjectToObject(data, UserUpdate.class);
+        LOGGER.debug("[0] '': Received user account update: username={} id={} avatar={} email={}",
+                update.getUsername(), update.getId(), update.getAvatar(), update.getEmail());
+        apiClient.getEventBus().post(new UserUpdateEvent(update));
     }
 
     private void handleVoiceStateUpdate(JSONObject data) {

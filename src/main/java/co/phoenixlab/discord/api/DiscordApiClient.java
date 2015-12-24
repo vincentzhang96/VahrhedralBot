@@ -2,6 +2,7 @@ package co.phoenixlab.discord.api;
 
 import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.LogInEvent;
+import co.phoenixlab.discord.api.event.UserUpdateEvent;
 import co.phoenixlab.discord.api.event.WebSocketCloseEvent;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -22,7 +23,10 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
@@ -199,6 +203,31 @@ public class DiscordApiClient {
         for (PrivateChannel privateChannel : readyMessage.getPrivateChannels()) {
             privateChannels.put(privateChannel.getId(), privateChannel);
             privateChannelsByUser.put(privateChannel.getRecipient(), privateChannel);
+        }
+    }
+
+    @Subscribe
+    public void onUserUpdate(UserUpdateEvent event) {
+        UserUpdate update = event.getUpdate();
+        User oldUser = clientUser.get();
+        if (!oldUser.getId().equals(update.getId())) {
+            throw new IllegalStateException("User ID should not be able to be updated!");
+        }
+        String oldEmail = email;
+        email = update.getEmail();
+        clientUser.set(new User(update.getUsername(), update.getId(),
+                update.getDiscriminator(), update.getAvatar()));
+        if (!oldUser.getUsername().equals(update.getUsername())) {
+            LOGGER.info("Username changed from '{}' to '{}'", oldUser.getUsername(), update.getUsername());
+        }
+        if (!oldUser.getDiscriminator().equals(update.getDiscriminator())) {
+            LOGGER.info("Discriminator changed from '{}' to '{}'", oldUser.getDiscriminator(), update.getDiscriminator());
+        }
+        if (!oldUser.getAvatar().equals(update.getAvatar())) {
+            LOGGER.info("Avatar changed from '{}' to '{}'", oldUser.getAvatar(), update.getAvatar());
+        }
+        if (!oldEmail.equals(email)) {
+            LOGGER.info("Email changed from '{}' to '{}'", oldEmail, email);
         }
     }
 
