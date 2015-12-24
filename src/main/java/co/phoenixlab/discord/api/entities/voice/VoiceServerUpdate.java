@@ -6,14 +6,14 @@ import com.google.gson.annotations.SerializedName;
 
 public class VoiceServerUpdate {
 
-    private final String endpoint;
+    private String endpoint;
 
     @SerializedName("guild_id")
-    private final String serverId;
+    private String serverId;
 
     private transient Server server = DiscordApiClient.NO_SERVER;
 
-    private final String token;
+    private String token;
 
     public VoiceServerUpdate(String endpoint, String serverId, String token) {
         this.endpoint = endpoint;
@@ -38,7 +38,11 @@ public class VoiceServerUpdate {
     }
 
     public void fix(DiscordApiClient apiClient) {
-        server = apiClient.getServerByID(serverId);
+        if (serverId != null) {
+            server = apiClient.getServerByID(serverId);
+        } else {
+            serverId = "";
+        }
     }
 
     @Override
