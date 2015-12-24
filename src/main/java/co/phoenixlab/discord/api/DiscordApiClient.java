@@ -215,8 +215,9 @@ public class DiscordApiClient {
         }
         String oldEmail = email;
         email = update.getEmail();
-        clientUser.set(new User(update.getUsername(), update.getId(),
-                update.getDiscriminator(), update.getAvatar()));
+        User newUser = new User(update.getUsername(), update.getId(),
+                update.getDiscriminator(), update.getAvatar());
+        clientUser.set(newUser);
         if (!oldUser.getUsername().equals(update.getUsername())) {
             LOGGER.info("Username changed from '{}' to '{}'", oldUser.getUsername(), update.getUsername());
         }
@@ -228,6 +229,17 @@ public class DiscordApiClient {
         }
         if (!oldEmail.equals(email)) {
             LOGGER.info("Email changed from '{}' to '{}'", oldEmail, email);
+        }
+        //  Fire off a change to ourself across all servers as well
+        for (Server server : servers) {
+            server.getMembers().stream().
+                    map(Member::getUser).
+                    filter(u -> u.equals(newUser)).
+                    findFirst().ifPresent(u -> {
+                u.setAvatar(update.getAvatar());
+                u.setUsername(update.getUsername());
+                u.setDiscriminator(update.getDiscriminator());
+            });
         }
     }
 

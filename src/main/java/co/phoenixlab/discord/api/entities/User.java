@@ -21,7 +21,7 @@ public class User {
     /**
      * An identifier used to discriminate between two users with the same name and/or id
      */
-    private final String discriminator;
+    private String discriminator;
 
     /**
      * The user's avatar ID
@@ -93,6 +93,10 @@ public class User {
     public void setAvatar(String avatar) {
         this.avatar = avatar;
         avatarUrl = null;
+    }
+
+    public void setDiscriminator(String discriminator) {
+        this.discriminator = discriminator;
     }
 
     @Override
