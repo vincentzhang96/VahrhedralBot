@@ -38,6 +38,10 @@ public class EventListener {
     @Subscribe
     public void onMessageRecieved(MessageReceivedEvent messageReceivedEvent) {
         Message message = messageReceivedEvent.getMessage();
+        if (bot.getConfig().getBlacklist().contains(message.getAuthor().getId())) {
+            return;
+        }
+
         if (message.getContent().startsWith(bot.getConfig().getCommandPrefix())) {
             bot.getMainCommandDispatcher().handleCommand(message);
             return;

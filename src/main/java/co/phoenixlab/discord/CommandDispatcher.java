@@ -181,7 +181,6 @@ public class CommandDispatcher {
 
     public boolean shouldCommandBeDispatched(CommandWrapper command, MessageContext context) {
         return (command.alwaysActive || active().get()) &&
-                !bot.getConfig().getBlacklist().contains(context.getAuthor().getId()) &&
                 customCommandDispatchChecker.test(command, context);
     }
 
