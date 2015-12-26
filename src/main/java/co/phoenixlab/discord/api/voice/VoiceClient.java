@@ -77,9 +77,11 @@ public class VoiceClient implements Runnable {
                 LOGGER.warn("Unable to connect to voice endpoint");
             }
         } catch (InterruptedException e) {
-            LOGGER.info("Interrupted by stop request");
-            disconnect();
-            return;
+            if (!keepRunning.get()) {
+                LOGGER.info("Interrupted by stop request");
+                disconnect();
+                return;
+            }
         }
         connected.set(true);
         LOGGER.info("Connected to voice endpoint");
