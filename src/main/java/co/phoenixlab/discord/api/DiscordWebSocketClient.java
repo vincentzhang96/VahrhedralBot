@@ -130,7 +130,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
                         handleChannelUpdate(data);
                         break;
                     case "PRESENCE_UPDATE":
-                        handlePresenceUpdate(data);
+                        handlePresenceUpdate(data, message);
                         break;
                     case "VOICE_STATE_UPDATE":
                         handleVoiceStateUpdate(data);
@@ -247,7 +247,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         }
     }
 
-    private void handlePresenceUpdate(JSONObject data) {
+    private void handlePresenceUpdate(JSONObject data, String raw) {
         PresenceUpdate update = jsonObjectToObject(data, PresenceUpdate.class);
         Server server = apiClient.getServerByID(update.getServerId());
         if (server != NO_SERVER) {
@@ -259,9 +259,9 @@ public class DiscordWebSocketClient extends WebSocketClient {
             if (member != NO_MEMBER && member.getUser().equals(user)) {
                 member.getRoles().clear();
                 member.getRoles().addAll(update.getRoles());
-                LOGGER.debug("[{}] '{}': {}'s ({}) presence changed",
+                LOGGER.debug("[{}] '{}': {}'s ({}) presence changed: {}",
                         server.getId(), server.getName(),
-                        user.getUsername(), user.getId());
+                        user.getUsername(), user.getId(), raw);
                 apiClient.getEventBus().post(new PresenceUpdateEvent(update, server));
             } else {
                 LOGGER.warn("[{}] '{}': Orphan presence update received, ignored (userid={} username={}): Not found",
