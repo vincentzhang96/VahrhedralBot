@@ -1,5 +1,7 @@
 package co.phoenixlab.discord.api.entities;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -18,13 +20,17 @@ public class Member {
      */
     private final List<String> roles;
 
-    public Member(User user, List<String> roles) {
+    @SerializedName("joined_at")
+    private final String joinedAt;
+
+    public Member(User user, List<String> roles, String joinedAt) {
         this.user = user;
         this.roles = roles;
+        this.joinedAt = joinedAt;
     }
 
     public Member() {
-        this(null, null);
+        this(null, null, null);
     }
 
     /**
@@ -39,6 +45,10 @@ public class Member {
      */
     public List<String> getRoles() {
         return roles;
+    }
+
+    public String getJoinedAt() {
+        return joinedAt;
     }
 
     @Override

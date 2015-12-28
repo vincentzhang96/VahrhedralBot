@@ -43,7 +43,7 @@ public class DiscordApiClient {
     public static final Server NO_SERVER = new Server("NO_SERVER");
     public static final Channel NO_CHANNEL = new Channel("", "NO_CHANNEL");
     public static final User NO_USER = new User("NO_USER", "NO_USER", "NO_USER", null);
-    public static final Member NO_MEMBER = new Member(NO_USER, Collections.emptyList());
+    public static final Member NO_MEMBER = new Member(NO_USER, Collections.emptyList(), "");
     public static final Role NO_ROLE = new Role(0, 0, "NO_ROLE", false, "", false, 0);
     public static final String[] EMPTY_STR_ARRAY = new String[0];
 
