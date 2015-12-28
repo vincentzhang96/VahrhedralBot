@@ -423,6 +423,10 @@ public class Commands {
                     context.getChannel());
             return;
         }
+        if (context.getBot().getConfig().isAdmin(user.getId())) {
+            user = context.getAuthor();
+        }
+
         String insult = getInsult();
         if (insult == null) {
             apiClient.sendMessage(loc.localize("commands.general.insult.response.error"),
