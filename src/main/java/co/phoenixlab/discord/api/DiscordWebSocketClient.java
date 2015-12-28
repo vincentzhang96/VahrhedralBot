@@ -50,7 +50,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         Thread.currentThread().setName("WebSocketClient");
         LOGGER.info("WebSocket connection opened");
         send("{\"op\":2,\"d\":{\"token\":\"" + apiClient.getToken() + "\",\"properties\":{\"$os\":\"Linux\",\"" +
-                "$browser\":\"DesuBot\",\"$device\":\"DesuBot\",\"$referrer\":\"\",\"$referring_domain\"" +
+                "$browser\":\"Java\",\"$device\":\"Java\",\"$referrer\":\"\",\"$referring_domain\"" +
                 ":\"\"},\"v\":2}}");
     }
 

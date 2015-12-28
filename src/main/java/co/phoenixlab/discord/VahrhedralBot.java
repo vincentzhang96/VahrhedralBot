@@ -37,6 +37,8 @@ public class VahrhedralBot implements Runnable {
 
     public static final Path CONFIG_PATH = Paths.get("config/config.json");
 
+    public static final String USER_AGENT = "DiscordBot (https://github.com/vincentzhang96/VahrhedralBot, 12)";
+
     private DiscordApiClient apiClient;
     public static void main(String[] args) {
         LOGGER.info("Starting Vahrhedral bot");
@@ -79,6 +81,9 @@ public class VahrhedralBot implements Runnable {
         commandDispatcher = new CommandDispatcher(this, config.getCommandPrefix());
         commands = new Commands(this);
         commands.register(commandDispatcher);
+        //  Required User-Agent
+        Unirest.setDefaultHeader("User-Agent", USER_AGENT);
+
         apiClient = new DiscordApiClient();
         apiClient.getEventBus().register(eventListener);
         try {
