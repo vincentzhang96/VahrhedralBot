@@ -500,7 +500,9 @@ public class DiscordWebSocketClient extends WebSocketClient {
         if (message == null) {
             data.put("game", org.json.JSONObject.NULL);
         } else {
-            data.put("game", message);
+            org.json.JSONObject gameObj = new org.json.JSONObject();
+            gameObj.put("name", message);
+            data.put("game", gameObj);
         }
         request.put("d", data);
         send(request.toString());
