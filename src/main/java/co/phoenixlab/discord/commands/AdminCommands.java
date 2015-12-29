@@ -332,10 +332,32 @@ public class AdminCommands {
 
     private void eval(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
-        Message message = context.getMessage();
         if (!args.startsWith(TRIPLE_BACKTICK) || !args.endsWith(TRIPLE_BACKTICK)) {
-            apiClient.sendMessage("##TEMPORARY_MSG##Use triple backtick code block", message.getChannelId());
-            return;
+            HttpResponse<String> response;
+            try {
+                response = Unirest.get(args).
+                        asString();
+            } catch (UnirestException e) {
+                VahrhedralBot.LOGGER.warn("Unable to evaluate script", e);
+                String msg = e.getLocalizedMessage();
+                if (msg == null) {
+                    msg = e.getClass().getSimpleName();
+                }
+                apiClient.sendMessage(loc.localize("commands.admin.eval.response.exception", msg),
+                        context.getChannel());
+                return;
+            }
+            if (response.getStatus() != 200) {
+                VahrhedralBot.LOGGER.warn("Unable to evaluate script: HTTP {}: {}",
+                        response.getStatus(), response.getStatusText());
+                apiClient.sendMessage(loc.localize("commands.admin.eval.response.http_error",
+                        response.getStatus(), response.getStatusText()), context.getChannel());
+                return;
+            }
+            args = response.getBody();
+        } else {
+            args = args.substring(TRIPLE_BACKTICK.length(),
+                    args.length() - TRIPLE_BACKTICK.length());
         }
         try {
             ScriptHelper helper = new ScriptHelper(context);
@@ -349,9 +371,7 @@ public class AdminCommands {
             bindings.put("bot", context.getBot());
             bindings.put("loc", loc);
             bindings.put("api", context.getApiClient());
-            String baseScript = args.substring(TRIPLE_BACKTICK.length(),
-                    args.length() - TRIPLE_BACKTICK.length());
-            Object ret = scriptEngine.eval(baseScript, scriptContext);
+            Object ret = scriptEngine.eval(args, scriptContext);
             if (!helper.suppressOutput) {
                 String retStr = "null";
                 if (ret != null) {
@@ -452,7 +472,7 @@ public class AdminCommands {
 
         public String newCommand(String cmd, String desc, String args, Command command) {
             String namespace = "temp.js." + cmd;
-            loc.addLocaleStringProvider(new TempCommandLocaleProvider(namespace, cmd, desc, desc,  args));
+            loc.addLocaleStringProvider(new TempCommandLocaleProvider(namespace, cmd, desc, desc, args));
             bot.getMainCommandDispatcher().registerCommand(namespace, command);
             return String.format("Command `%s` registered in namespace `%s`", cmd, namespace);
         }
