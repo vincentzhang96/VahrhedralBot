@@ -497,13 +497,10 @@ public class DiscordWebSocketClient extends WebSocketClient {
         org.json.JSONObject request = new org.json.JSONObject();
         request.put("op", 3);
         org.json.JSONObject data = new org.json.JSONObject();
-        data.put("event", "Launch Game");
         if (message == null) {
-            data.put("properties", org.json.JSONObject.NULL);
+            data.put("game", org.json.JSONObject.NULL);
         } else {
-            org.json.JSONObject gameObj = new org.json.JSONObject();
-            gameObj.put("Game", message);
-            data.put("properties", gameObj);
+            data.put("game", message);
         }
         request.put("d", data);
         send(request.toString());
