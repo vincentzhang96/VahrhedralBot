@@ -494,18 +494,21 @@ public class DiscordWebSocketClient extends WebSocketClient {
     }
 
     void sendNowPlayingUpdate(String message) {
-        org.json.JSONObject request = new org.json.JSONObject();
-        request.put("op", 3);
         org.json.JSONObject data = new org.json.JSONObject();
         if (message == null) {
             data.put("game", org.json.JSONObject.NULL);
         } else {
-            org.json.JSONObject gameObj = new org.json.JSONObject();
-            gameObj.put("name", message);
-            data.put("game", gameObj);
+            org.json.JSONObject game = new org.json.JSONObject();
+            game.put("name", message);
+            data.put("game", game);
         }
-        request.put("d", data);
-        send(request.toString());
+        data.put("idle_since", org.json.JSONObject.NULL);
+        org.json.JSONObject outer = new org.json.JSONObject();
+        outer.put("op", 3);
+        outer.put("d", data);
+        String out = outer.toString();
+        LOGGER.info(out);
+        send(out);
     }
 
     private <T> T jsonObjectToObject(JSONObject object, Class<T> clazz) {
