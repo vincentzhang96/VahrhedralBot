@@ -493,6 +493,22 @@ public class DiscordWebSocketClient extends WebSocketClient {
         statistics.errorCount.increment();
     }
 
+    void sendNowPlayingUpdate(String message) {
+        org.json.JSONObject request = new org.json.JSONObject();
+        request.put("op", 3);
+        org.json.JSONObject data = new org.json.JSONObject();
+        data.put("event", "Launch Game");
+        if (message == null) {
+            data.put("properties", org.json.JSONObject.NULL);
+        } else {
+            org.json.JSONObject gameObj = new org.json.JSONObject();
+            gameObj.put("Game", message);
+            data.put("properties", gameObj);
+        }
+        request.put("d", data);
+        send(request.toString());
+    }
+
     private <T> T jsonObjectToObject(JSONObject object, Class<T> clazz) {
         //  Because this doesnt come too often and to simplify matters
         //  we'll serialize the object to string and have Gson parse out the object

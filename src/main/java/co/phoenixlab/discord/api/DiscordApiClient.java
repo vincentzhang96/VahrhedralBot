@@ -395,40 +395,7 @@ public class DiscordApiClient {
     }
 
     public void updateNowPlaying(String message) {
-        org.json.JSONObject req = new org.json.JSONObject();
-        req.put("event", "Launch Game");
-        if (message == null) {
-            req.put("properties", org.json.JSONObject.NULL);
-        } else {
-            org.json.JSONObject gameObj = new org.json.JSONObject();
-            gameObj.put("Game", message);
-            req.put("properties", gameObj);
-        }
-        Map<String, String> headers = new HashMap<>();
-        headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
-        headers.put(HttpHeaders.AUTHORIZATION, token);
-        HttpResponse<String> response;
-        try {
-            response = Unirest.post(ApiConst.TRACK_ENDPOINT).
-                    headers(headers).
-                    body(req.toString()).
-                    asString();
-        } catch (UnirestException e) {
-            statistics.restErrorCount.increment();
-            LOGGER.warn("Unable to update Now Playing", e);
-            return;
-        }
-        int status = response.getStatus();
-        if (status != 204) {
-            statistics.restErrorCount.increment();
-            LOGGER.warn("Unable to update Now Playing: HTTP {}: {}", status, response.getStatusText());
-            return;
-        }
-        if (message == null) {
-            LOGGER.debug("Cleared Now Playing");
-        } else {
-            LOGGER.debug("Updated Now Playing to '{}'", message);
-        }
+        webSocketClient.sendNowPlayingUpdate(message);
     }
 
     public String getToken() {
