@@ -75,6 +75,7 @@ public class AdminCommands {
         d.registerAlwaysActiveCommand("commands.admin.prefix", this::adminPrefix);
         d.registerAlwaysActiveCommand("commands.admin.sandwich", this::makeSandwich);
         d.registerAlwaysActiveCommand("commands.admin.eval", this::eval);
+        d.registerAlwaysActiveCommand("commands.admin.playing", this::updateNowPlaying);
     }
 
     private void adminStart(MessageContext context, String args) {
@@ -317,6 +318,15 @@ public class AdminCommands {
         } else {
             apiClient.sendMessage(loc.localize("commands.admin.sandwich.response.magic"),
                     context.getChannel());
+        }
+    }
+
+    private void updateNowPlaying(MessageContext context, String args) {
+        DiscordApiClient apiClient = context.getApiClient();
+        if (args.isEmpty()) {
+            apiClient.updateNowPlaying(null);
+        } else {
+            apiClient.updateNowPlaying(args);
         }
     }
 

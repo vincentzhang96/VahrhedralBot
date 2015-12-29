@@ -55,5 +55,9 @@ public class ApiConst {
      * The format string for icon URLs
      */
     public static final String ICON_URL_PATTERN = "https://cdn.discordapp.com/icons/%1$s/%2$s.jpg";
+    /**
+     * The endpoint for various random status updates
+     */
+    public static final String TRACK_ENDPOINT = API_BASE_PATH + "/track";
 
 }
