@@ -398,6 +398,11 @@ public class DiscordApiClient {
         webSocketClient.sendNowPlayingUpdate(message);
     }
 
+    public void updateRolesByObj(User user, Server server, Collection<Role> roles) {
+        List<String> r = roles.stream().map(Role::getId).collect(Collectors.toList());
+        updateRoles(user, server, r);
+    }
+
     public void updateRoles(User user, Server server, Collection<String> roles) {
         try {
             Map<String, String> headers = new HashMap<>();
