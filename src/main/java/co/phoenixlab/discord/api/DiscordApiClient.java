@@ -398,6 +398,37 @@ public class DiscordApiClient {
         webSocketClient.sendNowPlayingUpdate(message);
     }
 
+    public void updateRoles(User user, Server server, Collection<String> roles) {
+        try {
+            Map<String, String> headers = new HashMap<>();
+            headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+            headers.put(HttpHeaders.AUTHORIZATION, token);
+            org.json.JSONObject object = new org.json.JSONObject();
+            object.put("roles", roles);
+            HttpResponse<JsonNode> r = Unirest.patch(ApiConst.SERVERS_ENDPOINT + server.getId() + "/members/" +
+                    user.getId()).
+                    headers(headers).
+                    body(object.toString()).
+                    asJson();
+            int status = r.getStatus();
+            if (status < 200 || status >= 300) {
+                statistics.restErrorCount.increment();
+                LOGGER.warn("Unable to update member {} ({}) roles in {} ({}): HTTP {}: {}",
+                        user.getUsername(), user.getId(),
+                        server.getName(), server.getId(),
+                        status, r.getStatusText());
+                return;
+            }
+        } catch (UnirestException e) {
+            statistics.restErrorCount.increment();
+            LOGGER.warn("Unable to update member {} ({}) roles in {} ({})",
+                    user.getUsername(), user.getId(),
+                    server.getName(), server.getId());
+            LOGGER.warn("Unable to update member roles", e);
+            return;
+        }
+    }
+
     public String getToken() {
         return token;
     }
