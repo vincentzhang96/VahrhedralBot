@@ -65,6 +65,18 @@ public class Commands {
         d.registerCommand("commands.general.insult", this::insult);
     }
 
+    public AdminCommands getAdminCommands() {
+        return adminCommands;
+    }
+
+    public DnCommands getDnCommands() {
+        return dnCommands;
+    }
+
+    public ModCommands getModCommands() {
+        return modCommands;
+    }
+
     private void admin(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
         Message message = context.getMessage();
