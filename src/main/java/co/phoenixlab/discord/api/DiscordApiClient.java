@@ -631,13 +631,15 @@ public class DiscordApiClient {
         if (member == null || server == null) {
             return Collections.emptySet();
         }
-        Set<Role> ret = member.getRoles().stream().
+        Set<Role> definedRoles = member.getRoles().stream().
                 map(r -> getRole(r, server)).
-                collect(Collectors.toSet());
+                collect(Collectors.toCollection(LinkedHashSet::new));
         Role everyone = findRole("@everyone", server);
+        LinkedHashSet<Role> ret = new LinkedHashSet<>(definedRoles.size() + 1);
         if (everyone != null) {
             ret.add(everyone);
         }
+        ret.addAll(definedRoles);
         return ret;
     }
 
