@@ -123,6 +123,14 @@ public class Commands {
         Message message = context.getMessage();
         User author = context.getAuthor();
         Server server = context.getServer();
+
+        //  TODO TEMPORARY - LIMIT TO DNNACD
+        if (!server.getId().equals("106293726271246336")) {
+            apiClient.sendMessage(loc.localize("commands.general.mod.response.unsupported_server"),
+                    context.getChannel());
+            return;
+        }
+
         if (!checkPermission(CHAT_MANAGE_MESSAGES, apiClient.getUserMember(author, server), server, apiClient)) {
             apiClient.sendMessage(loc.localize("commands.general.mod.response.reject", author.getUsername()),
                     context.getChannel());
