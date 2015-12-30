@@ -399,11 +399,23 @@ public class DiscordApiClient {
     }
 
     public void updateRolesByObj(User user, Server server, Collection<Role> roles) {
+        updateRolesByObj(user, server, roles, true);
+    }
+
+    public void updateRolesByObj(User user, Server server, Collection<Role> roles, boolean async) {
         List<String> r = roles.stream().map(Role::getId).collect(Collectors.toList());
-        updateRoles(user, server, r);
+        updateRoles(user, server, r, async);
     }
 
     public void updateRoles(User user, Server server, Collection<String> roles) {
+        updateRoles(user, server, roles, true);
+    }
+
+    public void updateRoles(User user, Server server, Collection<String> roles, boolean async) {
+        if (async) {
+            executorService.submit(() -> updateRoles(user, server, roles, false));
+            return;
+        }
         try {
             Map<String, String> headers = new HashMap<>();
             headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
