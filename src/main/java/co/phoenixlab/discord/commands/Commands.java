@@ -25,12 +25,14 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static co.phoenixlab.discord.api.DiscordApiClient.*;
+import static co.phoenixlab.discord.api.entities.Permission.*;
 import static co.phoenixlab.discord.commands.CommandUtil.findUser;
 
 public class Commands {
 
     private final AdminCommands adminCommands;
     private final DnCommands dnCommands;
+    private final ModCommands modCommands;
     private final Localizer loc;
     private final Random random;
 
@@ -40,6 +42,7 @@ public class Commands {
     public Commands(VahrhedralBot bot) {
         adminCommands = new AdminCommands(bot);
         dnCommands = new DnCommands(bot);
+        modCommands = new ModCommands(bot);
         loc = bot.getLocalizer();
         random = new Random();
     }
@@ -47,7 +50,9 @@ public class Commands {
     public void register(CommandDispatcher d) {
         adminCommands.registerAdminCommands();
         dnCommands.registerDnCommands();
+        modCommands.registerModCommands();
         d.registerAlwaysActiveCommand("commands.general.admin", this::admin);
+        d.registerAlwaysActiveCommand("commands.general.mod", this::mod);
         d.registerCommand("commands.general.admins", this::listAdmins);
         d.registerCommand("commands.general.info", this::info);
         d.registerCommand("commands.general.avatar", this::avatar);
@@ -109,6 +114,24 @@ public class Commands {
             args = "help";
         }
         adminCommands.getAdminCommandDispatcher().
+                handleCommand(new Message(message.getAuthor(), message.getChannelId(),
+                        args, message.getId(), message.getMentions(), message.getTimestamp()));
+    }
+
+    private void mod(MessageContext context, String args) {
+        DiscordApiClient apiClient = context.getApiClient();
+        Message message = context.getMessage();
+        User author = context.getAuthor();
+        Server server = context.getServer();
+        if (!checkPermission(CHAT_MANAGE_MESSAGES, apiClient.getUserMember(author, server), server, apiClient)) {
+            apiClient.sendMessage(loc.localize("commands.general.mod.response.reject", author.getUsername()),
+                    context.getChannel());
+            return;
+        }
+        if (args.isEmpty()) {
+            args = "help";
+        }
+        modCommands.getModCommandDispatcher().
                 handleCommand(new Message(message.getAuthor(), message.getChannelId(),
                         args, message.getId(), message.getMentions(), message.getTimestamp()));
     }
@@ -296,14 +319,14 @@ public class Commands {
             return;
         }
         Member issuer = apiClient.getUserMember(message.getAuthor(), server);
-        if (!(checkPermission(Permission.GEN_MANAGE_ROLES, issuer, server, apiClient) ||
+        if (!(checkPermission(GEN_MANAGE_ROLES, issuer, server, apiClient) ||
                 context.getBot().getConfig().isAdmin(message.getAuthor().getId()))) {
             apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.no_user_perms"),
                     context.getChannel());
             return;
         }
         Member bot = apiClient.getUserMember(apiClient.getClientUser(), server);
-        if (!checkPermission(Permission.GEN_MANAGE_ROLES, bot, server, apiClient)) {
+        if (!checkPermission(GEN_MANAGE_ROLES, bot, server, apiClient)) {
             apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.no_bot_perms"),
                     context.getChannel());
             return;
