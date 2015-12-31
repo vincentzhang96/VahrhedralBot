@@ -15,7 +15,10 @@ public class InstantGsonTypeAdapter extends TypeAdapter<Instant> {
         if (value == null) {
             out.nullValue();
         } else {
-            out.value(value.toEpochMilli());
+            out.beginObject();
+            out.name("sec").value(value.getEpochSecond());
+            out.name("nanos").value(value.getNano());
+            out.endObject();
         }
     }
 
@@ -24,7 +27,20 @@ public class InstantGsonTypeAdapter extends TypeAdapter<Instant> {
         if (in.peek() == JsonToken.NULL) {
             return null;
         }
-        long epoch = in.nextLong();
-        return Instant.ofEpochMilli(epoch);
+        long sec = 0L;
+        int nanos = 0;
+        in.beginObject();
+        while (in.hasNext()) {
+            switch (in.nextName()) {
+                case "sec":
+                    sec = in.nextLong();
+                    break;
+                case "nanos":
+                    nanos = in.nextInt();
+                    break;
+            }
+        }
+        in.endObject();
+        return Instant.ofEpochSecond(sec, nanos);
     }
 }
