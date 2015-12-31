@@ -2,7 +2,7 @@ package co.phoenixlab.discord.commands.tempstorage;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
 
 public class ServerTimeout {
 
@@ -13,16 +13,15 @@ public class ServerTimeout {
     private final Duration duration;
     private final Instant endTime;
     private final String issuedByUserId;
-    private final transient Future<Void> timerFuture;
+    private transient ScheduledFuture timerFuture;
 
     public ServerTimeout(Duration duration, Instant startTime, String userId, String serverId, String lastUsername,
-                         String issuedByUserId, Future<Void> timerFuture) {
+                         String issuedByUserId) {
         this.duration = duration;
         this.startTime = startTime;
         this.userId = userId;
         this.serverId = serverId;
         this.lastUsername = lastUsername;
-        this.timerFuture = timerFuture;
         this.endTime = startTime.plus(duration);
         this.issuedByUserId = issuedByUserId;
     }
@@ -51,8 +50,12 @@ public class ServerTimeout {
         return issuedByUserId;
     }
 
-    public Future<Void> getTimerFuture() {
+    public ScheduledFuture getTimerFuture() {
         return timerFuture;
+    }
+
+    public void setTimerFuture(ScheduledFuture timerFuture) {
+        this.timerFuture = timerFuture;
     }
 
     public String getLastUsername() {

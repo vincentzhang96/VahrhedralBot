@@ -32,6 +32,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -56,6 +57,8 @@ public class ModCommands {
 
     private final Gson gson;
 
+    private final ScheduledExecutorService timeoutService;
+
     public ModCommands(VahrhedralBot bot) {
         this.bot = bot;
         dispatcher = new CommandDispatcher(bot, "");
@@ -67,6 +70,7 @@ public class ModCommands {
                 registerTypeAdapter(Instant.class, new InstantGsonTypeAdapter()).
                 registerTypeAdapter(Duration.class, new DurationGsonTypeAdapter()).
                 create();
+        timeoutService = Executors.newScheduledThreadPool(10);
     }
 
     public CommandDispatcher getModCommandDispatcher() {
@@ -125,7 +129,7 @@ public class ModCommands {
             if (isUserTimedOut(user, server)) {
                 refreshTimeoutOnEvade(user, server);
             } else {
-                removeTimeout(user, server);
+                onTimeoutExpire(user, server);
             }
         }
     }
@@ -203,8 +207,48 @@ public class ModCommands {
         return false;
     }
 
-    public void removeTimeout(User user, Server server) {
-        //  TODO
+    public void cancelTimeout(User user, Server server, Channel invocationChannel) {
+        ServerTimeoutStorage storage = timeoutStorage.get(server.getId());
+        if (storage != null) {
+            ServerTimeout timeout = storage.getTimeouts().remove(user.getId());
+            if (timeout != null) {
+                SafeNav.of(timeout.getTimerFuture()).ifPresent(f -> f.cancel(true));
+                LOGGER.info("Cancelling timeout for {} ({}) in {} ({})",
+                        user.getUsername(), user.getId(),
+                        server.getName(), server.getId());
+                apiClient.sendMessage(loc.localize("commands.mod.stoptimeout.response",
+                        user.getUsername(), user.getId()),
+                        invocationChannel);
+                return;
+            }
+        }
+        LOGGER.warn("Unable to cancel: cannot find server or timeout entry for {} ({}) in {} ({})",
+                user.getUsername(), user.getId(),
+                server.getName(), server.getId());
+        removeTimeoutRole(user, server, apiClient.getChannelById(server.getId()));
+        apiClient.sendMessage(loc.localize("commands.mod.stoptimeout.response.not_found",
+                user.getUsername(), user.getId()),
+                invocationChannel);
+    }
+
+    public void onTimeoutExpire(User user, Server server) {
+        ServerTimeoutStorage storage = timeoutStorage.get(server.getId());
+        if (storage != null) {
+            ServerTimeout timeout = storage.getTimeouts().remove(user.getId());
+            if (timeout != null) {
+                LOGGER.info("Expiring timeout for {} ({}) in {} ({})",
+                        user.getUsername(), user.getId(),
+                        server.getName(), server.getId());
+                apiClient.sendMessage(loc.localize("message.mod.timeout.expire",
+                        user.getId()),
+                        server.getId());
+                removeTimeoutRole(user, server, apiClient.getChannelById(server.getId()));
+                return;
+            }
+        }
+        LOGGER.warn("Unable to expire: find server or timeout entry for {} ({}) in {} ({})",
+                user.getUsername(), user.getId(),
+                server.getName(), server.getId());
     }
 
     /**
@@ -297,9 +341,9 @@ public class ModCommands {
                     Map.Entry<String, ServerTimeout> e = iter.next();
                     ServerTimeout timeout = e.getValue();
                     String userId = timeout.getUserId();
+                    User user = apiClient.getUserById(userId, server);
                     if (!isUserTimedOut(userId, server.getId())) {
                         //  Purge!
-                        User user = apiClient.getUserById(userId, server);
                         if (user == NO_USER) {
                             LOGGER.info("Ending timeout for departed user {} ({}) in {} ({})",
                                     timeout.getLastUsername(), userId,
@@ -309,7 +353,8 @@ public class ModCommands {
                                     server.getId());
                             //  Don't need to remove the timeout role because leaving does that for us
                         } else {
-                            LOGGER.info("Ending timeout for {} ({}) in {} ({})",
+                            //  Duplicated from onTimeoutExpire except without remove since we're removing in an iter
+                            LOGGER.info("Expiring timeout for {} ({}) in {} ({})",
                                     user.getUsername(), user.getId(),
                                     server.getName(), server.getId());
                             apiClient.sendMessage(loc.localize("message.mod.timeout.expire",
@@ -317,7 +362,14 @@ public class ModCommands {
                                     server.getId());
                             removeTimeoutRole(user, server, apiClient.getChannelById(server.getId()));
                         }
+                        SafeNav.of(timeout.getTimerFuture()).ifPresent(f -> f.cancel(true));
                         iter.remove();
+                    } else {
+                        //  Start our futures
+                        Duration duration = Duration.between(Instant.now(), timeout.getEndTime());
+                        ScheduledFuture future = timeoutService.schedule(() ->
+                                onTimeoutExpire(user, server), duration.getSeconds(), TimeUnit.SECONDS);
+                        timeout.setTimerFuture(future);
                     }
                 }
             }
