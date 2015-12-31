@@ -65,6 +65,18 @@ public class Commands {
         d.registerCommand("commands.general.insult", this::insult);
     }
 
+    public AdminCommands getAdminCommands() {
+        return adminCommands;
+    }
+
+    public DnCommands getDnCommands() {
+        return dnCommands;
+    }
+
+    public ModCommands getModCommands() {
+        return modCommands;
+    }
+
     private void admin(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
         Message message = context.getMessage();
@@ -123,6 +135,7 @@ public class Commands {
         Message message = context.getMessage();
         User author = context.getAuthor();
         Server server = context.getServer();
+
         if (!checkPermission(CHAT_MANAGE_MESSAGES, apiClient.getUserMember(author, server), server, apiClient)) {
             apiClient.sendMessage(loc.localize("commands.general.mod.response.reject", author.getUsername()),
                     context.getChannel());

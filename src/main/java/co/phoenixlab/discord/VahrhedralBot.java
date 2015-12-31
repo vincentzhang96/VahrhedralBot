@@ -79,13 +79,14 @@ public class VahrhedralBot implements Runnable {
         loadLocalization();
         versionInfo = loadVersionInfo();
         commandDispatcher = new CommandDispatcher(this, config.getCommandPrefix());
-        commands = new Commands(this);
-        commands.register(commandDispatcher);
         //  Required User-Agent
         Unirest.setDefaultHeader("User-Agent", USER_AGENT);
 
         apiClient = new DiscordApiClient();
         apiClient.getEventBus().register(eventListener);
+
+        commands = new Commands(this);
+        commands.register(commandDispatcher);
         try {
             apiClient.logIn(config.getEmail(), config.getPassword());
         } catch (IOException e) {
@@ -189,6 +190,10 @@ public class VahrhedralBot implements Runnable {
 
     public Localizer getLocalizer() {
         return localizer;
+    }
+
+    public Commands getCommands() {
+        return commands;
     }
 
     public void shutdown() {

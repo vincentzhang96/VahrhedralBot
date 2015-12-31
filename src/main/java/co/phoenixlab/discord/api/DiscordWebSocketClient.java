@@ -420,7 +420,9 @@ public class DiscordWebSocketClient extends WebSocketClient {
         ReadyMessage readyMessage = jsonObjectToObject(data, ReadyMessage.class);
         startKeepAlive(readyMessage.getHeartbeatInterval());
         LOGGER.info("[0] '': Sending keepAlive every {} ms", readyMessage.getHeartbeatInterval());
-        apiClient.getEventBus().post(new LogInEvent(readyMessage));
+        LogInEvent event = new LogInEvent(readyMessage);
+        apiClient.onLogInEvent(event);
+        apiClient.getEventBus().post(event);
     }
 
     private void handleGuildCreate(JSONObject data) {

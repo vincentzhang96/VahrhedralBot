@@ -185,8 +185,7 @@ public class DiscordApiClient {
         return gateway;
     }
 
-    @Subscribe
-    public void onLogInEvent(LogInEvent event) {
+    void onLogInEvent(LogInEvent event) {
         ReadyMessage readyMessage = event.getReadyMessage();
         setSessionId(readyMessage.getSessionId());
         LOGGER.info("Using sessionId {}", getSessionId());
@@ -396,6 +395,54 @@ public class DiscordApiClient {
 
     public void updateNowPlaying(String message) {
         webSocketClient.sendNowPlayingUpdate(message);
+    }
+
+    public void updateRolesByObj(User user, Server server, Collection<Role> roles) {
+        updateRolesByObj(user, server, roles, true);
+    }
+
+    public void updateRolesByObj(User user, Server server, Collection<Role> roles, boolean async) {
+        List<String> r = roles.stream().map(Role::getId).collect(Collectors.toList());
+        updateRoles(user, server, r, async);
+    }
+
+    public void updateRoles(User user, Server server, Collection<String> roles) {
+        updateRoles(user, server, roles, true);
+    }
+
+    public void updateRoles(User user, Server server, Collection<String> roles, boolean async) {
+        if (async) {
+            executorService.submit(() -> updateRoles(user, server, roles, false));
+            return;
+        }
+        try {
+            Map<String, String> headers = new HashMap<>();
+            headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+            headers.put(HttpHeaders.AUTHORIZATION, token);
+            org.json.JSONObject object = new org.json.JSONObject();
+            object.put("roles", roles);
+            HttpResponse<JsonNode> r = Unirest.patch(ApiConst.SERVERS_ENDPOINT + server.getId() + "/members/" +
+                    user.getId()).
+                    headers(headers).
+                    body(object.toString()).
+                    asJson();
+            int status = r.getStatus();
+            if (status < 200 || status >= 300) {
+                statistics.restErrorCount.increment();
+                LOGGER.warn("Unable to update member {} ({}) roles in {} ({}): HTTP {}: {}",
+                        user.getUsername(), user.getId(),
+                        server.getName(), server.getId(),
+                        status, r.getStatusText());
+                return;
+            }
+        } catch (UnirestException e) {
+            statistics.restErrorCount.increment();
+            LOGGER.warn("Unable to update member {} ({}) roles in {} ({})",
+                    user.getUsername(), user.getId(),
+                    server.getName(), server.getId());
+            LOGGER.warn("Unable to update member roles", e);
+            return;
+        }
     }
 
     public String getToken() {
