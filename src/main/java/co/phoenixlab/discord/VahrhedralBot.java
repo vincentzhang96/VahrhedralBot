@@ -192,6 +192,10 @@ public class VahrhedralBot implements Runnable {
         return localizer;
     }
 
+    public Commands getCommands() {
+        return commands;
+    }
+
     public void shutdown() {
         shutdown(0);
     }
