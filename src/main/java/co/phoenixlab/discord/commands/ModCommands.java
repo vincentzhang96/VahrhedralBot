@@ -596,19 +596,36 @@ public class ModCommands {
         StringJoiner joiner = new StringJoiner(", ");
         long days = duration.toDays();
         if (days > 0) {
-            joiner.add(String.format("%,d days", days));
+            long years = days / 365;
+            if (years > 0) {
+                long centuries = years / 100;
+                if (centuries > 0) {
+                    long millenia = centuries / 10;
+                    joiner.add(loc.localize("time.millenia", millenia));
+                    centuries = centuries % 10;
+                    if (centuries > 0) {
+                        joiner.add(loc.localize("time.centuries", centuries));
+                    }
+                }
+                years = years % 100;
+                if (years > 0) {
+                    joiner.add(loc.localize("time.years", years));
+                }
+            }
+            days = days % 365;
+            joiner.add(loc.localize("time.days", days));
         }
         long hours = duration.toHours() % 24L;
         if (hours > 0) {
-            joiner.add(String.format("%,d hours", hours));
+            joiner.add(loc.localize("time.hours", hours));
         }
         long minutes = duration.toMinutes() % 60L;
         if (minutes > 0) {
-            joiner.add(String.format("%,d minutes", minutes));
+            joiner.add(loc.localize("time.minutes", minutes));
         }
         long seconds = duration.getSeconds() % 60L;
         if (seconds > 0) {
-            joiner.add(String.format("%,d seconds", seconds));
+            joiner.add(loc.localize("time.seconds", seconds));
         }
         return joiner.toString();
     }
