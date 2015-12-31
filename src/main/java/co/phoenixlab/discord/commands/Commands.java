@@ -499,6 +499,9 @@ public class Commands {
     }
 
     private boolean checkPermission(Permission permission, Member member, Server server, DiscordApiClient apiClient) {
+        if (member.getUser().getId().equals(server.getOwnerId())) {
+            return true;
+        }
         for (String roleId : member.getRoles()) {
             Role role = apiClient.getRole(roleId, server);
             if (permission.test(role.getPermissions())) {
