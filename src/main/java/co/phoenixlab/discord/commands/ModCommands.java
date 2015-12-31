@@ -359,7 +359,7 @@ public class ModCommands {
             storage = new ServerTimeoutStorage(serverId);
             timeoutStorage.put(serverId, storage);
             LOGGER.warn("Timeout role for server {} ({}) is not configured",
-                    storage.getTimeoutRoleId(), serverName, serverId);
+                    serverName, serverId);
             apiClient.sendMessage(loc.localize("message.mod.timeout.not_configured"), invocationChannel);
         }
         return false;
