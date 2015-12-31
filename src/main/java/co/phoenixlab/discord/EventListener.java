@@ -1,10 +1,8 @@
 package co.phoenixlab.discord;
 
 import co.phoenixlab.discord.api.DiscordApiClient;
-import co.phoenixlab.discord.api.entities.Channel;
-import co.phoenixlab.discord.api.entities.Message;
-import co.phoenixlab.discord.api.entities.Server;
-import co.phoenixlab.discord.api.entities.User;
+import co.phoenixlab.discord.api.entities.*;
+import co.phoenixlab.discord.api.event.LogInEvent;
 import co.phoenixlab.discord.api.event.MemberChangeEvent;
 import co.phoenixlab.discord.api.event.MessageReceivedEvent;
 import co.phoenixlab.discord.api.event.ServerJoinLeaveEvent;
@@ -97,5 +95,9 @@ public class EventListener {
         messageListeners.remove(Objects.requireNonNull(name));
     }
 
+    @Subscribe
+    public void onLogIn(LogInEvent logInEvent) {
+        bot.getCommands().getModCommands().loadServerTimeoutStorageFiles();
+    }
 
 }
