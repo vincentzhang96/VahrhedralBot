@@ -302,7 +302,6 @@ public class ModCommands {
                 formatInstant(timeout.getEndTime())),
                 channel);
         applyTimeoutRole(user, server, channel);
-
     }
 
     /**
@@ -368,6 +367,7 @@ public class ModCommands {
         removeTimeoutRole(user, server, apiClient.getChannelById(server.getId()));
         if (storage != null) {
             ServerTimeout timeout = storage.getTimeouts().remove(user.getId());
+            saveServerTimeoutStorage(storage);
             if (timeout != null) {
                 SafeNav.of(timeout.getTimerFuture()).ifPresent(f -> f.cancel(true));
                 LOGGER.info("Cancelling timeout for {} ({}) in {} ({})",
@@ -392,6 +392,7 @@ public class ModCommands {
         if (storage != null) {
             ServerTimeout timeout = storage.getTimeouts().remove(user.getId());
             if (timeout != null) {
+                saveServerTimeoutStorage(storage);
                 LOGGER.info("Expiring timeout for {} ({}) in {} ({})",
                         user.getUsername(), user.getId(),
                         server.getName(), server.getId());
