@@ -53,6 +53,7 @@ public class ModCommands {
         CommandDispatcher d = dispatcher;
         d.registerAlwaysActiveCommand("commands.mod.timeout", this::timeout);
         d.registerAlwaysActiveCommand("commands.mod.stoptimeout", this::stopTimeout);
+        d.registerAlwaysActiveCommand("commands.mod.settimeoutrole", this::setTimeoutRole);
 
         EventBus eventBus = bot.getApiClient().getEventBus();
         eventBus.register(new WeakEventSubscriber<>(memberJoinListener, eventBus, MemberChangeEvent.class));
@@ -64,6 +65,10 @@ public class ModCommands {
 
     private void stopTimeout(MessageContext context, String args) {
         //  TODO
+    }
+
+    private void setTimeoutRole(MessageContext context, String args) {
+
     }
 
     @Subscribe
