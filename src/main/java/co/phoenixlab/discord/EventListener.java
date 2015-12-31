@@ -97,7 +97,7 @@ public class EventListener {
 
     @Subscribe
     public void onLogIn(LogInEvent logInEvent) {
-        bot.getCommands().getModCommands().loadServerTimeoutStorageFiles();
+        bot.getCommands().getModCommands().onReady();
     }
 
 }

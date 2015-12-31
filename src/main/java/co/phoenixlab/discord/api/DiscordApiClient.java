@@ -185,8 +185,7 @@ public class DiscordApiClient {
         return gateway;
     }
 
-    @Subscribe
-    public void onLogInEvent(LogInEvent event) {
+    void onLogInEvent(LogInEvent event) {
         ReadyMessage readyMessage = event.getReadyMessage();
         setSessionId(readyMessage.getSessionId());
         LOGGER.info("Using sessionId {}", getSessionId());

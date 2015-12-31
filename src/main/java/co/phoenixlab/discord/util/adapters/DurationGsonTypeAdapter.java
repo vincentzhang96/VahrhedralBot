@@ -28,6 +28,7 @@ public class DurationGsonTypeAdapter extends TypeAdapter<Duration> {
         }
         long sec = 0L;
         int nanos = 0;
+        in.beginObject();
         while (in.hasNext()) {
             switch (in.nextName()) {
                 case "sec":
@@ -38,6 +39,7 @@ public class DurationGsonTypeAdapter extends TypeAdapter<Duration> {
                     break;
             }
         }
+        in.endObject();
         return Duration.ofSeconds(sec, nanos);
     }
 }
