@@ -15,15 +15,31 @@ import co.phoenixlab.discord.api.event.MemberChangeEvent.MemberChange;
 import co.phoenixlab.discord.commands.tempstorage.ServerTimeout;
 import co.phoenixlab.discord.commands.tempstorage.ServerTimeoutStorage;
 import co.phoenixlab.discord.util.WeakEventSubscriber;
+import co.phoenixlab.discord.util.adapters.DurationGsonTypeAdapter;
+import co.phoenixlab.discord.util.adapters.InstantGsonTypeAdapter;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static co.phoenixlab.discord.VahrhedralBot.LOGGER;
-import static co.phoenixlab.discord.api.DiscordApiClient.NO_ROLE;
+import static co.phoenixlab.discord.api.DiscordApiClient.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 
 public class ModCommands {
 
@@ -36,6 +52,10 @@ public class ModCommands {
 
     private final Map<String, ServerTimeoutStorage> timeoutStorage;
 
+    private static final Path serverStorageDir = Paths.get("config/tempServerStorage/");
+
+    private final Gson gson;
+
     public ModCommands(VahrhedralBot bot) {
         this.bot = bot;
         dispatcher = new CommandDispatcher(bot, "");
@@ -43,6 +63,10 @@ public class ModCommands {
         apiClient = bot.getApiClient();
         memberJoinListener = this::onMemberJoinedServer;
         timeoutStorage = new HashMap<>();
+        gson = new GsonBuilder().
+                registerTypeAdapter(Instant.class, new InstantGsonTypeAdapter()).
+                registerTypeAdapter(Duration.class, new DurationGsonTypeAdapter()).
+                create();
     }
 
     public CommandDispatcher getModCommandDispatcher() {
@@ -68,7 +92,29 @@ public class ModCommands {
     }
 
     private void setTimeoutRole(MessageContext context, String args) {
-
+        DiscordApiClient apiClient = context.getApiClient();
+        if (args.isEmpty()) {
+            apiClient.sendMessage(loc.localize("commands.mod.settimeoutrole.response.missing"),
+                    context.getChannel());
+            return;
+        }
+        Role role = apiClient.getRole(args, context.getServer());
+        if (role == NO_ROLE) {
+            apiClient.sendMessage(loc.localize("commands.mod.settimeoutrole.response.not_found",
+                    args),
+                    context.getChannel());
+            return;
+        }
+        String serverId = context.getServer().getId();
+        ServerTimeoutStorage storage = timeoutStorage.get(serverId);
+        if (storage == null) {
+            storage = new ServerTimeoutStorage(serverId);
+            timeoutStorage.put(serverId, storage);
+        }
+        storage.setTimeoutRoleId(role.getId());
+        apiClient.sendMessage(loc.localize("commands.mod.settimeoutrole.response",
+                role.getName(), role.getId()),
+                context.getChannel());
     }
 
     @Subscribe
@@ -78,6 +124,8 @@ public class ModCommands {
             Server server = memberChangeEvent.getServer();
             if (isUserTimedOut(user, server)) {
                 refreshTimeoutOnEvade(user, server);
+            } else {
+                removeTimeout(user, server);
             }
         }
     }
@@ -96,13 +144,15 @@ public class ModCommands {
                 server.getName(), server.getId());
         Channel channel = apiClient.getChannelById(server.getId(), server);
         applyTimeoutRole(user, server, channel);
+
     }
 
     /**
      * Applies the timeout role to the given user. This does NOT create or manage any storage/persistence, it only
      * sets the user's roles
-     * @param user The user to add to the timeout role
-     * @param server The server on which to add the user to the timeout role
+     *
+     * @param user              The user to add to the timeout role
+     * @param server            The server on which to add the user to the timeout role
      * @param invocationChannel The channel to send messages on error
      */
     public void applyTimeoutRole(User user, Server server, Channel invocationChannel) {
@@ -138,30 +188,31 @@ public class ModCommands {
     }
 
     public boolean isUserTimedOut(User user, Server server) {
-        ServerTimeoutStorage storage = timeoutStorage.get(server.getId());
+        return isUserTimedOut(user.getId(), server.getId());
+    }
+
+    public boolean isUserTimedOut(String userId, String serverId) {
+        ServerTimeoutStorage storage = timeoutStorage.get(serverId);
         if (storage != null) {
-            ServerTimeout timeout = storage.getTimeouts().get(user.getId());
+            ServerTimeout timeout = storage.getTimeouts().get(userId);
             if (timeout != null) {
                 Instant now = Instant.now();
-                if (timeout.getEndTime().compareTo(now) > 0) {
-                    return true;
-                } else {
-                    removeTimeout(user, server, storage, timeout);
-                }
+                return timeout.getEndTime().compareTo(now) > 0;
             }
         }
         return false;
     }
 
-    public void removeTimeout(User user, Server server, ServerTimeoutStorage storage, ServerTimeout timeout) {
+    public void removeTimeout(User user, Server server) {
         //  TODO
     }
 
     /**
      * Removes the timeout role from the given user. This does NOT create or manage any storage/persistence, it only
      * sets the user's roles
-     * @param user The user to remove the timeout role
-     * @param server The server on which to remove the user from the timeout role
+     *
+     * @param user              The user to remove the timeout role
+     * @param server            The server on which to remove the user from the timeout role
      * @param invocationChannel The channel to send messages on error
      */
     public void removeTimeoutRole(User user, Server server, Channel invocationChannel) {
@@ -193,6 +244,86 @@ public class ModCommands {
             LOGGER.warn("Timeout role for server {} ({}) is not configured",
                     storage.getTimeoutRoleId(), serverName, serverId);
             apiClient.sendMessage(loc.localize("message.mod.timeout.not_configured"), invocationChannel);
+        }
+    }
+
+
+    public void saveServerTimeoutStorage(ServerTimeoutStorage storage) {
+        try {
+            Files.createDirectories(serverStorageDir);
+        } catch (IOException e) {
+            LOGGER.warn("Unable to create server storage directory", e);
+            return;
+        }
+        Path serverStorageFile = serverStorageDir.resolve(storage.getServerId() + ".json");
+        try (BufferedWriter writer = Files.newBufferedWriter(serverStorageFile, UTF_8, CREATE, TRUNCATE_EXISTING)) {
+            gson.toJson(storage, writer);
+            writer.flush();
+        } catch (IOException e) {
+            LOGGER.warn("Unable to write server storage file for " + storage.getServerId(), e);
+            return;
+        }
+        LOGGER.info("Saved server {}", storage.getServerId());
+    }
+
+    public void loadServerTimeoutStorageFiles() {
+        if (!Files.exists(serverStorageDir)) {
+            LOGGER.info("Server storage directory doesn't exist, not loading anything");
+            return;
+        }
+        try (Stream<Path> files = Files.list(serverStorageDir)) {
+            files.filter(p -> p.getFileName().toString().endsWith(".json")).
+                    forEach(this::loadServerTimeoutStorage);
+        } catch (IOException e) {
+            LOGGER.warn("Unable to load server storage files", e);
+            return;
+        }
+    }
+
+    public void loadServerTimeoutStorage(Path path) {
+        try (Reader reader = Files.newBufferedReader(path, UTF_8)) {
+            ServerTimeoutStorage storage = gson.fromJson(reader, ServerTimeoutStorage.class);
+            if (storage != null) {
+                Server server = apiClient.getServerByID(storage.getServerId());
+                if (server == NO_SERVER) {
+                    LOGGER.warn("Rejecting {} server storage file: server not found", storage.getServerId());
+                    return;
+                }
+                timeoutStorage.put(storage.getServerId(), storage);
+                LOGGER.info("Loaded {} ({}) server storage file", server.getName(), server.getId());
+                //  Prune expired entries
+                for (Iterator<Map.Entry<String, ServerTimeout>> iter = storage.getTimeouts().entrySet().iterator();
+                     iter.hasNext(); ) {
+                    Map.Entry<String, ServerTimeout> e = iter.next();
+                    ServerTimeout timeout = e.getValue();
+                    String userId = timeout.getUserId();
+                    if (!isUserTimedOut(userId, server.getId())) {
+                        //  Purge!
+                        User user = apiClient.getUserById(userId, server);
+                        if (user == NO_USER) {
+                            LOGGER.info("Ending timeout for departed user {} ({}) in {} ({})",
+                                    timeout.getLastUsername(), userId,
+                                    server.getName(), server.getId());
+                            apiClient.sendMessage(loc.localize("message.mod.timeout.expire.not_found",
+                                    user.getId()),
+                                    server.getId());
+                            //  Don't need to remove the timeout role because leaving does that for us
+                        } else {
+                            LOGGER.info("Ending timeout for {} ({}) in {} ({})",
+                                    user.getUsername(), user.getId(),
+                                    server.getName(), server.getId());
+                            apiClient.sendMessage(loc.localize("message.mod.timeout.expire",
+                                    user.getId()),
+                                    server.getId());
+                            removeTimeoutRole(user, server, apiClient.getChannelById(server.getId()));
+                        }
+                        iter.remove();
+                    }
+                }
+            }
+        } catch (IOException | JsonParseException e) {
+            LOGGER.warn("Unable to load server storage file " + path.getFileName(), e);
+            return;
         }
     }
 }
