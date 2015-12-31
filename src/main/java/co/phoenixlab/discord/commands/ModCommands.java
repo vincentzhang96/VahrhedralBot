@@ -120,12 +120,12 @@ public class ModCommands {
                             storage = new ServerTimeoutStorage(serverId);
                             timeoutStorage.put(serverId, storage);
                         }
-                        storage.getTimeouts().put(user.getId(), timeout);
-                        ScheduledFuture future = timeoutService.schedule(() ->
-                                onTimeoutExpire(theUser, server), duration.getSeconds(), TimeUnit.SECONDS);
-                        timeout.setTimerFuture(future);
-                        saveServerTimeoutStorage(storage);
                         if (applyTimeoutRole(user, server, channel)) {
+                            storage.getTimeouts().put(user.getId(), timeout);
+                            ScheduledFuture future = timeoutService.schedule(() ->
+                                    onTimeoutExpire(theUser, server), duration.getSeconds(), TimeUnit.SECONDS);
+                            timeout.setTimerFuture(future);
+                            saveServerTimeoutStorage(storage);
                             apiClient.sendMessage(loc.localize("commands.mod.timeout.response",
                                     user.getUsername(), user.getId(),
                                     formatDuration(duration),
