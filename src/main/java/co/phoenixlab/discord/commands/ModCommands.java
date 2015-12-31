@@ -49,7 +49,7 @@ import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 
 public class ModCommands {
 
-    public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("L dd HH:mm:ss z");
+    public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("MMM dd uuuu HH:mm:ss z");
     private final CommandDispatcher dispatcher;
     private Localizer loc;
     private final VahrhedralBot bot;
@@ -241,7 +241,26 @@ public class ModCommands {
     }
 
     private void stopTimeout(MessageContext context, String args) {
-        //  TODO
+        if (args.isEmpty()) {
+            apiClient.sendMessage(loc.localize("commands.mod.stoptimeout.response.invalid"),
+                    context.getChannel());
+            return;
+        }
+        String uid = args;
+        if (uid.length() > 4) {
+            if (uid.startsWith("<@")) {
+                uid = uid.substring(2, uid.length() - 1);
+            }
+            Server server = context.getServer();
+            User user = apiClient.getUserById(uid, server);
+            if (user == NO_USER) {
+                user = new User("UNKNOWN", uid, "", null);
+            }
+            cancelTimeout(user, server, context.getChannel());
+        } else {
+            apiClient.sendMessage(loc.localize("commands.mod.stoptimeout.response.invalid"),
+                    context.getChannel());
+        }
     }
 
     private void setTimeoutRole(MessageContext context, String args) {
