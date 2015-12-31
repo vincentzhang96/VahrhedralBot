@@ -330,7 +330,7 @@ public class ModCommands {
                         forEach(newRoles::add);
                 //  Update
                 apiClient.updateRoles(user, server, newRoles);
-                return true;
+                return userRoles.size() < newRoles.size();
             } else {
                 LOGGER.warn("Timeout role ID {} for server {} ({}) does not exist",
                         timeoutRoleId, serverName, serverId);
@@ -365,6 +365,7 @@ public class ModCommands {
 
     public void cancelTimeout(User user, Server server, Channel invocationChannel) {
         ServerTimeoutStorage storage = timeoutStorage.get(server.getId());
+        removeTimeoutRole(user, server, apiClient.getChannelById(server.getId()));
         if (storage != null) {
             ServerTimeout timeout = storage.getTimeouts().remove(user.getId());
             if (timeout != null) {
@@ -381,7 +382,6 @@ public class ModCommands {
         LOGGER.warn("Unable to cancel: cannot find server or timeout entry for {} ({}) in {} ({})",
                 user.getUsername(), user.getId(),
                 server.getName(), server.getId());
-        removeTimeoutRole(user, server, apiClient.getChannelById(server.getId()));
         apiClient.sendMessage(loc.localize("commands.mod.stoptimeout.response.not_found",
                 user.getUsername(), user.getId()),
                 invocationChannel);
@@ -519,10 +519,12 @@ public class ModCommands {
                             LOGGER.info("Expiring timeout for {} ({}) in {} ({})",
                                     user.getUsername(), user.getId(),
                                     server.getName(), server.getId());
-                            apiClient.sendMessage(loc.localize("message.mod.timeout.expire",
-                                    user.getId()),
-                                    server.getId());
-                            removeTimeoutRole(user, server, apiClient.getChannelById(server.getId()));
+                            //  Only send message if they still have the role
+                            if (removeTimeoutRole(user, server, apiClient.getChannelById(server.getId()))) {
+                                apiClient.sendMessage(loc.localize("message.mod.timeout.expire",
+                                        user.getId()),
+                                        server.getId());
+                            }
                         }
                         SafeNav.of(timeout.getTimerFuture()).ifPresent(f -> f.cancel(true));
                         iter.remove();
