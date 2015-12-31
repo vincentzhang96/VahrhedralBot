@@ -12,7 +12,7 @@ public class ServerTimeout {
     private final Duration duration;
     private final Instant endTime;
     private final String issuedByUserId;
-    private final Future<Void> timerFuture;
+    private final transient Future<Void> timerFuture;
 
     public ServerTimeout(Duration duration, Instant startTime, String userId, String serverId, String issuedByUserId,
                          Future<Void> timerFuture) {
