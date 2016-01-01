@@ -610,7 +610,7 @@ public class Commands {
                     replace("\n", " ");
             joiner.add(loc.localize("commands.general.minific.response.manage.list.entry",
                     minific.getId(),
-                    apiClient.getUserById(minific.getAuthorId()),
+                    apiClient.getUserById(minific.getAuthorId()).getUsername(),
                     minific.getDate(),
                     excerpt));
         }
