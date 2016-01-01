@@ -3,6 +3,7 @@ package co.phoenixlab.discord.commands.tempstorage;
 import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ScheduledFuture;
 
 public class ServerTimeout {
@@ -27,7 +28,7 @@ public class ServerTimeout {
         try {
             end = startTime.plus(duration);
         } catch (DateTimeException | ArithmeticException e) {
-            end = Instant.MAX;
+            end = Instant.MAX.minus(1, ChronoUnit.YEARS);
         }
         this.endTime = end;
         this.issuedByUserId = issuedByUserId;
