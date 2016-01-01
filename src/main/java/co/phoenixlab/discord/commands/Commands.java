@@ -562,15 +562,30 @@ public class Commands {
                         context.getChannel());
             }
         } else {
-            if (minificStorage.getAuthorizedAuthorUids().contains(authorId) ||
-                    context.getBot().getConfig().isAdmin(authorId)) {
-                Minific fic = addMinific(args, authorId);
-                apiClient.sendMessage(loc.localize("commands.general.minific.response.added",
-                        fic.getId()),
+            if (args.indexOf(' ') < 0) {
+                for (Minific fic : minificStorage.getMinifics()) {
+                    if (fic.getId().equals(args)) {
+                        User user = apiClient.getUserById(fic.getAuthorId());
+                        apiClient.sendMessage(loc.localize("commands.general.minific.response.random",
+                                fic.getId(), user.getUsername(), fic.getDate(), fic.getContent()),
+                                context.getChannel());
+                        return;
+                    }
+                }
+                apiClient.sendMessage(loc.localize("commands.general.minific.response.not_found",
+                        args),
                         context.getChannel());
             } else {
-                apiClient.sendMessage(loc.localize("commands.general.minific.response.reject"),
-                        context.getChannel());
+                if (minificStorage.getAuthorizedAuthorUids().contains(authorId) ||
+                        context.getBot().getConfig().isAdmin(authorId)) {
+                    Minific fic = addMinific(args, authorId);
+                    apiClient.sendMessage(loc.localize("commands.general.minific.response.added",
+                            fic.getId()),
+                            context.getChannel());
+                } else {
+                    apiClient.sendMessage(loc.localize("commands.general.minific.response.reject"),
+                            context.getChannel());
+                }
             }
         }
     }
