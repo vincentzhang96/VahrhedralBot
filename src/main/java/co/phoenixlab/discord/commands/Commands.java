@@ -548,8 +548,9 @@ public class Commands {
                 apiClient.sendMessage(loc.localize("commands.general.minific.response.none"),
                         context.getChannel());
             } else {
+                User user = apiClient.getUserById(fic.getAuthorId());
                 apiClient.sendMessage(loc.localize("commands.general.minific.response.random",
-                        fic.getId(), fic.getAuthorId(), fic.getDate(), fic.getContent()),
+                        fic.getId(), user.getUsername(), fic.getDate(), fic.getContent()),
                         context.getChannel());
             }
         } else {
