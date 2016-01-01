@@ -553,10 +553,17 @@ public class Commands {
                         context.getChannel());
             }
         } else {
-            Minific fic = addMinific(args, context.getAuthor().getId());
-            apiClient.sendMessage(loc.localize("commands.general.minific.response.added",
-                    fic.getId()),
-                    context.getChannel());
+            String authorId = context.getAuthor().getId();
+            if (minificStorage.getAuthorizedAuthorUids().contains(authorId) ||
+                    context.getBot().getConfig().isAdmin(authorId)) {
+                Minific fic = addMinific(args, authorId);
+                apiClient.sendMessage(loc.localize("commands.general.minific.response.added",
+                        fic.getId()),
+                        context.getChannel());
+            } else {
+                apiClient.sendMessage(loc.localize("commands.general.minific.response.reject"),
+                        context.getChannel());
+            }
         }
     }
 
@@ -590,6 +597,10 @@ public class Commands {
 
     private void loadMinificStorage() {
         Gson gson = new Gson();
+        if (!Files.exists(MINIFIC_STORE)) {
+            minificStorage = new MinificStorage();
+            saveMinificStorage();
+        }
         try (Reader reader = Files.newBufferedReader(MINIFIC_STORE, UTF_8)) {
             minificStorage = gson.fromJson(reader, MinificStorage.class);
             VahrhedralBot.LOGGER.info("Loaded minific store");
