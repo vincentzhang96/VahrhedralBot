@@ -28,7 +28,7 @@ public class ServerTimeout {
         try {
             end = startTime.plus(duration);
         } catch (DateTimeException | ArithmeticException e) {
-            end = Instant.MAX.minus(1, ChronoUnit.YEARS);
+            end = Instant.MAX.minus(Duration.of(1, ChronoUnit.YEARS));
         }
         this.endTime = end;
         this.issuedByUserId = issuedByUserId;
