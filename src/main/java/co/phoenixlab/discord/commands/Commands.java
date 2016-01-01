@@ -11,6 +11,10 @@ import co.phoenixlab.discord.api.ApiConst;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.DiscordWebSocketClient;
 import co.phoenixlab.discord.api.entities.*;
+import co.phoenixlab.discord.api.event.LogInEvent;
+import co.phoenixlab.discord.commands.tempstorage.Minific;
+import co.phoenixlab.discord.commands.tempstorage.MinificStorage;
+import com.google.gson.Gson;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
@@ -20,13 +24,25 @@ import org.apache.http.entity.ContentType;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static co.phoenixlab.discord.api.DiscordApiClient.*;
-import static co.phoenixlab.discord.api.entities.Permission.*;
+import static co.phoenixlab.discord.api.entities.Permission.CHAT_MANAGE_MESSAGES;
+import static co.phoenixlab.discord.api.entities.Permission.GEN_MANAGE_ROLES;
 import static co.phoenixlab.discord.commands.CommandUtil.findUser;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 
 public class Commands {
 
@@ -38,6 +54,11 @@ public class Commands {
 
     //  Temporary until command throttling is implemented
     private Instant lastInsultTime;
+
+    private MinificStorage minificStorage;
+
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MMM dd uuuu");
+    private static final Path MINIFIC_STORE = Paths.get("config/minific.json");
 
     public Commands(VahrhedralBot bot) {
         adminCommands = new AdminCommands(bot);
@@ -63,6 +84,7 @@ public class Commands {
         d.registerCommand("commands.general.sandwich", this::makeSandwich);
         d.registerCommand("commands.general.dn", this::dnCommands);
         d.registerCommand("commands.general.insult", this::insult);
+        d.registerCommand("commands.general.minific", this::minific);
     }
 
     public AdminCommands getAdminCommands() {
@@ -517,4 +539,81 @@ public class Commands {
                     context.getChannel());
         }
     }
+
+    private void minific(MessageContext context, String args) {
+        DiscordApiClient apiClient = context.getApiClient();
+        if (args.isEmpty()) {
+            Minific fic = getRandomMinific();
+            if (fic == null) {
+                apiClient.sendMessage(loc.localize("commands.general.minific.response.none"),
+                        context.getChannel());
+            } else {
+                User user = apiClient.getUserById(fic.getAuthorId());
+                apiClient.sendMessage(loc.localize("commands.general.minific.response.random",
+                        fic.getId(), user.getUsername(), fic.getDate(), fic.getContent()),
+                        context.getChannel());
+            }
+        } else {
+            String authorId = context.getAuthor().getId();
+            if (minificStorage.getAuthorizedAuthorUids().contains(authorId) ||
+                    context.getBot().getConfig().isAdmin(authorId)) {
+                Minific fic = addMinific(args, authorId);
+                apiClient.sendMessage(loc.localize("commands.general.minific.response.added",
+                        fic.getId()),
+                        context.getChannel());
+            } else {
+                apiClient.sendMessage(loc.localize("commands.general.minific.response.reject"),
+                        context.getChannel());
+            }
+        }
+    }
+
+    private Minific getRandomMinific() {
+        int size = minificStorage.getMinifics().size();
+        if (size == 0) {
+            return null;
+        }
+        return minificStorage.getMinifics().get(random.nextInt(size));
+    }
+
+    private Minific addMinific(String content, String authorId) {
+        ZonedDateTime now = ZonedDateTime.now();
+        Minific minific = new Minific(Integer.toString(minificStorage.getMinifics().size()),
+                authorId, DATE_FORMATTER.format(now), content);
+        minificStorage.getMinifics().add(minific);
+        saveMinificStorage();
+        return minific;
+    }
+
+    private void saveMinificStorage() {
+        Gson gson = new Gson();
+        try (BufferedWriter writer = Files.newBufferedWriter(MINIFIC_STORE, UTF_8, CREATE, TRUNCATE_EXISTING)) {
+            gson.toJson(minificStorage, writer);
+            writer.flush();
+            VahrhedralBot.LOGGER.info("Saved minific store");
+        } catch (IOException e) {
+            VahrhedralBot.LOGGER.warn("Unable to save minific store", e);
+        }
+    }
+
+    private void loadMinificStorage() {
+        Gson gson = new Gson();
+        if (!Files.exists(MINIFIC_STORE)) {
+            minificStorage = new MinificStorage();
+            saveMinificStorage();
+        }
+        try (Reader reader = Files.newBufferedReader(MINIFIC_STORE, UTF_8)) {
+            minificStorage = gson.fromJson(reader, MinificStorage.class);
+            VahrhedralBot.LOGGER.info("Loaded minific store");
+        } catch (IOException e) {
+            VahrhedralBot.LOGGER.warn("Unable to load minific store", e);
+        }
+    }
+
+    public void onLogIn(LogInEvent logInEvent) {
+        loadMinificStorage();
+
+        modCommands.onReady();
+    }
+
 }
