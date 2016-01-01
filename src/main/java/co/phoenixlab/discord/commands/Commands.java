@@ -620,6 +620,7 @@ public class Commands {
                         apiClient.sendMessage(loc.localize("commands.general.minific.response.manage.addauthor",
                                 user.getUsername()),
                                 ctxChannel);
+                        saveMinificStorage();
                     } else {
                         apiClient.sendMessage(loc.localize("commands.general.minific.response.manage.no_user"),
                                 ctxChannel);
