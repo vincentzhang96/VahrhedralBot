@@ -606,10 +606,13 @@ public class Commands {
         StringJoiner joiner = new StringJoiner("\n");
         for (Minific minific : minificStorage.getMinifics()) {
             String content = minific.getContent();
-            String excerpt = content.substring(0, Math.min(content.length(), 10)).
+            String excerpt = content.substring(0, Math.min(content.length(), 30)).
                     replace("\n", " ");
             joiner.add(loc.localize("commands.general.minific.response.manage.list.entry",
-                    minific.getId(), minific.getAuthorId(), minific.getDate(), excerpt));
+                    minific.getId(),
+                    apiClient.getUserById(minific.getAuthorId()),
+                    minific.getDate(),
+                    excerpt));
         }
         apiClient.sendMessage(loc.localize("commands.general.minific.response.manage.list",
                 minificStorage.getMinifics().size(),
