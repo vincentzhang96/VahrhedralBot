@@ -629,6 +629,7 @@ public class Commands {
                     apiClient.sendMessage(loc.localize("commands.general.minific.response.manage.error"),
                             ctxChannel);
                 }
+                return;
             case "list":
                 listMinificsCmd(apiClient, ctxChannel);
                 return;
