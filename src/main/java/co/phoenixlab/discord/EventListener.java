@@ -100,7 +100,7 @@ public class EventListener {
 
     @Subscribe
     public void onLogIn(LogInEvent logInEvent) {
-        bot.getCommands().getModCommands().onReady();
+        bot.getCommands().onLogIn(logInEvent);
     }
 
 }
