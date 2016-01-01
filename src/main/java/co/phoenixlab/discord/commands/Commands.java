@@ -564,6 +564,10 @@ public class Commands {
             }
         } else {
             if (args.indexOf(' ') < 0) {
+                if (args.equalsIgnoreCase("list")) {
+                    listMinificsCmd(apiClient, context.getChannel());
+                    return;
+                }
                 for (Minific fic : minificStorage.getMinifics()) {
                     if (fic.getId().equals(args)) {
                         User user = apiClient.getUserById(fic.getAuthorId());
