@@ -48,6 +48,9 @@ public class EventListener {
     }
 
     private void handleMention(Message message) {
+        if (!bot.getMainCommandDispatcher().active().get()) {
+            return;
+        }
         String otherId = message.getAuthor().getId();
         bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.mention.response",
                 message.getAuthor().getUsername()),
