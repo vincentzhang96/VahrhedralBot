@@ -15,6 +15,7 @@ import co.phoenixlab.discord.api.event.LogInEvent;
 import co.phoenixlab.discord.commands.tempstorage.Minific;
 import co.phoenixlab.discord.commands.tempstorage.MinificStorage;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
@@ -611,6 +612,22 @@ public class Commands {
                 apiClient.sendMessage(loc.localize("commands.general.minific.response.manage.error"),
                         ctxChannel);
                 return;
+            case "addauthor":
+                if (split.length == 2) {
+                    User user = apiClient.getUserById(split[1]);
+                    if (user != NO_USER) {
+                        minificStorage.getAuthorizedAuthorUids().add(split[1]);
+                        apiClient.sendMessage(loc.localize("commands.general.minific.response.manage.addauthor",
+                                user.getUsername()),
+                                ctxChannel);
+                    } else {
+                        apiClient.sendMessage(loc.localize("commands.general.minific.response.manage.no_user"),
+                                ctxChannel);
+                    }
+                } else {
+                    apiClient.sendMessage(loc.localize("commands.general.minific.response.manage.error"),
+                            ctxChannel);
+                }
             case "list":
                 listMinificsCmd(apiClient, ctxChannel);
                 return;
@@ -633,6 +650,7 @@ public class Commands {
                 minificStorage.getMinifics().size(),
                 joiner.toString()),
                 ctxChannel);
+        saveMinificStorage();
     }
 
     private boolean setMinificAuthorCmd(DiscordApiClient apiClient, Channel ctxChannel, String s) {
@@ -646,6 +664,7 @@ public class Commands {
                     apiClient.sendMessage(loc.localize("commands.general.minific.response.manage.setauthor",
                             id, authorId),
                             ctxChannel);
+                    saveMinificStorage();
                     return true;
                 }
             }
@@ -689,6 +708,7 @@ public class Commands {
                 minific = new Minific(Integer.toString(i), minific.getAuthorId(), minific.getDate(), minific.getContent());
                 minifics.add(minific);
             }
+            saveMinificStorage();
         }
         return deleted;
     }
@@ -711,7 +731,7 @@ public class Commands {
     }
 
     private void saveMinificStorage() {
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
         try (BufferedWriter writer = Files.newBufferedWriter(MINIFIC_STORE, UTF_8, CREATE, TRUNCATE_EXISTING)) {
             gson.toJson(minificStorage, writer);
             writer.flush();
