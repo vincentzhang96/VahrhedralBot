@@ -1,5 +1,6 @@
 package co.phoenixlab.discord.commands.tempstorage;
 
+import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ScheduledFuture;
@@ -22,7 +23,13 @@ public class ServerTimeout {
         this.userId = userId;
         this.serverId = serverId;
         this.lastUsername = lastUsername;
-        this.endTime = startTime.plus(duration);
+        Instant end;
+        try {
+            end = startTime.plus(duration);
+        } catch (DateTimeException | ArithmeticException e) {
+            end = Instant.MAX;
+        }
+        this.endTime = end;
         this.issuedByUserId = issuedByUserId;
     }
 
