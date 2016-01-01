@@ -3,9 +3,9 @@ package co.phoenixlab.discord.commands.tempstorage;
 public class Minific {
 
     private final String id;
-    private final String authorId;
+    private String authorId;
     private final String date;
-    private final String content;
+    private String content;
 
     public Minific(String id, String authorId, String date, String content) {
         this.id = id;
@@ -32,5 +32,13 @@ public class Minific {
 
     public String getId() {
         return id;
+    }
+
+    public void setAuthorId(String authorId) {
+        this.authorId = authorId;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
     }
 }

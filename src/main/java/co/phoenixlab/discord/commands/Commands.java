@@ -542,7 +542,15 @@ public class Commands {
 
     private void minific(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
-        if (args.isEmpty()) {
+        String authorId = context.getAuthor().getId();
+        if (args.startsWith("!#/")) {
+            if (!context.getBot().getConfig().isAdmin(authorId)) {
+                apiClient.sendMessage(loc.localize("commands.general.minific.response.manage.reject"),
+                        context.getChannel());
+                return;
+            }
+            manageMinific(args, apiClient, context.getChannel());
+        } else if (args.isEmpty()) {
             Minific fic = getRandomMinific();
             if (fic == null) {
                 apiClient.sendMessage(loc.localize("commands.general.minific.response.none"),
@@ -554,7 +562,6 @@ public class Commands {
                         context.getChannel());
             }
         } else {
-            String authorId = context.getAuthor().getId();
             if (minificStorage.getAuthorizedAuthorUids().contains(authorId) ||
                     context.getBot().getConfig().isAdmin(authorId)) {
                 Minific fic = addMinific(args, authorId);
@@ -566,6 +573,88 @@ public class Commands {
                         context.getChannel());
             }
         }
+    }
+
+    private void manageMinific(String args, DiscordApiClient apiClient, Channel ctxChannel) {
+        String[] split = args.split(" ", 2);
+        String cmd = split[0].substring(3).toLowerCase();
+        switch (cmd) {
+            case "delete":
+                if (split.length == 2) {
+                    deleteMinificCmd(apiClient, ctxChannel, split[1]);
+                } else {
+                    apiClient.sendMessage(loc.localize("commands.general.minific.response.manage.error"),
+                            ctxChannel);
+                }
+                return;
+            case "setauthor":
+                if (split.length == 2) {
+                    if (setMinificAuthorCmd(apiClient, ctxChannel, split[1])) {
+                        return;
+                    }
+                }
+                apiClient.sendMessage(loc.localize("commands.general.minific.response.manage.error"),
+                        ctxChannel);
+                return;
+        }
+    }
+
+    private boolean setMinificAuthorCmd(DiscordApiClient apiClient, Channel ctxChannel, String s) {
+        String[] ss = s.split(" ", 2);
+        if (ss.length == 2) {
+            String id = ss[0];
+            String authorId = ss[1];
+            for (Minific minific : minificStorage.getMinifics()) {
+                if (minific.getId().equals(id)) {
+                    minific.setAuthorId(authorId);
+                    apiClient.sendMessage(loc.localize("commands.general.minific.response.manage.setauthor",
+                            id, authorId),
+                            ctxChannel);
+                    return true;
+                }
+            }
+            apiClient.sendMessage(loc.localize("commands.general.minific.response.manage.not_found",
+                    id),
+                    ctxChannel);
+            return true;
+        }
+        return false;
+    }
+
+    private void deleteMinificCmd(DiscordApiClient apiClient, Channel ctxChannel, String id) {
+        if (deleteMinific(id)) {
+            apiClient.sendMessage(loc.localize("commands.general.minific.response.manage.delete",
+                    id),
+                    ctxChannel);
+        } else {
+            apiClient.sendMessage(loc.localize("commands.general.minific.response.manage.not_found",
+                    id),
+                    ctxChannel);
+        }
+    }
+
+    private boolean deleteMinific(String id) {
+        boolean deleted = false;
+        List<Minific> minifics = minificStorage.getMinifics();
+        for (Iterator<Minific> iter = minifics.iterator(); iter.hasNext(); ) {
+            Minific minific = iter.next();
+            if (minific.getId().equals(id)) {
+                iter.remove();
+                deleted = true;
+                break;
+            }
+        }
+        if (deleted) {
+            //  Re-ID fics
+            List<Minific> copy = new ArrayList<>(minifics);
+            minifics.clear();
+            for (int i = 0; i < copy.size(); i++) {
+                Minific minific = copy.get(i);
+                minific = new Minific(Integer.toString(i), minific.getAuthorId(), minific.getDate(), minific.getContent());
+                minifics.add(minific);
+            }
+        }
+        return deleted;
     }
 
     private Minific getRandomMinific() {
