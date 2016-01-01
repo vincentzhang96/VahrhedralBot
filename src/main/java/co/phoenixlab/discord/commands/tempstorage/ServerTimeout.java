@@ -27,7 +27,7 @@ public class ServerTimeout {
         try {
             end = startTime.plus(duration);
         } catch (DateTimeException | ArithmeticException e) {
-            end = Instant.ofEpochSecond(31556889832867199L);    //  1 year less than MAX
+            end = Instant.ofEpochSecond(31556889801331199L);    //  1 year less than MAX
         }
         this.endTime = end;
         this.issuedByUserId = issuedByUserId;
