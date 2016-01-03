@@ -8,10 +8,7 @@ import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.VahrhedralBot;
 import co.phoenixlab.discord.api.ApiConst;
 import co.phoenixlab.discord.api.DiscordApiClient;
-import co.phoenixlab.discord.api.entities.Message;
-import co.phoenixlab.discord.api.entities.OutboundMessage;
-import co.phoenixlab.discord.api.entities.Server;
-import co.phoenixlab.discord.api.entities.User;
+import co.phoenixlab.discord.api.entities.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
@@ -29,6 +26,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Future;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 import static co.phoenixlab.discord.api.DiscordApiClient.NO_USER;
@@ -75,6 +75,7 @@ public class AdminCommands {
         d.registerAlwaysActiveCommand("commands.admin.prefix", this::adminPrefix);
         d.registerAlwaysActiveCommand("commands.admin.sandwich", this::makeSandwich);
         d.registerAlwaysActiveCommand("commands.admin.eval", this::eval);
+        d.registerAlwaysActiveCommand("commands.admin.find", this::find);
         d.registerAlwaysActiveCommand("commands.admin.playing", this::updateNowPlaying);
     }
 
@@ -329,6 +330,44 @@ public class AdminCommands {
             apiClient.updateNowPlaying(args);
         }
     }
+
+    private void find(MessageContext context, String args) {
+        DiscordApiClient apiClient = context.getApiClient();
+        Channel channel = context.getChannel();
+        Pattern pattern;
+        try {
+            pattern = Pattern.compile(args);
+        } catch (PatternSyntaxException pse) {
+            apiClient.sendMessage(loc.localize("commands.admin.find.response.invalid"),
+                    channel);
+            return;
+        }
+        Predicate<String> matcher = pattern.asPredicate();
+        List<User> results = context.getServer().getMembers().stream().
+                map(Member::getUser).
+                filter(u -> matcher.test(u.getUsername())).
+                collect(Collectors.toList());
+        int size = results.size();
+        if (size > 20) {
+            apiClient.sendMessage(loc.localize("commands.admin.find.response.oversize",
+                    size),
+                    channel);
+            return;
+        }
+        StringJoiner resultJoiner = new StringJoiner(", ");
+        results.stream().
+                map(this::userToResult).
+                forEach(resultJoiner::add);
+        apiClient.sendMessage(loc.localize("commands.admin.find.response.format",
+                size, resultJoiner.toString()),
+                channel);
+    }
+
+    private String userToResult(User user) {
+        return loc.localize("commands.admin.find.response.entry",
+                user.getUsername(), user.getId(), user.getDiscriminator());
+    }
+
 
     private void eval(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
