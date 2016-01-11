@@ -15,6 +15,13 @@ public class DnCommands {
     public static final double DEFENSE_90_SCALAR = 0.0006D;
     public static final double DEFENSE_80_CONSTANT = 0.0037D;
     public static final double DEFENSE_90_CONSTANT = 0D;
+    public static final double DEFENSE_MAX_PERCENT = 85D;
+    public static final int CRIT_80_CAP = 127685;
+    public static final int CRIT_90_CAP = 235880;
+    public static final int CRITDMG_80_CAP = 431970;
+    public static final int CRITDMG_90_CAP = 671160;
+    public static final double CRITDMG_MAX_PERCENT = 1D;
+    public static final double CRIT_MAX_PERCENT = 0.89D;
     private final CommandDispatcher dispatcher;
     private final VahrhedralBot bot;
     private Localizer loc;
@@ -28,10 +35,72 @@ public class DnCommands {
     public void registerDnCommands() {
         dispatcher.registerCommand("commands.dn.defense", this::defenseCalculator);
         dispatcher.registerCommand("commands.dn.finaldamage", this::finalDamageCalculator);
+        dispatcher.registerCommand("commands.dn.crit", this::critChanceCalculator);
+        dispatcher.registerCommand("commands.dn.critdmg", this::critDamageCalculator);
     }
 
     public CommandDispatcher getDispatcher() {
         return dispatcher;
+    }
+
+    private void critChanceCalculator(MessageContext context, String args) {
+        DiscordApiClient apiClient = context.getApiClient();
+        //  Strip commas
+        args = args.replace(",", "");
+        String[] split = args.split(" ");
+        if (split.length >= 1) {
+            int crit = (int) parseStat(split[0]);
+            int level = 80;
+            if (split.length >= 2) {
+                level = ParseInt.parseOrDefault(split[1], level);
+            }
+            if (level < 80 || level > 90) {
+                apiClient.sendMessage(loc.localize("commands.dn.crit.response.level_out_of_range",
+                        80, 90),
+                        context.getChannel());
+                return;
+            }
+            double alpha = (double)(level - 80) / 10D;
+            double percent = crit / (lerp(CRIT_80_CAP, CRIT_90_CAP, alpha));
+            percent = Math.max(0, Math.min(CRIT_MAX_PERCENT, percent)) * 100D;
+            apiClient.sendMessage(loc.localize("commands.dn.crit.response.format",
+                    level, percent),
+                    context.getChannel());
+            return;
+        }
+        apiClient.sendMessage(loc.localize("commands.dn.crit.response.invalid",
+                bot.getMainCommandDispatcher().getCommandPrefix()),
+                context.getChannel());
+    }
+
+    private void critDamageCalculator(MessageContext context, String args) {
+        DiscordApiClient apiClient = context.getApiClient();
+        //  Strip commas
+        args = args.replace(",", "");
+        String[] split = args.split(" ");
+        if (split.length >= 1) {
+            int crit = (int) parseStat(split[0]);
+            int level = 80;
+            if (split.length >= 2) {
+                level = ParseInt.parseOrDefault(split[1], level);
+            }
+            if (level < 80 || level > 90) {
+                apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.level_out_of_range",
+                        80, 90),
+                        context.getChannel());
+                return;
+            }
+            double alpha = (double)(level - 80) / 10D;
+            double percent = crit / (lerp(CRITDMG_80_CAP, CRITDMG_90_CAP, alpha));
+            percent = Math.max(0, Math.min(CRITDMG_MAX_PERCENT, percent)) * 100D + 200D;
+            apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.format",
+                    level, percent),
+                    context.getChannel());
+            return;
+        }
+        apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.invalid",
+                bot.getMainCommandDispatcher().getCommandPrefix()),
+                context.getChannel());
     }
 
     private void finalDamageCalculator(MessageContext context, String args) {
@@ -91,8 +160,8 @@ public class DnCommands {
                     return;
                 }
                 //  Cap defense is 85%
-                def = Math.min(def, 85D);
-                mDef = Math.min(mDef, 85D);
+                def = Math.min(def, DEFENSE_MAX_PERCENT);
+                mDef = Math.min(mDef, DEFENSE_MAX_PERCENT);
 
                 double eDHp = rawHp / (1D - (def / 100D));
                 double eMHp = rawHp / (1D - (mDef / 100D));
