@@ -55,7 +55,7 @@ public class DnCommands {
             double b = 0.0000009093 * Math.pow(fd, 2.2);
             double fdPercent = Math.min(100, Math.max(a, b));
             apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.format",
-                    level, (int) fdPercent),
+                    level, fdPercent),
                     context.getChannel());
             return;
         }
@@ -98,7 +98,7 @@ public class DnCommands {
                 double eMHp = rawHp / (1D - (mDef / 100D));
 
                 apiClient.sendMessage(loc.localize("commands.dn.defense.response.format",
-                        (int) def, (int) mDef, (long) eDHp, (long) eMHp, level),
+                        def, mDef, (long) eDHp, (long) eMHp, level),
                         context.getChannel());
 
                 return;
