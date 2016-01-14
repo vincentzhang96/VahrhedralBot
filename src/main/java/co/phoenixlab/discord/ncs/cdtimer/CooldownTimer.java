@@ -1,4 +1,4 @@
-package co.phoenixlab.discord.ncs;
+package co.phoenixlab.discord.ncs.cdtimer;
 
 /**
  *
