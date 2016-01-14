@@ -32,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -59,6 +60,7 @@ public class Commands {
     private MinificStorage minificStorage;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MMM dd uuuu");
+    public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("MMM dd uuuu HH:mm:ss z");
     private static final Path MINIFIC_STORE = Paths.get("config/minific.json");
 
     public Commands(VahrhedralBot bot) {
@@ -203,6 +205,15 @@ public class Commands {
             context.getApiClient().sendMessage(loc.localize("commands.general.info.response.not_found"),
                     message.getChannelId());
         } else {
+            String joined;
+            Member member = context.getApiClient().getUserMember(user, context.getServer());
+            if (member != NO_MEMBER) {
+                ZonedDateTime joinTime = ZonedDateTime.parse(member.getJoinedAt(), DateTimeFormatter.ISO_DATE_TIME);
+                joinTime = joinTime.withZoneSameInstant(ZoneId.systemDefault());
+                joined = DATE_TIME_FORMATTER.format(joinTime);
+            } else {
+                joined = "N/A";
+            }
             String avatar = (user.getAvatar() == null ? loc.localize("commands.general.info.response.no_avatar") :
                     user.getAvatarUrl().toExternalForm());
             String response = loc.localize("commands.general.info.response.format",
@@ -211,7 +222,8 @@ public class Commands {
                             loc.localize("commands.general.info.response.blacklisted") : "",
                     config.getAdmins().contains(user.getId()) ?
                             loc.localize("commands.general.info.response.admin") : "",
-                    avatar);
+                    avatar,
+                    joined);
             context.getApiClient().sendMessage(response, context.getChannel());
         }
     }

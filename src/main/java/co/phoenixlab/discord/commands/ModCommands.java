@@ -7,10 +7,7 @@ import co.phoenixlab.discord.CommandDispatcher;
 import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.VahrhedralBot;
 import co.phoenixlab.discord.api.DiscordApiClient;
-import co.phoenixlab.discord.api.entities.Channel;
-import co.phoenixlab.discord.api.entities.Role;
-import co.phoenixlab.discord.api.entities.Server;
-import co.phoenixlab.discord.api.entities.User;
+import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.MemberChangeEvent;
 import co.phoenixlab.discord.api.event.MemberChangeEvent.MemberChange;
 import co.phoenixlab.discord.commands.tempstorage.ServerTimeout;
@@ -38,6 +35,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -88,6 +88,7 @@ public class ModCommands {
         d.registerAlwaysActiveCommand("commands.mod.timeout", this::timeout);
         d.registerAlwaysActiveCommand("commands.mod.stoptimeout", this::stopTimeout);
         d.registerAlwaysActiveCommand("commands.mod.settimeoutrole", this::setTimeoutRole);
+        d.registerAlwaysActiveCommand("commands.admin.find", this::find);
 
         EventBus eventBus = bot.getApiClient().getEventBus();
         eventBus.register(new WeakEventSubscriber<>(memberJoinListener, eventBus, MemberChangeEvent.class));
@@ -288,6 +289,43 @@ public class ModCommands {
                 role.getName(), role.getId()),
                 context.getChannel());
         saveServerTimeoutStorage(storage);
+    }
+
+    private void find(MessageContext context, String args) {
+        DiscordApiClient apiClient = context.getApiClient();
+        Channel channel = context.getChannel();
+        Pattern pattern;
+        try {
+            pattern = Pattern.compile(args);
+        } catch (PatternSyntaxException pse) {
+            apiClient.sendMessage(loc.localize("commands.admin.find.response.invalid"),
+                    channel);
+            return;
+        }
+        Predicate<String> matcher = pattern.asPredicate();
+        List<User> results = context.getServer().getMembers().stream().
+                map(Member::getUser).
+                filter(u -> matcher.test(u.getUsername())).
+                collect(Collectors.toList());
+        int size = results.size();
+        if (size > 20) {
+            apiClient.sendMessage(loc.localize("commands.admin.find.response.oversize",
+                    size),
+                    channel);
+            return;
+        }
+        StringJoiner resultJoiner = new StringJoiner(", ");
+        results.stream().
+                map(this::userToResult).
+                forEach(resultJoiner::add);
+        apiClient.sendMessage(loc.localize("commands.admin.find.response.format",
+                size, resultJoiner.toString()),
+                channel);
+    }
+
+    private String userToResult(User user) {
+        return loc.localize("commands.admin.find.response.entry",
+                user.getUsername(), user.getId(), user.getDiscriminator());
     }
 
     @Subscribe
