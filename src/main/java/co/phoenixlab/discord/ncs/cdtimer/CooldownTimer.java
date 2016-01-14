@@ -11,13 +11,6 @@ public interface CooldownTimer {
     long getCooldown();
 
     /**
-     * Sets the length of the cooldown for this timer, in seconds. Must be at least zero
-     * @param cooldown The cooldown, in seconds, set for this timer
-     * @throws IllegalArgumentException if the cooldown is less than zero
-     */
-    void setCooldown(long cooldown) throws IllegalArgumentException;
-
-    /**
      * Gets the currently available number of charges
      */
     int getCharges();

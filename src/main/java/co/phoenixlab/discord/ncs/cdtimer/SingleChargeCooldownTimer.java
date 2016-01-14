@@ -28,21 +28,16 @@ public class SingleChargeCooldownTimer implements CooldownTimer {
      * @throws IllegalArgumentException If the cooldown timer length is less than 0
      */
     public SingleChargeCooldownTimer(long cooldown) throws IllegalArgumentException {
-        setCooldown(cooldown);
+        if (cooldown < 0) {
+            throw new IllegalArgumentException("Cooldown must be at least zero");
+        }
+        cooldownMillis = cooldown * 1000L;
         lastUseTimeMillis = 0;
     }
 
     @Override
     public long getCooldown() {
         return cooldownMillis / 1000L;
-    }
-
-    @Override
-    public void setCooldown(long cooldown) {
-        if (cooldown < 0) {
-            throw new IllegalArgumentException("Cooldown must be at least zero");
-        }
-        cooldownMillis = cooldown * 1000L;
     }
 
     @Override

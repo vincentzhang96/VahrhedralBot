@@ -30,7 +30,10 @@ public class ChargedCooldownTimer implements CooldownTimer {
             throw new IllegalArgumentException("Charges must be between 2 and " + MAX_CHARGES);
         }
         chargeTimes = new long[charges];
-        setCooldown(chargeCooldown);
+        if (chargeCooldown < 0) {
+            throw new IllegalArgumentException("Cooldown must be at least zero");
+        }
+        chargeCooldownMillis = chargeCooldown * 1000L;
     }
 
     @Override
@@ -38,13 +41,6 @@ public class ChargedCooldownTimer implements CooldownTimer {
         return chargeCooldownMillis / 1000L;
     }
 
-    @Override
-    public void setCooldown(long cooldown) throws IllegalArgumentException {
-        if (cooldown < 0) {
-            throw new IllegalArgumentException("Cooldown must be at least zero");
-        }
-        chargeCooldownMillis = cooldown * 1000L;
-    }
 
     @Override
     public int getCharges() {
