@@ -40,6 +40,9 @@ public class ChargedCooldownTimer implements CooldownTimer {
 
     @Override
     public void setCooldown(long cooldown) throws IllegalArgumentException {
+        if (cooldown < 0) {
+            throw new IllegalArgumentException("Cooldown must be at least zero");
+        }
         chargeCooldownMillis = cooldown * 1000L;
     }
 
