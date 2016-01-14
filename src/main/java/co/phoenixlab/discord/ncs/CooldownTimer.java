@@ -1,4 +1,4 @@
-package co.phoenixlab.discord.store;
+package co.phoenixlab.discord.ncs;
 
 /**
  *
@@ -32,6 +32,13 @@ public interface CooldownTimer {
      */
     default boolean isOnCooldown() {
         return getCharges() == 0;
+    }
+
+    /**
+     * Same as {@link CooldownTimer#isOnCooldown()}
+     */
+    default boolean check() {
+        return isOnCooldown();
     }
 
     /**
