@@ -10,6 +10,21 @@ public class ChargedCooldownTimer implements CooldownTimer {
 
     private long chargeCooldownMillis;
 
+    /**
+     * Constructor for deserialization
+     */
+    public ChargedCooldownTimer() {
+        chargeTimes = new long[0];
+        chargeCooldownMillis = 0;
+    }
+
+    /**
+     * Constructs a timer with the given number of charges with the given cooldown.
+     * @param chargeCooldown The amount of time (in seconds) that a charge will go on cooldown. At least 0s
+     * @param charges The number of charges available to consume. At least 2 but no more
+     *                than {@link ChargedCooldownTimer#MAX_CHARGES}
+     * @throws IllegalArgumentException if
+     */
     public ChargedCooldownTimer(long chargeCooldown, int charges) throws IllegalArgumentException {
         if (charges <= 2 || charges > MAX_CHARGES) {
             throw new IllegalArgumentException("Charges must be between 2 and " + MAX_CHARGES);
