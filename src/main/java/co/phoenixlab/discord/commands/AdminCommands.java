@@ -162,7 +162,7 @@ public class AdminCommands {
             listBlacklistedUsers(context, apiClient, bot);
             return;
         }
-        User user = findUser(context, args);
+        User user = findUser(context, args, true);
         if (user == NO_USER) {
             apiClient.sendMessage(loc.localize("commands.admin.blacklist.response.not_found"),
                     context.getChannel());
@@ -202,7 +202,7 @@ public class AdminCommands {
                     context.getChannel());
             return;
         }
-        User user = findUser(context, args);
+        User user = findUser(context, args, true);
         if (user == NO_USER) {
             apiClient.sendMessage(loc.localize("commands.admin.pardon.response.not_found"),
                     context.getChannel());

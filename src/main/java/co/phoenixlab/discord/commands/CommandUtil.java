@@ -8,6 +8,10 @@ import co.phoenixlab.discord.api.entities.User;
 public class CommandUtil {
 
     static User findUser(MessageContext context, String username) {
+        return findUser(context, username, false);
+    }
+
+    static User findUser(MessageContext context, String username, boolean global) {
         Message message = context.getMessage();
         User user;
         Channel channel = context.getApiClient().getChannelById(message.getChannelId());
@@ -17,7 +21,11 @@ public class CommandUtil {
             user = message.getMentions()[0];
         } else {
             //  Try exact match, frontal match, ID match, and fuzzy match
-            user = context.getApiClient().findUser(username, channel.getParent());
+            if (global) {
+                user = context.getApiClient().findUser(username);
+            } else {
+                user = context.getApiClient().findUser(username, channel.getParent());
+            }
         }
         return user;
     }
