@@ -1,7 +1,10 @@
 package co.phoenixlab.discord;
 
 import co.phoenixlab.discord.api.DiscordApiClient;
-import co.phoenixlab.discord.api.entities.*;
+import co.phoenixlab.discord.api.entities.Channel;
+import co.phoenixlab.discord.api.entities.Message;
+import co.phoenixlab.discord.api.entities.Server;
+import co.phoenixlab.discord.api.entities.User;
 import co.phoenixlab.discord.api.event.LogInEvent;
 import co.phoenixlab.discord.api.event.MemberChangeEvent;
 import co.phoenixlab.discord.api.event.MessageReceivedEvent;
@@ -54,7 +57,7 @@ public class EventListener {
         String otherId = message.getAuthor().getId();
         bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.mention.response",
                 message.getAuthor().getUsername()),
-                message.getChannelId(), new String[] {otherId});
+                message.getChannelId(), new String[]{otherId});
     }
 
     @Subscribe
@@ -73,20 +76,25 @@ public class EventListener {
 
     @Subscribe
     public void onMemberChangeEvent(MemberChangeEvent event) {
+        Server server = event.getServer();
+        //  Default channel has same ID as server
+        Channel channel = bot.getApiClient().getChannelById(server.getId());
+        if (channel == DiscordApiClient.NO_CHANNEL) {
+            return;
+        }
         if (event.getMemberChange() == MemberChangeEvent.MemberChange.ADDED) {
-            Server server = event.getServer();
             //  TODO TEMPORARY Disable for servers with more than 100 people
             //  until per-server feature controls are implemented
             if (server.getMembers().size() > 100) {
                 return;
             }
-            //  Default channel has same ID as server
-            Channel channel = bot.getApiClient().getChannelById(server.getId());
-            if (channel != DiscordApiClient.NO_CHANNEL) {
-                bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.new_member.response",
-                        event.getMember().getUser().getUsername()),
-                        channel.getId());
-            }
+            bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.new_member.response",
+                    event.getMember().getUser().getUsername()),
+                    channel.getId());
+        } else if (event.getMemberChange() == MemberChangeEvent.MemberChange.DELETED) {
+            bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.member_quit.response",
+                    event.getMember().getUser().getUsername()),
+                    channel.getId());
         }
     }
 
