@@ -207,8 +207,9 @@ public class Commands {
         } else {
             String joined;
             Member member = context.getApiClient().getUserMember(user, context.getServer());
-            if (member != NO_MEMBER) {
-                ZonedDateTime joinTime = ZonedDateTime.parse(member.getJoinedAt(), DateTimeFormatter.ISO_DATE_TIME);
+            String memberJoinDate = member.getJoinedAt();
+            if (member != NO_MEMBER && memberJoinDate != null) {
+                ZonedDateTime joinTime = ZonedDateTime.parse(memberJoinDate, DateTimeFormatter.ISO_DATE_TIME);
                 joinTime = joinTime.withZoneSameInstant(ZoneId.systemDefault());
                 joined = DATE_TIME_FORMATTER.format(joinTime);
             } else {
