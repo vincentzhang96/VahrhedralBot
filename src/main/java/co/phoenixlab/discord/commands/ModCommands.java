@@ -127,16 +127,24 @@ public class ModCommands {
                                     onTimeoutExpire(theUser, server), duration.getSeconds(), TimeUnit.SECONDS);
                             timeout.setTimerFuture(future);
                             saveServerTimeoutStorage(storage);
-                            apiClient.sendMessage(loc.localize("commands.mod.timeout.response",
+                            String durationStr = formatDuration(duration);
+                            String instantStr = formatInstant(timeout.getEndTime());
+                            String msg = loc.localize("commands.mod.timeout.response",
                                     user.getUsername(), user.getId(),
-                                    formatDuration(duration),
-                                    formatInstant(timeout.getEndTime())),
-                                    channel);
+                                    durationStr,
+                                    instantStr);
+                            apiClient.sendMessage(msg, channel);
+                            LOGGER.info("[{}] '{}': Timing out {} ({}) for {} (until {}), issued by {} ({})",
+                                    serverId, server.getName(),
+                                    user.getUsername(), user.getId(),
+                                    duration, instantStr,
+                                    context.getAuthor().getUsername(), context.getAuthor().getId());
+
                         }
                         //  No else with error - applyTimeoutRole does that for us
                         return;
                     } else {
-                        LOGGER.warn("Invalid duration format");
+                        LOGGER.warn("Invalid duration format: '{}'", args);
                     }
                 } else if (split.length == 1) {
                     if (isUserTimedOut(user, server)) {
@@ -158,10 +166,10 @@ public class ModCommands {
                     }
                     return;
                 } else {
-                    LOGGER.warn("Split length not 1 or 2, was {}", split.length);
+                    LOGGER.warn("Split length not 1 or 2, was {}: '{}'", split.length, args);
                 }
             } else {
-                LOGGER.warn("UID/mention not long enough");
+                LOGGER.warn("UID/mention not long enough: '{}'", args);
             }
         } else {
             LOGGER.warn("Args was empty");
@@ -257,6 +265,10 @@ public class ModCommands {
             if (user == NO_USER) {
                 user = new User("UNKNOWN", uid, "", null);
             }
+            LOGGER.info("{} ({}) is attempting to cancel timeout for {} ({}) in {} ({})",
+                    context.getAuthor().getUsername(), context.getAuthor().getId(),
+                    user.getUsername(), user.getId(),
+                    server.getName(), server.getId());
             cancelTimeout(user, server, context.getChannel());
         } else {
             apiClient.sendMessage(loc.localize("commands.mod.stoptimeout.response.invalid"),
@@ -335,7 +347,7 @@ public class ModCommands {
             Server server = memberChangeEvent.getServer();
             if (isUserTimedOut(user, server)) {
                 refreshTimeoutOnEvade(user, server);
-            } else {
+            } else if (doesTimeoutEntryExistForUser(user, server)) {
                 onTimeoutExpire(user, server);
             }
         }
@@ -414,6 +426,21 @@ public class ModCommands {
             if (timeout != null) {
                 Instant now = Instant.now();
                 return timeout.getEndTime().compareTo(now) > 0;
+            }
+        }
+        return false;
+    }
+
+    public boolean doesTimeoutEntryExistForUser(User user, Server server) {
+        return doesTimeoutEntryExistForUser(user.getId(), server.getId());
+    }
+
+    public boolean doesTimeoutEntryExistForUser(String userId, String serverId) {
+        ServerTimeoutStorage storage = timeoutStorage.get(serverId);
+        if (storage != null) {
+            ServerTimeout timeout = storage.getTimeouts().get(userId);
+            if (timeout != null) {
+                return true;
             }
         }
         return false;
