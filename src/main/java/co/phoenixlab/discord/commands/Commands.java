@@ -84,7 +84,7 @@ public class Commands {
         d.registerCommand("commands.general.stats", this::stats);
         d.registerCommand("commands.general.roles", this::roles);
         d.registerCommand("commands.general.rolecolor", this::roleColor);
-        d.registerCommand("commands.general.sandwich", this::makeSandwich);
+//        d.registerCommand("commands.general.sandwich", this::makeSandwich);
         d.registerCommand("commands.general.dn", this::dnCommands);
         d.registerCommand("commands.general.insult", this::insult);
         d.registerCommand("commands.general.minific", this::minific);
