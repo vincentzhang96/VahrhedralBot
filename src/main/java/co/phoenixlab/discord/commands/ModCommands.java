@@ -359,7 +359,8 @@ public class ModCommands {
                 next(timeouts -> timeouts.get(user.getId())).
                 get();
         if (timeout == null) {
-            LOGGER.warn("Attempted to refresh a timeout on a user who was not timed out!");
+            LOGGER.warn("Attempted to refresh a timeout on a user who was not timed out! {} ({})",
+                    user.getUsername(), user.getId());
             return;
         }
         LOGGER.info("User {} ({}) attempted to evade a timeout on {} ({})!",
