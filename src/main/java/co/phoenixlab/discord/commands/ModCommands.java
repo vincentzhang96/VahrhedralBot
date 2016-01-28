@@ -112,7 +112,7 @@ public class ModCommands {
                 final User theUser = user;
                 if (split.length == 2) {
                     Duration duration = parseDuration(split[1]);
-                    if (duration != null && !duration.isNegative()) {
+                    if (duration != null && !duration.isNegative() && !duration.isZero()) {
                         ServerTimeout timeout = new ServerTimeout(duration,
                                 Instant.now(), user.getId(), serverId,
                                 user.getUsername(), context.getAuthor().getId());
