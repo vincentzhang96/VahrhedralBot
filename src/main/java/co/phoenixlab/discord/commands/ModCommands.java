@@ -137,7 +137,7 @@ public class ModCommands {
                             LOGGER.info("[{}] '{}': Timing out {} ({}) for {} (until {}), issued by {} ({})",
                                     serverId, server.getName(),
                                     user.getUsername(), user.getId(),
-                                    duration, instantStr,
+                                    durationStr, instantStr,
                                     context.getAuthor().getUsername(), context.getAuthor().getId());
 
                         }
