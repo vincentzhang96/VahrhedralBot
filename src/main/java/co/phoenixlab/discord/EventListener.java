@@ -82,20 +82,17 @@ public class EventListener {
         if (channel == DiscordApiClient.NO_CHANNEL) {
             return;
         }
+        String key;
         if (event.getMemberChange() == MemberChangeEvent.MemberChange.ADDED) {
-            //  TODO TEMPORARY Disable for servers with more than 100 people
-            //  until per-server feature controls are implemented
-            if (server.getMembers().size() > 100) {
-                return;
-            }
-            bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.new_member.response",
-                    event.getMember().getUser().getUsername()),
-                    channel.getId());
+            key = "message.new_member.response";
         } else if (event.getMemberChange() == MemberChangeEvent.MemberChange.DELETED) {
-            bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.member_quit.response",
-                    event.getMember().getUser().getUsername()),
-                    channel.getId());
+            key = "message.member_quit.response";
+        } else {
+            return;
         }
+        bot.getApiClient().sendMessage(bot.getLocalizer().localize(key,
+                event.getMember().getUser().getUsername()),
+                channel.getId());
     }
 
     public void registerMessageListner(String name, Consumer<Message> listener) {
