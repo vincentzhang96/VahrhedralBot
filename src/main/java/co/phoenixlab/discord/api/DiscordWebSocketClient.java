@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.time.ZonedDateTime;
 import java.util.Iterator;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.LongAdder;
@@ -322,6 +323,10 @@ public class DiscordWebSocketClient extends WebSocketClient {
         String serverId = (String) data.get("guild_id");
         Server server = apiClient.getServerByID(serverId);
         if (server != NO_SERVER) {
+            //  Fix missing join date time
+            if (member.getJoinedAt() == null) {
+                member = new Member(member.getUser(), member.getRoles(), ZonedDateTime.now().toString());
+            }
             server.getMembers().add(member);
             LOGGER.debug("[{}] '{}': Added {}'s ({}) membership",
                     server.getId(), server.getName(),
