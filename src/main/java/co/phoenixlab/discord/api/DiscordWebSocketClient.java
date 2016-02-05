@@ -486,7 +486,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        LOGGER.info("[0] '': Closing WebSocket {}: {} {}", code, reason, remote ? "remote" : "local");
+        LOGGER.info("[0] '': Closing WebSocket {}: '{}' {}", code, reason, remote ? "remote" : "local");
         if (keepAliveFuture != null) {
             keepAliveFuture.cancel(true);
         }

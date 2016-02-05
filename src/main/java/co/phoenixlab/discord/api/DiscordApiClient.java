@@ -14,10 +14,12 @@ import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
+import org.java_websocket.client.DefaultSSLWebSocketClientFactory;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -143,11 +145,18 @@ public class DiscordApiClient {
         try {
             int retryTimeSec = 0;
             do {
-                final String gateway = getWebSocketGateway();
                 try {
-                    webSocketClient = new DiscordWebSocketClient(this, new URI(gateway));
+                    final String gateway = getWebSocketGateway();
+                    final URI gatewayUri = new URI(gateway);
+                    webSocketClient = new DiscordWebSocketClient(this, gatewayUri);
+                    SSLContext context = SSLContext.getInstance("TLS");
+                    context.init(null, null, null);
+                    webSocketClient.setWebSocketFactory(new DefaultSSLWebSocketClientFactory(context));
                 } catch (URISyntaxException e) {
                     LOGGER.warn("Bad gateway", e);
+                    throw new IOException(e);
+                } catch (Exception e) {
+                    LOGGER.warn("Unexpected error", e);
                     throw new IOException(e);
                 }
                 statistics.connectAttemptCount.increment();
@@ -180,7 +189,6 @@ public class DiscordApiClient {
             throw new IOException("Unable to retrieve websocket : HTTP " + status + ": " + response.getStatusText());
         }
         String gateway = response.getBody().getObject().getString("url");
-        gateway = "w" + gateway.substring(2);
         LOGGER.info("Found WebSocket gateway at {}", gateway);
         return gateway;
     }
