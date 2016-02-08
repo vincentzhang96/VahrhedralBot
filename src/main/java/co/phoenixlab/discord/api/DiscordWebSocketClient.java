@@ -260,9 +260,9 @@ public class DiscordWebSocketClient extends WebSocketClient {
             if (member != NO_MEMBER && member.getUser().equals(user)) {
                 member.getRoles().clear();
                 member.getRoles().addAll(update.getRoles());
-                LOGGER.debug("[{}] '{}': {}'s ({}) presence changed: {}",
+                LOGGER.debug("[{}] '{}': {}'s ({}) presence changed",
                         server.getId(), server.getName(),
-                        user.getUsername(), user.getId(), raw);
+                        user.getUsername(), user.getId());
                 apiClient.getEventBus().post(new PresenceUpdateEvent(update, server));
             } else {
                 LOGGER.warn("[{}] '{}': Orphan presence update received, ignored (userid={} username={}): Not found",
@@ -369,8 +369,9 @@ public class DiscordWebSocketClient extends WebSocketClient {
     private void handleChannelDelete(JSONObject data) {
         if (Boolean.TRUE.equals(data.get("is_private"))) {
             PrivateChannel channel = jsonObjectToObject(data, PrivateChannel.class);
-            //  TODO
-            LOGGER.debug("[0] '': Delete private channel with {}", channel.getRecipient().getUsername());
+            apiClient.getPrivateChannels().remove(channel.getId());
+            apiClient.getPrivateChannelsByUserMap().remove(channel.getRecipient());
+            LOGGER.debug("[0] '': Deleted private channel with {}", channel.getRecipient().getUsername());
         } else {
             Channel channel = jsonObjectToObject(data, Channel.class);
             String parentServerId = (String) data.get("guild_id");
@@ -399,8 +400,9 @@ public class DiscordWebSocketClient extends WebSocketClient {
     private void handleChannelCreate(JSONObject data) {
         if (Boolean.TRUE.equals(data.get("is_private"))) {
             PrivateChannel channel = jsonObjectToObject(data, PrivateChannel.class);
-            //  TODO
             LOGGER.debug("[0] '': New private channel with {}", channel.getRecipient().getUsername());
+            apiClient.getPrivateChannels().put(channel.getId(), channel);
+            apiClient.getPrivateChannelsByUserMap().put(channel.getRecipient(), channel);
         } else {
             Channel channel = jsonObjectToObject(data, Channel.class);
             String parentServerId = (String) data.get("guild_id");
