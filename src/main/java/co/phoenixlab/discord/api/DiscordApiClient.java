@@ -520,7 +520,17 @@ public class DiscordApiClient {
                 map(Server::getChannels).
                 flatMap(Set::stream).
                 filter(c -> id.equals(c.getId())).
-                findFirst().orElse(NO_CHANNEL);
+                findFirst().orElse(getPrivateChannelByIdAsChannel(id));
+    }
+
+    public Channel getPrivateChannelByIdAsChannel(String id) {
+        PrivateChannel privateChannel = getPrivateChannelById(id);
+        if (privateChannel != null) {
+            Channel channel = new Channel(privateChannel.getId(), "PM:" + privateChannel.getRecipient().toString());
+            channel.setParent(NO_SERVER);
+            return channel;
+        }
+        return NO_CHANNEL;
     }
 
     public Channel getChannelById(String id, Server server) {
@@ -625,7 +635,7 @@ public class DiscordApiClient {
     }
 
     public Member getUserMember(String userId, Server server) {
-        if (userId == null || server == null) {
+        if (userId == null || server == null || server == NO_SERVER) {
             return NO_MEMBER;
         }
         for (Member member : server.getMembers()) {
@@ -638,7 +648,7 @@ public class DiscordApiClient {
     }
 
     public Role getRole(String roleId, Server server) {
-        if (roleId == null || server == null) {
+        if (roleId == null || server == null || server == NO_SERVER) {
             return NO_ROLE;
         }
         for (Role role : server.getRoles()) {
@@ -650,7 +660,7 @@ public class DiscordApiClient {
     }
 
     public Role findRole(String roleName, Server server) {
-        if (roleName == null || server == null) {
+        if (roleName == null || server == null || server == NO_SERVER) {
             return NO_ROLE;
         }
         //  Exact (case insensitive) match
@@ -683,7 +693,7 @@ public class DiscordApiClient {
     }
 
     public Set<Role> getMemberRoles(Member member, Server server) {
-        if (member == null || server == null) {
+        if (member == null || server == null || server == NO_SERVER) {
             return Collections.emptySet();
         }
         Set<Role> definedRoles = member.getRoles().stream().

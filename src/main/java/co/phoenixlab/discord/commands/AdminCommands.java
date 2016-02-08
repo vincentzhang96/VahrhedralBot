@@ -30,7 +30,9 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static co.phoenixlab.discord.api.DiscordApiClient.NO_SERVER;
 import static co.phoenixlab.discord.api.DiscordApiClient.NO_USER;
 import static co.phoenixlab.discord.commands.CommandUtil.findUser;
 
@@ -343,10 +345,22 @@ public class AdminCommands {
             return;
         }
         Predicate<String> matcher = pattern.asPredicate();
-        List<User> results = context.getServer().getMembers().stream().
-                map(Member::getUser).
-                filter(u -> matcher.test(u.getUsername())).
-                collect(Collectors.toList());
+        List<User> results;
+        if (context.getServer() == NO_SERVER) {
+            Stream<User> userStream = Stream.empty();
+            for (Server server : apiClient.getServers()) {
+                userStream = Stream.concat(userStream, server.getMembers().stream().
+                        map(Member::getUser).
+                        filter(u -> matcher.test(u.getUsername())));
+            }
+            results = userStream.distinct().
+                    collect(Collectors.toList());
+        } else {
+            results = context.getServer().getMembers().stream().
+                    map(Member::getUser).
+                    filter(u -> matcher.test(u.getUsername())).
+                    collect(Collectors.toList());
+        }
         int size = results.size();
         if (size > 20) {
             apiClient.sendMessage(loc.localize("commands.admin.find.response.oversize",

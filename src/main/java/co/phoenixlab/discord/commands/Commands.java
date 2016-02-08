@@ -161,6 +161,11 @@ public class Commands {
         User author = context.getAuthor();
         Server server = context.getServer();
 
+        if (server == NO_SERVER) {
+            apiClient.sendMessage(loc.localize("commands.common.cannot_use_private_message"), context.getChannel());
+            return;
+        }
+
         if (!checkPermission(CHAT_MANAGE_MESSAGES, apiClient.getUserMember(author, server), server, apiClient)) {
             apiClient.sendMessage(loc.localize("commands.general.mod.response.reject", author.getUsername()),
                     context.getChannel());
