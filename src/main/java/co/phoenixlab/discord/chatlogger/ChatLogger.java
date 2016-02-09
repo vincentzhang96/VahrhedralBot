@@ -76,15 +76,15 @@ public class ChatLogger {
     public void logMessage(Message message, Server server, Channel channel) {
         String logMsg;
         if (message.getAttachments() != null && message.getAttachments().length > 0) {
-            logMsg = String.format("%s [%s] \"%s\": %s",
+            logMsg = String.format("%s [%20s] \"%s\": %s",
                     DATE_TIME_FORMATTER.format(DATE_TIME_PARSER.parse(message.getTimestamp())),
-                    message.getId(),
+                    message.getAuthor().getId(),
                     message.getAuthor().getUsername(),
                     message.getAttachments()[0].toString());
         } else {
-            logMsg = String.format("%s [%s] \"%s\": \"%s\"",
+            logMsg = String.format("%s [%20s] \"%s\": \"%s\"",
                     DATE_TIME_FORMATTER.format(DATE_TIME_PARSER.parse(message.getTimestamp())),
-                    message.getId(),
+                    message.getAuthor().getId(),
                     message.getAuthor().getUsername(),
                     resolveMentions(message.getContent()));
         }
@@ -94,14 +94,14 @@ public class ChatLogger {
     public void logPrivateMessage(Message message) {
         String logMsg;
         if (message.getAttachments() != null && message.getAttachments().length > 0) {
-            logMsg = String.format("%s [%s]: %s",
+            logMsg = String.format("%s [%20s]: %s",
                     DATE_TIME_FORMATTER.format(DATE_TIME_PARSER.parse(message.getTimestamp())),
-                    message.getId(),
+                    message.getAuthor().getId(),
                     message.getAttachments()[0].toString());
         } else {
-            logMsg = String.format("%s [%s]: \"%s\"",
+            logMsg = String.format("%s [%20s]: \"%s\"",
                     DATE_TIME_FORMATTER.format(DATE_TIME_PARSER.parse(message.getTimestamp())),
-                    message.getId(),
+                    message.getAuthor().getId(),
                     message.getContent());
         }
         logMessage(logMsg, PRIVATE_MESSAGES,
