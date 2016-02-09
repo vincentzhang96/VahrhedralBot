@@ -11,6 +11,10 @@ public class TempServerConfig {
     public TempServerConfig() {
     }
 
+    public TempServerConfig(String serverId) {
+        this.serverId = serverId;
+    }
+
     public TempServerConfig(String serverId, ServerTimeoutStorage serverTimeouts, String voiceLogChannelId) {
         this.serverId = serverId;
         this.serverTimeouts = serverTimeouts;

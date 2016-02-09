@@ -123,7 +123,7 @@ public class ModCommands {
                                 user.getUsername(), context.getAuthor().getId());
                         TempServerConfig serverConfig = serverStorage.get(serverId);
                         if (serverConfig == null) {
-                            serverConfig = new TempServerConfig();
+                            serverConfig = new TempServerConfig(serverId);
                             serverStorage.put(serverId, serverConfig);
                         }
                         ServerTimeoutStorage storage = serverConfig.getServerTimeouts();
@@ -304,7 +304,7 @@ public class ModCommands {
         String serverId = context.getServer().getId();
         TempServerConfig serverConfig = serverStorage.get(serverId);
         if (serverConfig == null) {
-            serverConfig = new TempServerConfig();
+            serverConfig = new TempServerConfig(serverId);
             serverStorage.put(serverId, serverConfig);
         }
         ServerTimeoutStorage storage = serverConfig.getServerTimeouts();
@@ -403,7 +403,7 @@ public class ModCommands {
         String serverId = server.getId();
         TempServerConfig serverConfig = serverStorage.get(serverId);
         if (serverConfig == null) {
-            serverConfig = new TempServerConfig();
+            serverConfig = new TempServerConfig(serverId);
             serverStorage.put(serverId, serverConfig);
         }
         ServerTimeoutStorage storage = serverConfig.getServerTimeouts();
@@ -476,7 +476,7 @@ public class ModCommands {
         String serverId = server.getId();
         TempServerConfig serverConfig = serverStorage.get(serverId);
         if (serverConfig == null) {
-            serverConfig = new TempServerConfig();
+            serverConfig = new TempServerConfig(serverId);
             serverStorage.put(serverId, serverConfig);
         }
         ServerTimeoutStorage storage = serverConfig.getServerTimeouts();
@@ -507,7 +507,7 @@ public class ModCommands {
         String serverId = server.getId();
         TempServerConfig serverConfig = serverStorage.get(serverId);
         if (serverConfig == null) {
-            serverConfig = new TempServerConfig();
+            serverConfig = new TempServerConfig(serverId);
             serverStorage.put(serverId, serverConfig);
         }
         ServerTimeoutStorage storage = serverConfig.getServerTimeouts();
@@ -542,7 +542,7 @@ public class ModCommands {
         String serverId = server.getId();
         TempServerConfig serverConfig = serverStorage.get(serverId);
         if (serverConfig == null) {
-            serverConfig = new TempServerConfig();
+            serverConfig = new TempServerConfig(serverId);
             serverStorage.put(serverId, serverConfig);
         }
         ServerTimeoutStorage storage = serverConfig.getServerTimeouts();
