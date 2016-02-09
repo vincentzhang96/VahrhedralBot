@@ -73,8 +73,8 @@ public class DiscordApiClient {
 
     private final Gson gson;
 
-    private final Map<String, PrivateChannel> privateChannels;
-    private final Map<User, PrivateChannel> privateChannelsByUser;
+    private final Map<String, Channel> privateChannels;
+    private final Map<User, Channel> privateChannelsByUser;
 
     private final AtomicBoolean active;
 
@@ -207,7 +207,7 @@ public class DiscordApiClient {
         remapServers();
 
         LOGGER.info("Holding {} private conversations", readyMessage.getPrivateChannels().length);
-        for (PrivateChannel privateChannel : readyMessage.getPrivateChannels()) {
+        for (Channel privateChannel : readyMessage.getPrivateChannels()) {
             privateChannels.put(privateChannel.getId(), privateChannel);
             privateChannelsByUser.put(privateChannel.getRecipient(), privateChannel);
         }
@@ -489,19 +489,19 @@ public class DiscordApiClient {
         return server;
     }
 
-    public Map<String, PrivateChannel> getPrivateChannels() {
+    public Map<String, Channel> getPrivateChannels() {
         return privateChannels;
     }
 
-    public Map<User, PrivateChannel> getPrivateChannelsByUserMap() {
+    public Map<User, Channel> getPrivateChannelsByUserMap() {
         return privateChannelsByUser;
     }
 
-    public PrivateChannel getPrivateChannelById(String id) {
+    public Channel getPrivateChannelById(String id) {
         return privateChannels.get(id);
     }
 
-    public PrivateChannel getPrivateChannelByUser(User user) {
+    public Channel getPrivateChannelByUser(User user) {
         return privateChannelsByUser.get(user);
     }
 
@@ -524,11 +524,9 @@ public class DiscordApiClient {
     }
 
     public Channel getPrivateChannelByIdAsChannel(String id) {
-        PrivateChannel privateChannel = getPrivateChannelById(id);
+        Channel privateChannel = getPrivateChannelById(id);
         if (privateChannel != null) {
-            Channel channel = new Channel(privateChannel.getId(), "PM:" + privateChannel.getRecipient().toString());
-            channel.setParent(NO_SERVER);
-            return channel;
+            return privateChannel;
         }
         return NO_CHANNEL;
     }

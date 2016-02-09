@@ -1,5 +1,7 @@
 package co.phoenixlab.discord.api.entities;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.Objects;
 
 /**
@@ -22,6 +24,12 @@ public class Channel {
     private ChannelType type;
 
     private transient Server parent;
+
+    @SerializedName("is_private")
+    private boolean isPrivate;
+
+    private User recipient;
+
 
     public Channel(String id, String name) {
         this.id = id;
@@ -68,6 +76,14 @@ public class Channel {
 
     public ChannelType getType() {
         return type;
+    }
+
+    public boolean isPrivate() {
+        return isPrivate;
+    }
+
+    public User getRecipient() {
+        return recipient;
     }
 
     @Override

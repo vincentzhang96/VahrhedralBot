@@ -13,7 +13,7 @@ public class ReadyMessage {
     @SerializedName("read_state")
     private ReadState[] readState;
     @SerializedName("private_channels")
-    private PrivateChannel[] privateChannels;
+    private Channel[] privateChannels;
     @SerializedName("heartbeat_interval")
     private long heartbeatInterval;
     @SerializedName("guilds")
@@ -38,7 +38,7 @@ public class ReadyMessage {
         return readState;
     }
 
-    public PrivateChannel[] getPrivateChannels() {
+    public Channel[] getPrivateChannels() {
         return privateChannels;
     }
 

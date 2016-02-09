@@ -46,6 +46,11 @@ public class Server {
         this.id = id;
     }
 
+    public Server(String id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
     /**
      * @return {@link #name}
      */

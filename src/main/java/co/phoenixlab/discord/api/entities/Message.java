@@ -16,7 +16,7 @@ public class Message {
 
     private final String nonce;
 
-    private final Object[] attachments;
+    private final Attachment[] attachments;
 
     private final Object[] embeds;
 
@@ -34,7 +34,9 @@ public class Message {
     @SerializedName("edited_timestamp")
     private final String editedTimestamp;
 
-    public Message(User author, String channelId, String nonce, Object[] attachments, Object[] embeds,
+    private transient boolean isPrivateMessage;
+
+    public Message(User author, String channelId, String nonce, Attachment[] attachments, Object[] embeds,
                    boolean mentionEveryone, String content, String id, User[] mentions, String timestamp,
                    String editedTimestamp) {
         this.author = author;
@@ -86,7 +88,7 @@ public class Message {
         return nonce;
     }
 
-    public Object[] getAttachments() {
+    public Attachment[] getAttachments() {
         return attachments;
     }
 
@@ -100,6 +102,14 @@ public class Message {
 
     public String getEditedTimestamp() {
         return editedTimestamp;
+    }
+
+    public boolean isPrivateMessage() {
+        return isPrivateMessage;
+    }
+
+    public void setPrivateMessage(boolean privateMessage) {
+        isPrivateMessage = privateMessage;
     }
 
     @Override
