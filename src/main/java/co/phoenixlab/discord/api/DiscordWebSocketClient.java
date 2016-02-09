@@ -465,24 +465,21 @@ public class DiscordWebSocketClient extends WebSocketClient {
 
     private void handleMessageCreate(JSONObject data) {
         Message message = jsonObjectToObject(data, Message.class);
-        //  Ignore messages from self
-        if (!message.getAuthor().equals(apiClient.getClientUser())) {
-            Channel channel = apiClient.getChannelById(message.getChannelId());
-            if (channel == null || channel == NO_CHANNEL || channel.isPrivate()) {
-                LOGGER.debug("[0] '': Recieved direct message from {}: {}",
-                        message.getAuthor().getUsername(),
-                        message.getContent());
-                message.setPrivateMessage(true);
-            } else {
-                LOGGER.debug("[{}] '{}': Recieved message from {} in #{}: {}",
-                        channel.getParent().getId(), channel.getParent().getName(),
-                        message.getAuthor().getUsername(),
-                        channel.getName(),
-                        message.getContent());
-                message.setPrivateMessage(false);
-            }
-            apiClient.getEventBus().post(new MessageReceivedEvent(message));
+        Channel channel = apiClient.getChannelById(message.getChannelId());
+        if (channel == null || channel == NO_CHANNEL || channel.isPrivate()) {
+            LOGGER.debug("[0] '': Recieved direct message from {}: {}",
+                    message.getAuthor().getUsername(),
+                    message.getContent());
+            message.setPrivateMessage(true);
+        } else {
+            LOGGER.debug("[{}] '{}': Recieved message from {} in #{}: {}",
+                    channel.getParent().getId(), channel.getParent().getName(),
+                    message.getAuthor().getUsername(),
+                    channel.getName(),
+                    message.getContent());
+            message.setPrivateMessage(false);
         }
+        apiClient.getEventBus().post(new MessageReceivedEvent(message));
     }
 
     @Override
