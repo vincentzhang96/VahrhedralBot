@@ -103,6 +103,10 @@ public class ModCommands {
                 if (uid.startsWith("<@")) {
                     uid = uid.substring(2, uid.length() - 1);
                 }
+                if (!uid.matches("[0-9]+")) {
+                    apiClient.sendMessage(loc.localize("commands.mod.stoptimeout.response.not_id"), channel);
+                    return;
+                }
                 Server server = context.getServer();
                 String serverId = server.getId();
                 User user = apiClient.getUserById(uid, server);
