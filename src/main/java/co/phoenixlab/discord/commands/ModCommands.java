@@ -12,6 +12,7 @@ import co.phoenixlab.discord.api.event.MemberChangeEvent;
 import co.phoenixlab.discord.api.event.MemberChangeEvent.MemberChange;
 import co.phoenixlab.discord.commands.tempstorage.ServerTimeout;
 import co.phoenixlab.discord.commands.tempstorage.ServerTimeoutStorage;
+import co.phoenixlab.discord.commands.tempstorage.TempServerConfig;
 import co.phoenixlab.discord.util.WeakEventSubscriber;
 import co.phoenixlab.discord.util.adapters.DurationGsonTypeAdapter;
 import co.phoenixlab.discord.util.adapters.InstantGsonTypeAdapter;
@@ -57,7 +58,7 @@ public class ModCommands {
 
     private final Consumer<MemberChangeEvent> memberJoinListener;
 
-    private final Map<String, ServerTimeoutStorage> timeoutStorage;
+    private final Map<String, TempServerConfig> serverStorage;
 
     private static final Path serverStorageDir = Paths.get("config/tempServerStorage/");
 
@@ -71,7 +72,7 @@ public class ModCommands {
         loc = bot.getLocalizer();
         apiClient = bot.getApiClient();
         memberJoinListener = this::onMemberJoinedServer;
-        timeoutStorage = new HashMap<>();
+        serverStorage = new HashMap<>();
         gson = new GsonBuilder().
                 registerTypeAdapter(Instant.class, new InstantGsonTypeAdapter()).
                 registerTypeAdapter(Duration.class, new DurationGsonTypeAdapter()).
@@ -120,17 +121,22 @@ public class ModCommands {
                         ServerTimeout timeout = new ServerTimeout(duration,
                                 Instant.now(), user.getId(), serverId,
                                 user.getUsername(), context.getAuthor().getId());
-                        ServerTimeoutStorage storage = timeoutStorage.get(serverId);
+                        TempServerConfig serverConfig = serverStorage.get(serverId);
+                        if (serverConfig == null) {
+                            serverConfig = new TempServerConfig();
+                            serverStorage.put(serverId, serverConfig);
+                        }
+                        ServerTimeoutStorage storage = serverConfig.getServerTimeouts();
                         if (storage == null) {
-                            storage = new ServerTimeoutStorage(serverId);
-                            timeoutStorage.put(serverId, storage);
+                            storage = new ServerTimeoutStorage();
+                            serverConfig.setServerTimeouts(storage);
                         }
                         if (applyTimeoutRole(user, server, channel)) {
                             storage.getTimeouts().put(user.getId(), timeout);
                             ScheduledFuture future = timeoutService.schedule(() ->
                                     onTimeoutExpire(theUser, server), duration.getSeconds(), TimeUnit.SECONDS);
                             timeout.setTimerFuture(future);
-                            saveServerTimeoutStorage(storage);
+                            saveServerConfig(serverConfig);
                             String durationStr = formatDuration(duration);
                             String instantStr = formatInstant(timeout.getEndTime());
                             String msg = loc.localize("commands.mod.timeout.response",
@@ -152,7 +158,8 @@ public class ModCommands {
                     }
                 } else if (split.length == 1) {
                     if (isUserTimedOut(user, server)) {
-                        ServerTimeout timeout = SafeNav.of(timeoutStorage.get(serverId)).
+                        ServerTimeout timeout = SafeNav.of(serverStorage.get(serverId)).
+                                next(TempServerConfig::getServerTimeouts).
                                 next(ServerTimeoutStorage::getTimeouts).
                                 next(m -> m.get(theUser.getId())).get();
                         //  Timeout cannot be null since we just checked
@@ -295,16 +302,21 @@ public class ModCommands {
             return;
         }
         String serverId = context.getServer().getId();
-        ServerTimeoutStorage storage = timeoutStorage.get(serverId);
+        TempServerConfig serverConfig = serverStorage.get(serverId);
+        if (serverConfig == null) {
+            serverConfig = new TempServerConfig();
+            serverStorage.put(serverId, serverConfig);
+        }
+        ServerTimeoutStorage storage = serverConfig.getServerTimeouts();
         if (storage == null) {
-            storage = new ServerTimeoutStorage(serverId);
-            timeoutStorage.put(serverId, storage);
+            storage = new ServerTimeoutStorage();
+            serverConfig.setServerTimeouts(storage);
         }
         storage.setTimeoutRoleId(role.getId());
         apiClient.sendMessage(loc.localize("commands.mod.settimeoutrole.response",
                 role.getName(), role.getId()),
                 context.getChannel());
-        saveServerTimeoutStorage(storage);
+        saveServerConfig(serverConfig);
     }
 
     private void find(MessageContext context, String args) {
@@ -358,7 +370,8 @@ public class ModCommands {
     }
 
     private void refreshTimeoutOnEvade(User user, Server server) {
-        ServerTimeout timeout = SafeNav.of(timeoutStorage.get(server.getId())).
+        ServerTimeout timeout = SafeNav.of(serverStorage.get(server.getId())).
+                next(TempServerConfig::getServerTimeouts).
                 next(ServerTimeoutStorage::getTimeouts).
                 next(timeouts -> timeouts.get(user.getId())).
                 get();
@@ -388,7 +401,12 @@ public class ModCommands {
      */
     public boolean applyTimeoutRole(User user, Server server, Channel invocationChannel) {
         String serverId = server.getId();
-        ServerTimeoutStorage storage = timeoutStorage.get(serverId);
+        TempServerConfig serverConfig = serverStorage.get(serverId);
+        if (serverConfig == null) {
+            serverConfig = new TempServerConfig();
+            serverStorage.put(serverId, serverConfig);
+        }
+        ServerTimeoutStorage storage = serverConfig.getServerTimeouts();
         String serverName = server.getName();
         if (storage != null && storage.getTimeoutRoleId() != null) {
             String timeoutRoleId = storage.getTimeoutRoleId();
@@ -411,8 +429,9 @@ public class ModCommands {
                         invocationChannel);
             }
         } else {
-            storage = new ServerTimeoutStorage(serverId);
-            timeoutStorage.put(serverId, storage);
+            storage = new ServerTimeoutStorage();
+            serverConfig.setServerTimeouts(storage);
+            serverStorage.put(serverId, serverConfig);
             LOGGER.warn("Timeout role for server {} ({}) is not configured",
                     serverName, serverId);
             apiClient.sendMessage(loc.localize("message.mod.timeout.not_configured"), invocationChannel);
@@ -425,7 +444,8 @@ public class ModCommands {
     }
 
     public boolean isUserTimedOut(String userId, String serverId) {
-        ServerTimeoutStorage storage = timeoutStorage.get(serverId);
+        ServerTimeoutStorage storage = SafeNav.of(serverStorage.get(serverId)).
+                get(TempServerConfig::getServerTimeouts);
         if (storage != null) {
             ServerTimeout timeout = storage.getTimeouts().get(userId);
             if (timeout != null) {
@@ -441,7 +461,8 @@ public class ModCommands {
     }
 
     public boolean doesTimeoutEntryExistForUser(String userId, String serverId) {
-        ServerTimeoutStorage storage = timeoutStorage.get(serverId);
+        ServerTimeoutStorage storage = SafeNav.of(serverStorage.get(serverId)).
+                get(TempServerConfig::getServerTimeouts);
         if (storage != null) {
             ServerTimeout timeout = storage.getTimeouts().get(userId);
             if (timeout != null) {
@@ -452,16 +473,22 @@ public class ModCommands {
     }
 
     public void cancelTimeout(User user, Server server, Channel invocationChannel) {
-        ServerTimeoutStorage storage = timeoutStorage.get(server.getId());
-        removeTimeoutRole(user, server, apiClient.getChannelById(server.getId()));
+        String serverId = server.getId();
+        TempServerConfig serverConfig = serverStorage.get(serverId);
+        if (serverConfig == null) {
+            serverConfig = new TempServerConfig();
+            serverStorage.put(serverId, serverConfig);
+        }
+        ServerTimeoutStorage storage = serverConfig.getServerTimeouts();
+        removeTimeoutRole(user, server, apiClient.getChannelById(serverId));
         if (storage != null) {
             ServerTimeout timeout = storage.getTimeouts().remove(user.getId());
-            saveServerTimeoutStorage(storage);
+            saveServerConfig(serverConfig);
             if (timeout != null) {
                 SafeNav.of(timeout.getTimerFuture()).ifPresent(f -> f.cancel(true));
                 LOGGER.info("Cancelling timeout for {} ({}) in {} ({})",
                         user.getUsername(), user.getId(),
-                        server.getName(), server.getId());
+                        server.getName(), serverId);
                 apiClient.sendMessage(loc.localize("commands.mod.stoptimeout.response",
                         user.getUsername(), user.getId()),
                         invocationChannel);
@@ -477,11 +504,17 @@ public class ModCommands {
     }
 
     public void onTimeoutExpire(User user, Server server) {
-        ServerTimeoutStorage storage = timeoutStorage.get(server.getId());
+        String serverId = server.getId();
+        TempServerConfig serverConfig = serverStorage.get(serverId);
+        if (serverConfig == null) {
+            serverConfig = new TempServerConfig();
+            serverStorage.put(serverId, serverConfig);
+        }
+        ServerTimeoutStorage storage = serverConfig.getServerTimeouts();
         if (storage != null) {
             ServerTimeout timeout = storage.getTimeouts().remove(user.getId());
             if (timeout != null) {
-                saveServerTimeoutStorage(storage);
+                saveServerConfig(serverConfig);
                 LOGGER.info("Expiring timeout for {} ({}) in {} ({})",
                         user.getUsername(), user.getId(),
                         server.getName(), server.getId());
@@ -507,7 +540,12 @@ public class ModCommands {
      */
     public boolean removeTimeoutRole(User user, Server server, Channel invocationChannel) {
         String serverId = server.getId();
-        ServerTimeoutStorage storage = timeoutStorage.get(serverId);
+        TempServerConfig serverConfig = serverStorage.get(serverId);
+        if (serverConfig == null) {
+            serverConfig = new TempServerConfig();
+            serverStorage.put(serverId, serverConfig);
+        }
+        ServerTimeoutStorage storage = serverConfig.getServerTimeouts();
         String serverName = server.getName();
         if (storage != null && storage.getTimeoutRoleId() != null) {
             String timeoutRoleId = storage.getTimeoutRoleId();
@@ -530,8 +568,9 @@ public class ModCommands {
                         invocationChannel);
             }
         } else {
-            storage = new ServerTimeoutStorage(serverId);
-            timeoutStorage.put(serverId, storage);
+            storage = new ServerTimeoutStorage();
+            serverConfig.setServerTimeouts(storage);
+            serverStorage.put(serverId, serverConfig);
             LOGGER.warn("Timeout role for server {} ({}) is not configured",
                     storage.getTimeoutRoleId(), serverName, serverId);
             apiClient.sendMessage(loc.localize("message.mod.timeout.not_configured"), invocationChannel);
@@ -540,7 +579,7 @@ public class ModCommands {
     }
 
 
-    public void saveServerTimeoutStorage(ServerTimeoutStorage storage) {
+    public void saveServerConfig(TempServerConfig storage) {
         try {
             Files.createDirectories(serverStorageDir);
         } catch (IOException e) {
@@ -558,32 +597,34 @@ public class ModCommands {
         LOGGER.info("Saved server {}", storage.getServerId());
     }
 
-    public void loadServerTimeoutStorageFiles() {
+    public void loadServerConfigFiles() {
         if (!Files.exists(serverStorageDir)) {
             LOGGER.info("Server storage directory doesn't exist, not loading anything");
             return;
         }
         try (Stream<Path> files = Files.list(serverStorageDir)) {
             files.filter(p -> p.getFileName().toString().endsWith(".json")).
-                    forEach(this::loadServerTimeoutStorage);
+                    forEach(this::loadServerConfig);
         } catch (IOException e) {
             LOGGER.warn("Unable to load server storage files", e);
             return;
         }
     }
 
-    public void loadServerTimeoutStorage(Path path) {
+    public void loadServerConfig(Path path) {
         boolean purge = false;
+        TempServerConfig config;
         ServerTimeoutStorage storage;
         try (Reader reader = Files.newBufferedReader(path, UTF_8)) {
-            storage = gson.fromJson(reader, ServerTimeoutStorage.class);
+            config = gson.fromJson(reader, TempServerConfig.class);
+            storage = config.getServerTimeouts();
             if (storage != null) {
-                Server server = apiClient.getServerByID(storage.getServerId());
+                Server server = apiClient.getServerByID(config.getServerId());
                 if (server == NO_SERVER) {
-                    LOGGER.warn("Rejecting {} server storage file: server not found", storage.getServerId());
+                    LOGGER.warn("Rejecting {} server storage file: server not found", config.getServerId());
                     return;
                 }
-                timeoutStorage.put(storage.getServerId(), storage);
+                serverStorage.put(config.getServerId(), config);
                 LOGGER.info("Loaded {} ({}) server storage file",
                         server.getName(), server.getId(), storage.getTimeoutRoleId());
                 //  Prune expired entries
@@ -633,16 +674,17 @@ public class ModCommands {
         }
 
         if (purge) {
-            saveServerTimeoutStorage(storage);
+            saveServerConfig(config);
         }
     }
 
     public void onReady() {
         //  Load configs
-        loadServerTimeoutStorageFiles();
+        loadServerConfigFiles();
 
         //  Reapply timeouts that may have dropped during downtime
-        timeoutStorage.forEach((sid, st) -> {
+        serverStorage.forEach((sid, conf) -> {
+            ServerTimeoutStorage st = conf.getServerTimeouts();
             st.getTimeouts().forEach((uid, t) -> {
                 if(isUserTimedOut(uid, sid)) {
                     //  Check if the user still has timeout role

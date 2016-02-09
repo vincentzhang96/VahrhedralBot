@@ -5,18 +5,13 @@ import java.util.Map;
 
 public class ServerTimeoutStorage {
 
-    private final String serverId;
     private String timeoutRoleId;
     private final Map<String, ServerTimeout> timeouts;
 
-    public ServerTimeoutStorage(String serverId) {
-        this.serverId = serverId;
+    public ServerTimeoutStorage() {
         timeouts = new HashMap<>();
     }
 
-    public String getServerId() {
-        return serverId;
-    }
 
     public Map<String, ServerTimeout> getTimeouts() {
         return timeouts;
