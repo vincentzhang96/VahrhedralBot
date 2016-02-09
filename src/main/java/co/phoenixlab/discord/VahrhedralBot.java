@@ -4,6 +4,7 @@ import co.phoenixlab.common.localization.LocaleStringProvider;
 import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.common.localization.LocalizerImpl;
 import co.phoenixlab.discord.api.DiscordApiClient;
+import co.phoenixlab.discord.chatlogger.ChatLogger;
 import co.phoenixlab.discord.commands.Commands;
 import com.google.gson.Gson;
 import com.mashape.unirest.http.HttpResponse;
@@ -60,6 +61,8 @@ public class VahrhedralBot implements Runnable {
     private String versionInfo;
     private Localizer localizer;
 
+    private ChatLogger chatLogger;
+
     public VahrhedralBot() {
         taskQueue = new TaskQueue();
         eventListener = new EventListener(this);
@@ -84,6 +87,8 @@ public class VahrhedralBot implements Runnable {
 
         apiClient = new DiscordApiClient();
         apiClient.getEventBus().register(eventListener);
+
+        chatLogger = new ChatLogger(apiClient);
 
         commands = new Commands(this);
         commands.register(commandDispatcher);
@@ -194,6 +199,10 @@ public class VahrhedralBot implements Runnable {
 
     public Commands getCommands() {
         return commands;
+    }
+
+    public ChatLogger getChatLogger() {
+        return chatLogger;
     }
 
     public void shutdown() {
