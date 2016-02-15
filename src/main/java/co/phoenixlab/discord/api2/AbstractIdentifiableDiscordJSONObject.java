@@ -22,7 +22,7 @@ public class AbstractIdentifiableDiscordJSONObject extends AbstractIdentifiable 
 
     @Override
     public void fromJsonObject(JSONObject jsonObject)
-            throws JSONException, NullPointerException {
+            throws JSONException, NullPointerException, IllegalArgumentException {
         Objects.requireNonNull(jsonObject);
         id = jsonObject.getString("id");
         if (!isValid()) {
