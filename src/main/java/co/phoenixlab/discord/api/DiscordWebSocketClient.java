@@ -49,9 +49,23 @@ public class DiscordWebSocketClient extends WebSocketClient {
     public void onOpen(ServerHandshake handshakedata) {
         Thread.currentThread().setName("WebSocketClient");
         LOGGER.info("WebSocket connection opened");
-        send("{\"op\":2,\"d\":{\"token\":\"" + apiClient.getToken() + "\",\"properties\":{\"$os\":\"Linux\",\"" +
-                "$browser\":\"Java\",\"$device\":\"Java\",\"$referrer\":\"\",\"$referring_domain\"" +
-                ":\"\"},\"v\":2}}");
+        org.json.JSONObject connectObj = new org.json.JSONObject();
+        connectObj.put("op", 2);
+        org.json.JSONObject dataObj = new org.json.JSONObject();
+        dataObj.put("token", apiClient.getToken());
+        dataObj.put("v", 3);
+        dataObj.put("large_threshold", 100);
+        dataObj.put("compress", false);
+        org.json.JSONObject properties = new org.json.JSONObject();
+        properties.put("$os", "Linux");
+        properties.put("$browser", "Java");
+        properties.put("$device", "Java");
+        properties.put("$referrer", "");
+        properties.put("$referring_domain", "");
+        dataObj.put("properties", properties);
+        connectObj.put("d", dataObj);
+
+        send(connectObj.toString());
     }
 
     @Override
@@ -269,8 +283,8 @@ public class DiscordWebSocketClient extends WebSocketClient {
                         update.getUser().getId(), update.getUser().getUsername());
             }
         } else {
-            LOGGER.warn("[{}] '': Orphan presence update received, ignored (userid={} username={})",
-                    update.getServerId(),
+            LOGGER.warn("[{}] '{}': Orphan presence update received, ignored (userid={} username={})",
+                    update.getServerId(), (server == null ? "": server.getName()),
                     update.getUser().getId(), update.getUser().getUsername());
         }
     }
