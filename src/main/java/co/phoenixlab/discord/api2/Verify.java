@@ -22,6 +22,11 @@ public class Verify {
         }
     }
 
+    public static void thatStringIsNotEffectivelyEmptyOrNull(String s, String name) {
+        thatStringIsNotNull(s, name);
+        thatStringIsNotEffectivelyEmpty(s, name);
+    }
+
     public static void thatValueIsGreaterThan(int i, int min, String name) {
         if (i <= min) {
             throw new IllegalArgumentException(name + " must be greater than " + min);
