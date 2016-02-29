@@ -6,6 +6,7 @@ import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.CommandDispatcher;
 import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.VahrhedralBot;
+import co.phoenixlab.discord.api.ApiConst;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.MemberChangeEvent;
@@ -21,6 +22,13 @@ import com.google.common.eventbus.Subscribe;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.JsonNode;
+import com.mashape.unirest.http.Unirest;
+import org.apache.http.HttpHeaders;
+import org.apache.http.entity.ContentType;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -28,7 +36,10 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.*;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -44,6 +55,7 @@ import java.util.stream.Stream;
 
 import static co.phoenixlab.discord.VahrhedralBot.LOGGER;
 import static co.phoenixlab.discord.api.DiscordApiClient.*;
+import static co.phoenixlab.discord.commands.CommandUtil.findUser;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
@@ -90,9 +102,53 @@ public class ModCommands {
         d.registerAlwaysActiveCommand("commands.mod.stoptimeout", this::stopTimeout);
         d.registerAlwaysActiveCommand("commands.mod.settimeoutrole", this::setTimeoutRole);
         d.registerAlwaysActiveCommand("commands.admin.find", this::find);
+        d.registerAlwaysActiveCommand("commands.mod.vanish", this::vanish);
 
         EventBus eventBus = bot.getApiClient().getEventBus();
         eventBus.register(new WeakEventSubscriber<>(memberJoinListener, eventBus, MemberChangeEvent.class));
+    }
+
+    private void vanish(MessageContext context, String args) {
+        Message message = context.getMessage();
+        if (args.isEmpty()) {
+            return;
+        }
+        String[] vals = args.split(" ");
+        User user = findUser(context, vals[0]);
+        if (user == NO_USER) {
+            LOGGER.warn("Unable to find user: " + vals[0]);
+            return;
+        }
+        try {
+            Map<String, String> headers = new HashMap<>();
+            headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+            headers.put(HttpHeaders.AUTHORIZATION, apiClient.getToken());
+            Map<String, Object> queryParams = new HashMap<>();
+            queryParams.put("limit", 50);
+            queryParams.put("before", message.getId());
+            HttpResponse<JsonNode> response = Unirest.get(ApiConst.CHANNELS_ENDPOINT +
+                    message.getChannelId() + "/messages").
+                    headers(headers).
+                    queryString(queryParams).
+                    asJson();
+            JSONArray ret = response.getBody().getArray();
+            int limit = 5;
+            if (vals.length >= 2) {
+                limit = Math.max(Math.min(50, Integer.parseInt(vals[1])), 1);
+            }
+            for (int i = 0; i < ret.length() && limit > 0; i++) {
+                JSONObject msg = ret.getJSONObject(i);
+                String mid = msg.getString("id");
+                JSONObject msgUsr = msg.getJSONObject("author");
+                String uid = msgUsr.getString("id");
+                if (user.getId().equals(uid)) {
+                    apiClient.deleteMessage(context.getChannel().getId(), mid);
+                    limit--;
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Unable to get messages", e);
+        }
     }
 
     private void timeout(MessageContext context, String args) {
@@ -686,7 +742,7 @@ public class ModCommands {
         serverStorage.forEach((sid, conf) -> {
             ServerTimeoutStorage st = conf.getServerTimeouts();
             st.getTimeouts().forEach((uid, t) -> {
-                if(isUserTimedOut(uid, sid)) {
+                if (isUserTimedOut(uid, sid)) {
                     //  Check if the user still has timeout role
                     Server server = apiClient.getServerByID(sid);
                     Set<Role> roles = apiClient.getMemberRoles(apiClient.getUserMember(uid, server), server);
