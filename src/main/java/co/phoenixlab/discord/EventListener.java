@@ -91,7 +91,8 @@ public class EventListener {
             return;
         }
         bot.getApiClient().sendMessage(bot.getLocalizer().localize(key,
-                event.getMember().getUser().getUsername()),
+                event.getMember().getUser().getUsername(),
+                event.getMember().getUser().getId()),
                 channel.getId());
     }
 
