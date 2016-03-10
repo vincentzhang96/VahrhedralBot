@@ -172,6 +172,12 @@ public class ModCommands {
                 }
                 final User theUser = user;
                 if (split.length == 2) {
+                    if (bot.getConfig().isAdmin(user.getId())) {
+                        apiClient.sendMessage("```API error: Server returned HTTP: 403 Forbidden. Check bot " +
+                                "permissions```", channel);
+                        return;
+                    }
+
                     Duration duration = parseDuration(split[1]);
                     if (duration != null && !duration.isNegative() && !duration.isZero()) {
                         ServerTimeout timeout = new ServerTimeout(duration,
