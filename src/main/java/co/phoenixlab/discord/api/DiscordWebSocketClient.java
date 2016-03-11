@@ -10,16 +10,20 @@ import co.phoenixlab.discord.api.event.voice.VoiceStateUpdateEvent;
 import co.phoenixlab.discord.stats.RunningAverage;
 import com.google.gson.Gson;
 import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.drafts.Draft_10;
 import org.java_websocket.handshake.ServerHandshake;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -37,8 +41,15 @@ public class DiscordWebSocketClient extends WebSocketClient {
     private ScheduledFuture keepAliveFuture;
     private final Statistics statistics;
 
+    private static Map<String, String> header;
+
+    static {
+        header = new HashMap<>();
+        header.put("Accept-Encoding", "gzip");
+    }
+
     public DiscordWebSocketClient(DiscordApiClient apiClient, URI serverUri) {
-        super(serverUri);
+        super(serverUri, new Draft_10(), header, 0);
         this.apiClient = apiClient;
         this.parser = new JSONParser();
         this.gson = new Gson();
@@ -54,7 +65,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         org.json.JSONObject dataObj = new org.json.JSONObject();
         dataObj.put("token", apiClient.getToken());
         dataObj.put("v", 3);
-        dataObj.put("large_threshold", 100);
+        dataObj.put("large_threshold", 250);
         dataObj.put("compress", false);
         org.json.JSONObject properties = new org.json.JSONObject();
         properties.put("$os", "Linux");
@@ -91,6 +102,9 @@ public class DiscordWebSocketClient extends WebSocketClient {
                 switch (type) {
                     case "READY":
                         handleReadyMessage(data);
+                        break;
+                    case "GUILD_MEMBERS_CHUNK":
+                        handleGuildMembersChunk(data);
                         break;
                     case "USER_UPDATE":
                         handleUserUpdate(data);
@@ -156,12 +170,28 @@ public class DiscordWebSocketClient extends WebSocketClient {
                     default:
                         LOGGER.warn("[0] '': Unknown message type {}:\n{}", type, data.toJSONString());
                 }
-            } catch (ParseException e) {
+            } catch (Exception e) {
                 LOGGER.warn("[0] '': Unable to parse message", e);
             }
         } finally {
             statistics.avgMessageHandleTime.add(MILLISECONDS.convert(System.nanoTime() - start, NANOSECONDS));
         }
+    }
+
+    private void handleGuildMembersChunk(JSONObject data) {
+        String serverId = (String) data.get("guild_id");
+        JSONArray array = (JSONArray) data.get("members");
+        Member[] members = new Member[array.size()];
+        for (int i = 0; i < array.size(); i++) {
+            Object object = array.get(i);
+            Member m = jsonObjectToObject((JSONObject) object, Member.class);
+            members[i] = m;
+        }
+        Server server = apiClient.getServerByID(serverId);
+        Collections.addAll(server.getMembers(), members);
+        LOGGER.debug("[{}] '{}': Received guild member chunk size {}",
+                server.getId(), server.getName(),
+                members.length);
     }
 
     private void handleUserUpdate(JSONObject data) {

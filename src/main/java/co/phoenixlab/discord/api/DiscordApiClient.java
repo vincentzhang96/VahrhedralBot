@@ -213,9 +213,9 @@ public class DiscordApiClient {
         servers.clear();
         Collections.addAll(servers, readyMessage.getServers());
         remapServers();
-        //  Populate the large servers
+        //  Request to populate the large servers
         servers.stream().filter(Server::isLarge).
-                forEach(this::populateLargeServer);
+                forEach(this::requestLargerServerUsers);
 
         LOGGER.info("Holding {} private conversations", readyMessage.getPrivateChannels().length);
         for (Channel privateChannel : readyMessage.getPrivateChannels()) {
@@ -224,31 +224,15 @@ public class DiscordApiClient {
         }
     }
 
-    private void populateLargeServer(Server server) {
-        try {
-            //GET /api/guilds/:guild_id/members
-            Map<String, String> headers = new HashMap<>();
-            headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
-            headers.put(HttpHeaders.AUTHORIZATION, token);
-            HttpResponse<String> response = Unirest.
-                    get("https://discordapp.com/api/guilds/" + server.getId() + "/members").
-                    headers(headers).
-                    asString();
-            int status = response.getStatus();
-            if (status != 200) {
-                throw new UnirestException("HTTP " + response.getStatus() + ": " + response.getStatusText());
-            }
-            Member[] members = gson.fromJson(response.getBody(), Member[].class);
-            LOGGER.info("Retrieved {} members from endpoint", members.length);
-            for (Member member : members) {
-                server.getMembers().add(member);
-            }
-            LOGGER.info("Server should have {} members, has {}", server.getMemberCount(), server.getMembers().size());
-            server.setMemberCount(server.getMembers().size());
-        } catch (UnirestException e) {
-            statistics.restErrorCount.increment();
-            LOGGER.warn("Unable to populate members for " + server.getId(), e);
-        }
+    private void requestLargerServerUsers(Server server) {
+        org.json.JSONObject object = new org.json.JSONObject();
+        object.put("op", 8);
+        org.json.JSONObject requestBody = new org.json.JSONObject();
+        requestBody.put("guild_id", server.getId());
+        requestBody.put("query", "");
+        requestBody.put("limit", 0);
+        object.put("d", requestBody);
+        webSocketClient.send(object.toString());
     }
 
     @Subscribe
