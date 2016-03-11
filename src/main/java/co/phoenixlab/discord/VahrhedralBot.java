@@ -93,7 +93,12 @@ public class VahrhedralBot implements Runnable {
         commands = new Commands(this);
         commands.register(commandDispatcher);
         try {
-            apiClient.logIn(config.getEmail(), config.getPassword());
+            String token = config.getToken();
+            if (token == null || token.isEmpty()) {
+                apiClient.logIn(config.getEmail(), config.getPassword());
+            } else {
+                apiClient.logIn(token);
+            }
         } catch (IOException e) {
             LOGGER.error("Unable to log in", e);
         }

@@ -105,6 +105,12 @@ public class DiscordApiClient {
         statistics.eventCount.increment();
     }
 
+    public void logIn(String token) throws IOException {
+        this.token = token;
+        LOGGER.info("Using provided token {}", token);
+        openWebSocket();
+    }
+
     public void logIn(String email, String password) throws IOException {
         LOGGER.info("Attempting to log in as {}...", email);
         this.email = email;
@@ -400,6 +406,41 @@ public class DiscordApiClient {
             return;
         }
     }
+
+//    public Future<Message[]> getChannelHistory(String channelId, String before, int limit) {
+//
+//    }
+
+//    Message[] getChannelHistoryInternal(String channelId, String before, int limit) {
+//        try {
+//            Map<String, String> headers = new HashMap<>();
+//            headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+//            headers.put(HttpHeaders.AUTHORIZATION, token);
+//            Map<String, Object> queryParams = new HashMap<>();
+//            queryParams.put("limit", Math.max(1, Math.min(limit, 50)));
+//            if (before != null) {
+//                queryParams.put("before", before);
+//            }
+//            HttpResponse<JsonNode> response = Unirest.get(ApiConst.CHANNELS_ENDPOINT +
+//                    channelId + "/messages").
+//                    headers(headers).
+//                    queryString(queryParams).
+//                    asJson();
+//            int status = response.getStatus();
+//            if (status != 200) {
+//                statistics.restErrorCount.increment();
+//                LOGGER.warn("Unable to retrieve message: HTTP {}: {}", status, response.getStatusText());
+//                return null;
+//            }
+//            JSONArray ret = response.getBody().getArray();
+//
+//
+//        } catch (UnirestException e) {
+//            statistics.restErrorCount.increment();
+//            LOGGER.warn("Unable to retrieve message");
+//            return null;
+//        }
+//    }
 
     public void updateNowPlaying(String message) {
         webSocketClient.sendNowPlayingUpdate(message);

@@ -7,6 +7,7 @@ public class Configuration {
 
     private String email;
     private String password;
+    private String token;
     private String commandPrefix;
     private transient int prefixLength;
     private Set<String> blacklist;
@@ -15,6 +16,7 @@ public class Configuration {
     public Configuration() {
         email = "";
         password = "";
+        token = "";
         commandPrefix = "!";
         prefixLength = 0;
         blacklist = new HashSet<>();
@@ -64,5 +66,13 @@ public class Configuration {
 
     public boolean isAdmin(String userId) {
         return admins.contains(userId);
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }
