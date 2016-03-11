@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -48,6 +49,7 @@ public class DiscordApiClient {
     public static final Member NO_MEMBER = new Member(NO_USER, Collections.emptyList(), "");
     public static final Role NO_ROLE = new Role(0, 0, "NO_ROLE", false, "", false, 0);
     public static final String[] EMPTY_STR_ARRAY = new String[0];
+    public static final Pattern USER_ID_REGEX = Pattern.compile("[0-9]+");
 
     static {
         NO_CHANNEL.setParent(NO_SERVER);
@@ -656,9 +658,11 @@ public class DiscordApiClient {
             return temp;
         }
         //  ID match
-        temp = getUserById(username, server);
-        if (temp != null) {
-            return temp;
+        if (USER_ID_REGEX.matcher(username).matches()) {
+            temp = getUserById(username, server);
+            if (temp != null) {
+                return temp;
+            }
         }
 
         //  Still no match? Try fuzzy match
