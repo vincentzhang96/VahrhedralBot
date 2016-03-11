@@ -6,8 +6,7 @@ import java.util.List;
 
 public class PresenceUpdate {
 
-    @SerializedName("game_id")
-    private String gameId;
+    private Game game;
 
     @SerializedName("guild_id")
     private String guildId;
@@ -21,8 +20,8 @@ public class PresenceUpdate {
     public PresenceUpdate() {
     }
 
-    public String getGameId() {
-        return gameId;
+    public Game getGame() {
+        return game;
     }
 
     public String getServerId() {
