@@ -211,11 +211,41 @@ public class DiscordApiClient {
         servers.clear();
         Collections.addAll(servers, readyMessage.getServers());
         remapServers();
+        //  Populate the large servers
+        servers.stream().filter(Server::isLarge).
+                forEach(this::populateLargeServer);
 
         LOGGER.info("Holding {} private conversations", readyMessage.getPrivateChannels().length);
         for (Channel privateChannel : readyMessage.getPrivateChannels()) {
             privateChannels.put(privateChannel.getId(), privateChannel);
             privateChannelsByUser.put(privateChannel.getRecipient(), privateChannel);
+        }
+    }
+
+    private void populateLargeServer(Server server) {
+        try {
+            //GET /api/guilds/:guild_id/members
+            Map<String, String> headers = new HashMap<>();
+            headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+            headers.put(HttpHeaders.AUTHORIZATION, token);
+            HttpResponse<String> response = Unirest.
+                    get("https://discordapp.com/api/guilds/" + server.getId() + "/members").
+                    headers(headers).
+                    asString();
+            int status = response.getStatus();
+            if (status != 200) {
+                throw new UnirestException("HTTP " + response.getStatus() + ": " + response.getStatusText());
+            }
+            Member[] members = gson.fromJson(response.getBody(), Member[].class);
+            LOGGER.info("Retrieved {} members from endpoint", members.length);
+            for (Member member : members) {
+                server.getMembers().add(member);
+            }
+            LOGGER.info("Server should have {} members, has {}", server.getMemberCount(), server.getMembers().size());
+            server.setMemberCount(server.getMembers().size());
+        } catch (UnirestException e) {
+            statistics.restErrorCount.increment();
+            LOGGER.warn("Unable to populate members for " + server.getId(), e);
         }
     }
 
@@ -764,14 +794,28 @@ public class DiscordApiClient {
     }
 
     public Member getMemberHttp(String serverId, String userId) throws UnirestException {
-        Map<String, String> headers = new HashMap<>();
-        headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
-        headers.put(HttpHeaders.AUTHORIZATION, token);
-        HttpResponse<String> response = Unirest.
-                get("https://discordapp.com/api/guilds/" + serverId + "/members/" + userId).
-                headers(headers).
-                asString();
-        return gson.fromJson(response.getBody(), Member.class);
+        try {
+            Map<String, String> headers = new HashMap<>();
+            headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+            headers.put(HttpHeaders.AUTHORIZATION, token);
+            HttpResponse<String> response = Unirest.
+                    get("https://discordapp.com/api/guilds/" + serverId + "/members/" + userId).
+                    headers(headers).
+                    asString();
+            int status = response.getStatus();
+            if (status != 200) {
+                statistics.restErrorCount.increment();
+                throw new UnirestException("HTTP " + response.getStatus() + ": " + response.getStatusText());
+            }
+            Member member = gson.fromJson(response.getBody(), Member.class);
+            if (member == null) {
+                throw new UnirestException("Invalid entity: null");
+            }
+            return member;
+        } catch (UnirestException e) {
+            statistics.restErrorCount.increment();
+            throw e;
+        }
     }
 
     public ScheduledExecutorService getExecutorService() {

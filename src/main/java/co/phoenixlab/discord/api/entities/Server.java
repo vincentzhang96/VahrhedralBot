@@ -38,6 +38,9 @@ public class Server {
 
     private String icon;
 
+    @SerializedName("member_count")
+    private int memberCount;
+
     public Server() {
         this(null);
     }
@@ -115,5 +118,13 @@ public class Server {
     @Override
     public int hashCode() {
         return Objects.hash(id, region);
+    }
+
+    public void setMemberCount(int memberCount) {
+        this.memberCount = memberCount;
+    }
+
+    public int getMemberCount() {
+        return memberCount;
     }
 }
