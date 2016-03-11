@@ -663,6 +663,12 @@ public class DiscordApiClient {
                 return user;
             }
         }
+        //  Try API endpoint
+        try {
+            return getMemberHttp(server.getId(), userId).getUser();
+        } catch (Exception e) {
+            LOGGER.warn("Unable to get user " + userId + " via HTTP", e);
+        }
         return NO_USER;
     }
 
@@ -682,6 +688,12 @@ public class DiscordApiClient {
             if (user.getId().equals(userId)) {
                 return member;
             }
+        }
+        //  Try API endpoint
+        try {
+            return getMemberHttp(server.getId(), userId);
+        } catch (Exception e) {
+            LOGGER.warn("Unable to get user " + userId + " via HTTP", e);
         }
         return NO_MEMBER;
     }
@@ -745,6 +757,17 @@ public class DiscordApiClient {
         }
         ret.addAll(definedRoles);
         return ret;
+    }
+
+    public Member getMemberHttp(String serverId, String userId) throws UnirestException {
+        Map<String, String> headers = new HashMap<>();
+        headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+        headers.put(HttpHeaders.AUTHORIZATION, token);
+        HttpResponse<String> response = Unirest.
+                get("https://discordapp.com/api/guilds/" + serverId + "/members/" + userId).
+                headers(headers).
+                asString();
+        return gson.fromJson(response.getBody(), Member.class);
     }
 
     public ScheduledExecutorService getExecutorService() {
