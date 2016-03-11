@@ -665,7 +665,9 @@ public class DiscordApiClient {
         }
         //  Try API endpoint
         try {
-            return getMemberHttp(server.getId(), userId).getUser();
+            Member member = getMemberHttp(server.getId(), userId);
+            server.getMembers().add(member);
+            return member.getUser();
         } catch (Exception e) {
             LOGGER.warn("Unable to get user " + userId + " via HTTP", e);
         }
@@ -691,7 +693,9 @@ public class DiscordApiClient {
         }
         //  Try API endpoint
         try {
-            return getMemberHttp(server.getId(), userId);
+            Member member = getMemberHttp(server.getId(), userId);
+            server.getMembers().add(member);
+            return member;
         } catch (Exception e) {
             LOGGER.warn("Unable to get user " + userId + " via HTTP", e);
         }
