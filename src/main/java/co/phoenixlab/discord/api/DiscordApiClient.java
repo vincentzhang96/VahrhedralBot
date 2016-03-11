@@ -700,8 +700,12 @@ public class DiscordApiClient {
         //  Try API endpoint
         try {
             Member member = getMemberHttp(server.getId(), userId);
-            server.getMembers().add(member);
-            return member.getUser();
+            if (member != NO_MEMBER) {
+                server.getMembers().add(member);
+                return member.getUser();
+            } else {
+                LOGGER.warn("User {} not found via HTTP", userId);
+            }
         } catch (Exception e) {
             LOGGER.warn("Unable to get user " + userId + " via HTTP", e);
         }
@@ -728,8 +732,12 @@ public class DiscordApiClient {
         //  Try API endpoint
         try {
             Member member = getMemberHttp(server.getId(), userId);
-            server.getMembers().add(member);
-            return member;
+            if (member != NO_MEMBER) {
+                server.getMembers().add(member);
+                return member;
+            } else {
+                LOGGER.warn("User {} not found via HTTP", userId);
+            }
         } catch (Exception e) {
             LOGGER.warn("Unable to get user " + userId + " via HTTP", e);
         }
@@ -807,6 +815,10 @@ public class DiscordApiClient {
                     headers(headers).
                     asString();
             int status = response.getStatus();
+            if (status == 500) {
+                //  Actually a not found error
+                return NO_MEMBER;
+            }
             if (status != 200) {
                 statistics.restErrorCount.increment();
                 throw new UnirestException("HTTP " + response.getStatus() + ": " + response.getStatusText());
