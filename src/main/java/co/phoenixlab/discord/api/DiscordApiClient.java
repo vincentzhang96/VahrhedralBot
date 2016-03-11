@@ -687,6 +687,10 @@ public class DiscordApiClient {
         if (server == null || server == NO_SERVER) {
             return getUserById(userId);
         }
+        if (server.getMembers() == null) {
+            LOGGER.warn("Server {} {} has null member list", server.getId(), server.getName());
+            return NO_USER;
+        }
         for (Member member : server.getMembers()) {
             User user = member.getUser();
             if (user.getId().equals(userId)) {
