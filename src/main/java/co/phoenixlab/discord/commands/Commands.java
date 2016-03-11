@@ -206,12 +206,13 @@ public class Commands {
         } else {
             user = message.getAuthor();
         }
+        DiscordApiClient apiClient = context.getApiClient();
         if (user == NO_USER) {
-            context.getApiClient().sendMessage(loc.localize("commands.general.info.response.not_found"),
+            apiClient.sendMessage(loc.localize("commands.general.info.response.not_found"),
                     message.getChannelId());
         } else {
             String joined;
-            Member member = context.getApiClient().getUserMember(user, context.getServer());
+            Member member = apiClient.getUserMember(user, context.getServer());
             String memberJoinDate = member.getJoinedAt();
             if (member != NO_MEMBER && memberJoinDate != null) {
                 ZonedDateTime joinTime = ZonedDateTime.parse(memberJoinDate, DateTimeFormatter.ISO_DATE_TIME);
@@ -222,15 +223,19 @@ public class Commands {
             }
             String avatar = (user.getAvatar() == null ? loc.localize("commands.general.info.response.no_avatar") :
                     user.getAvatarUrl().toExternalForm());
+            String id = user.getId();
             String response = loc.localize("commands.general.info.response.format",
-                    user.getUsername(), user.getId(),
-                    config.getBlacklist().contains(user.getId()) ?
+                    user.getUsername(), id,
+                    config.getBlacklist().contains(id) ?
                             loc.localize("commands.general.info.response.blacklisted") : "",
-                    config.getAdmins().contains(user.getId()) ?
+                    config.getAdmins().contains(id) ?
                             loc.localize("commands.general.info.response.admin") : "",
                     avatar,
-                    joined);
-            context.getApiClient().sendMessage(response, context.getChannel());
+                    joined,
+                    Optional.ofNullable(apiClient.getUserGames().get(id)).orElse("[misc.nothing]"),
+                    "[" + Optional.ofNullable(apiClient.getUserPresences().get(id)).map(Presence::getDisplayKey).
+                            orElse("misc.unknown") + "]");
+            apiClient.sendMessage(response, context.getChannel());
         }
     }
 

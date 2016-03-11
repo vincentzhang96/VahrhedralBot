@@ -17,7 +17,7 @@ public class ReadyMessage {
     @SerializedName("heartbeat_interval")
     private long heartbeatInterval;
     @SerializedName("guilds")
-    private Server[] servers;
+    private ReadyServer[] servers;
 
     public ReadyMessage() {
     }
@@ -46,7 +46,7 @@ public class ReadyMessage {
         return heartbeatInterval;
     }
 
-    public Server[] getServers() {
+    public ReadyServer[] getServers() {
         return servers;
     }
 

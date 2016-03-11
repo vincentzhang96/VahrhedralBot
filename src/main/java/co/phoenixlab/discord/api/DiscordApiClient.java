@@ -1,5 +1,6 @@
 package co.phoenixlab.discord.api;
 
+import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.LogInEvent;
 import co.phoenixlab.discord.api.event.UserUpdateEvent;
@@ -82,6 +83,9 @@ public class DiscordApiClient {
 
     private final Statistics statistics;
 
+    private final Map<String, Presence> userPresences;
+    private final Map<String, String> userGames;
+
     public DiscordApiClient() {
         statistics = new Statistics();
         sessionId = new AtomicReference<>();
@@ -91,6 +95,8 @@ public class DiscordApiClient {
         serverMap = new HashMap<>();
         privateChannels = new HashMap<>();
         privateChannelsByUser = new HashMap<>();
+        userPresences = new HashMap<>();
+        userGames = new HashMap<>();
         active = new AtomicBoolean();
         eventBus = new EventBus((e, c) -> {
             LOGGER.warn("Error while handling event {} when calling {}",
@@ -213,6 +219,15 @@ public class DiscordApiClient {
         servers.clear();
         Collections.addAll(servers, readyMessage.getServers());
         remapServers();
+        //  Update presences
+        Arrays.stream(readyMessage.getServers()).
+                map(ReadyServer::getPresences).
+                flatMap(Arrays::stream).
+                forEach(p -> {
+                    String id = p.getUser().getId();
+                    userPresences.put(id, p.getStatus());
+                    userGames.put(id, SafeNav.of(p.getGame()).next(Game::getName).orElse("[misc.nothing]"));
+                });
         //  Request to populate the large servers
         servers.stream().filter(Server::isLarge).
                 forEach(this::requestLargerServerUsers);
@@ -840,6 +855,14 @@ public class DiscordApiClient {
 
     public boolean isActive() {
         return active.get();
+    }
+
+    public Map<String, Presence> getUserPresences() {
+        return userPresences;
+    }
+
+    public Map<String, String> getUserGames() {
+        return userGames;
     }
 
     @Subscribe

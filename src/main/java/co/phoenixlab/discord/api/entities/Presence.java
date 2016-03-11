@@ -1,11 +1,30 @@
 package co.phoenixlab.discord.api.entities;
 
+import com.google.gson.annotations.SerializedName;
+
 public enum Presence {
     /** User is online and present */
-    ONLINE,
+    @SerializedName("online")
+    ONLINE("status.online"),
     /** User is online but away */
-    IDLE,
+    @SerializedName("idle")
+    AWAY("status.away"),
     /** User is offline */
-    OFFLINE
+    @SerializedName("offline")
+    OFFLINE("status.offline");
 
+    private final String displayKey;
+
+    Presence(String displayKey) {
+        this.displayKey = displayKey;
+    }
+
+    public String getDisplayKey() {
+        return displayKey;
+    }
+
+    @Override
+    public String toString() {
+        return displayKey;
+    }
 }
