@@ -86,7 +86,7 @@ public class ChatLogger {
                     DATE_TIME_FORMATTER.format(DATE_TIME_PARSER.parse(message.getTimestamp())),
                     message.getAuthor().getId(),
                     message.getAuthor().getUsername(),
-                    resolveMentions(message.getContent()));
+                    resolveMentions(message, server));
         }
         logMessage(logMsg, server, channel);
     }
@@ -108,13 +108,14 @@ public class ChatLogger {
                 new Channel(message.getAuthor().getId(), message.getAuthor().getUsername()));
     }
 
-    private String resolveMentions(String content) {
+    private String resolveMentions(Message message, Server server) {
+        String content = message.getContent();
         Matcher matcher = MENTION_PATTERN.matcher(content);
         Map<String, String> replacements = new HashMap<>();
         while (matcher.find()) {
             String mention = matcher.group();
             String uid = mention.substring(2, mention.length() - 1);
-            User user = apiClient.getUserById(uid);
+            User user = apiClient.getUserById(uid, server);
             String replacement;
             if (user == DiscordApiClient.NO_USER) {
                 replacement = "@UNKNOWN-" + uid;
