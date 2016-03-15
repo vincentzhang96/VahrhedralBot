@@ -113,38 +113,55 @@ public class ModCommands {
         if (args.isEmpty()) {
             return;
         }
-        String[] vals = args.split(" ");
-        User user = findUser(context, vals[0]);
-        String userId = user.getId();
-        if (user == NO_USER) {
-            userId = vals[0];
-        }
+
         try {
-            Map<String, String> headers = new HashMap<>();
-            headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
-            headers.put(HttpHeaders.AUTHORIZATION, apiClient.getToken());
-            Map<String, Object> queryParams = new HashMap<>();
-            queryParams.put("limit", 50);
-            queryParams.put("before", message.getId());
-            HttpResponse<JsonNode> response = Unirest.get(ApiConst.CHANNELS_ENDPOINT +
-                    message.getChannelId() + "/messages").
-                    headers(headers).
-                    queryString(queryParams).
-                    asJson();
-            JSONArray ret = response.getBody().getArray();
-            int limit = 5;
-            if (vals.length >= 2) {
-                limit = Math.max(Math.min(50, Integer.parseInt(vals[1])), 1);
-            }
-            for (int i = 0; i < ret.length() && limit > 0; i++) {
-                JSONObject msg = ret.getJSONObject(i);
-                String mid = msg.getString("id");
-                JSONObject msgUsr = msg.getJSONObject("author");
-                String uid = msgUsr.getString("id");
-                if (userId.equals(uid)) {
-                    apiClient.deleteMessage(context.getChannel().getId(), mid);
-                    limit--;
+            String[] vals = args.split(" ");
+            String userId;
+            int numMsgs;
+            if (vals.length == 2) {
+                User user = findUser(context, vals[0]);
+                userId = user.getId();
+                if (user == NO_USER) {
+                    userId = vals[0];
                 }
+                numMsgs = Math.max(1, Math.min(50, Integer.parseInt(vals[1])));
+            } else if (vals.length == 1) {
+                userId = "";
+                numMsgs = Math.max(1, Math.min(50, Integer.parseInt(vals[0])));
+            } else {
+                userId = "";
+                numMsgs = 10;
+            }
+
+            int limit = numMsgs;
+            String before = message.getId();
+            //  Limit search to 5 pages (250 msgs)
+            for (int k = 0; k < 5 && limit > 0; k++) {
+                Map<String, String> headers = new HashMap<>();
+                headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+                headers.put(HttpHeaders.AUTHORIZATION, apiClient.getToken());
+                Map<String, Object> queryParams = new HashMap<>();
+                queryParams.put("limit", 50);
+                queryParams.put("before", before);
+                HttpResponse<JsonNode> response = Unirest.get(ApiConst.CHANNELS_ENDPOINT +
+                        message.getChannelId() + "/messages").
+                        headers(headers).
+                        queryString(queryParams).
+                        asJson();
+                JSONArray ret = response.getBody().getArray();
+                for (int i = 0; i < ret.length() && limit > 0; i++) {
+                    JSONObject msg = ret.getJSONObject(i);
+                    String mid = msg.getString("id");
+                    JSONObject msgUsr = msg.getJSONObject("author");
+                    String uid = msgUsr.getString("id");
+                    before = mid;
+                    if (userId.equals(uid)) {
+                        apiClient.deleteMessage(context.getChannel().getId(), mid);
+                        Thread.sleep(500);  //  Slow down to not flood discord
+                        limit--;
+                    }
+                }
+                Thread.sleep(500); //  Slow down between page requests
             }
         } catch (Exception e) {
             LOGGER.warn("Unable to get messages", e);
