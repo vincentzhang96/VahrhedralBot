@@ -118,6 +118,10 @@ public class ModCommands {
         if (user == NO_USER) {
             userId = args;
         }
+        if (userId.equals(context.getAuthor().getId())) {
+            apiClient.sendMessage("You cannot ban yourself", context.getChannel());
+            return;
+        }
         Map<String, String> headers = new HashMap<>();
         headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
         headers.put(HttpHeaders.AUTHORIZATION, apiClient.getToken());
