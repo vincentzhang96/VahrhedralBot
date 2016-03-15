@@ -103,9 +103,35 @@ public class ModCommands {
         d.registerAlwaysActiveCommand("commands.mod.settimeoutrole", this::setTimeoutRole);
         d.registerAlwaysActiveCommand("commands.admin.find", this::find);
         d.registerAlwaysActiveCommand("commands.mod.vanish", this::vanish);
+        d.registerAlwaysActiveCommand("commands.mod.ban", this::ban);
 
         EventBus eventBus = bot.getApiClient().getEventBus();
         eventBus.register(new WeakEventSubscriber<>(memberJoinListener, eventBus, MemberChangeEvent.class));
+    }
+
+    private void ban(MessageContext context, String args) {
+        if (args.isEmpty()) {
+            return;
+        }
+        User user = findUser(context, args);
+        String userId = user.getId();
+        if (user == NO_USER) {
+            userId = args;
+        }
+        Map<String, String> headers = new HashMap<>();
+        headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+        headers.put(HttpHeaders.AUTHORIZATION, apiClient.getToken());
+        try {
+            HttpResponse<JsonNode> response = Unirest.put("https://discordapp.com/api/guilds/" +
+                    context.getServer().getId() + "/bans/" + userId).
+                    headers(headers).
+                    asJson();
+            //  Ignore
+            apiClient.sendMessage(loc.localize("commands.mod.ban.response", user.getUsername(), userId),
+                    context.getChannel());
+        } catch (Exception e) {
+            LOGGER.warn("Exception when trying to ban " + userId, e);
+        }
     }
 
     private void vanish(MessageContext context, String args) {

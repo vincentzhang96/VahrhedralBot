@@ -833,7 +833,7 @@ public class DiscordApiClient {
             return member;
         } catch (UnirestException e) {
             statistics.restErrorCount.increment();
-            throw e;
+            return NO_MEMBER;
         }
     }
 
