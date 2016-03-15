@@ -115,9 +115,9 @@ public class ModCommands {
         }
         String[] vals = args.split(" ");
         User user = findUser(context, vals[0]);
+        String userId = user.getId();
         if (user == NO_USER) {
-            LOGGER.warn("Unable to find user: " + vals[0]);
-            return;
+            userId = vals[0];
         }
         try {
             Map<String, String> headers = new HashMap<>();
@@ -141,7 +141,7 @@ public class ModCommands {
                 String mid = msg.getString("id");
                 JSONObject msgUsr = msg.getJSONObject("author");
                 String uid = msgUsr.getString("id");
-                if (user.getId().equals(uid)) {
+                if (userId.equals(uid)) {
                     apiClient.deleteMessage(context.getChannel().getId(), mid);
                     limit--;
                 }
