@@ -135,6 +135,7 @@ public class ModCommands {
 
             int limit = numMsgs;
             String before = message.getId();
+            int sleepTime = 250;
             //  Limit search to 5 pages (250 msgs)
             for (int k = 0; k < 5 && limit > 0; k++) {
                 Map<String, String> headers = new HashMap<>();
@@ -149,19 +150,30 @@ public class ModCommands {
                         queryString(queryParams).
                         asJson();
                 JSONArray ret = response.getBody().getArray();
-                for (int i = 0; i < ret.length() && limit > 0; i++) {
-                    JSONObject msg = ret.getJSONObject(i);
-                    String mid = msg.getString("id");
-                    JSONObject msgUsr = msg.getJSONObject("author");
-                    String uid = msgUsr.getString("id");
-                    before = mid;
-                    if (userId.equals(uid)) {
+                if (userId.isEmpty()) {
+                    for (int i = 0; i < ret.length() && limit > 0; i++) {
+                        JSONObject msg = ret.getJSONObject(i);
+                        String mid = msg.getString("id");
+                        before = mid;
                         apiClient.deleteMessage(context.getChannel().getId(), mid);
-                        Thread.sleep(500);  //  Slow down to not flood discord
+                        Thread.sleep(sleepTime);  //  Slow down to not flood discord
                         limit--;
                     }
+                } else {
+                    for (int i = 0; i < ret.length() && limit > 0; i++) {
+                        JSONObject msg = ret.getJSONObject(i);
+                        String mid = msg.getString("id");
+                        JSONObject msgUsr = msg.getJSONObject("author");
+                        String uid = msgUsr.getString("id");
+                        before = mid;
+                        if (userId.equals(uid)) {
+                            apiClient.deleteMessage(context.getChannel().getId(), mid);
+                            Thread.sleep(sleepTime);  //  Slow down to not flood discord
+                            limit--;
+                        }
+                    }
                 }
-                Thread.sleep(500); //  Slow down between page requests
+                Thread.sleep(sleepTime); //  Slow down between page requests
             }
         } catch (Exception e) {
             LOGGER.warn("Unable to get messages", e);
