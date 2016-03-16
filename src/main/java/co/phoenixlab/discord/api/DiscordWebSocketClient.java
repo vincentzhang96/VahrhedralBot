@@ -116,10 +116,10 @@ public class DiscordWebSocketClient extends WebSocketClient {
                         handleMessageCreate(data);
                         break;
                     case "MESSAGE_UPDATE":
-                        //  Don't care
+                        handleMessageUpdate(data);
                         break;
                     case "MESSAGE_DELETE":
-                        //  Don't care
+                        handleMessageDelete(data);
                         break;
                     case "TYPING_START":
                         //  Don't care
@@ -176,6 +176,31 @@ public class DiscordWebSocketClient extends WebSocketClient {
         } finally {
             statistics.avgMessageHandleTime.add(MILLISECONDS.convert(System.nanoTime() - start, NANOSECONDS));
         }
+    }
+
+    private void handleMessageDelete(JSONObject data) {
+        String messageId = (String) data.get("id");
+        String channelId = (String) data.get("channelId");
+        apiClient.getEventBus().post(new MessageDeleteEvent(messageId, channelId));
+    }
+
+    private void handleMessageUpdate(JSONObject data) {
+        Message message = jsonObjectToObject(data, Message.class);
+        Channel channel = apiClient.getChannelById(message.getChannelId());
+        if (channel == null || channel == NO_CHANNEL || channel.isPrivate()) {
+            LOGGER.debug("[0] '': Edited direct message from {}: {}",
+                    message.getAuthor().getUsername(),
+                    message.getContent());
+            message.setPrivateMessage(true);
+        } else {
+            LOGGER.debug("[{}] '{}': Edited message from {} in #{}: {}",
+                    channel.getParent().getId(), channel.getParent().getName(),
+                    message.getAuthor().getUsername(),
+                    channel.getName(),
+                    message.getContent());
+            message.setPrivateMessage(false);
+        }
+        apiClient.getEventBus().post(new MessageEditEvent(message));
     }
 
     private void handleGuildMembersChunk(JSONObject data) {

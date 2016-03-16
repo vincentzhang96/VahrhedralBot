@@ -7,8 +7,11 @@ import co.phoenixlab.discord.api.entities.Message;
 import co.phoenixlab.discord.api.entities.Server;
 import co.phoenixlab.discord.api.entities.User;
 import co.phoenixlab.discord.api.event.ChannelChangeEvent;
+import co.phoenixlab.discord.api.event.MessageDeleteEvent;
+import co.phoenixlab.discord.api.event.MessageEditEvent;
 import co.phoenixlab.discord.api.event.MessageReceivedEvent;
 import com.google.common.eventbus.Subscribe;
+import com.google.common.primitives.Longs;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -20,6 +23,7 @@ import java.nio.file.StandardOpenOption;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -68,22 +72,25 @@ public class ChatLogger {
         if (channelChangeEvent.getChannelChange() == ChannelChangeEvent.ChannelChange.UPDATED) {
             Channel channel = channelChangeEvent.getChannel();
             logMessage(DATE_TIME_FORMATTER.format(ZonedDateTime.now()) +
-                    " -C- Channel name changed to #" + channel.getName(),
+                            " -C- Channel name changed to #" + channel.getName(),
                     channel.getParent(), channel);
         }
     }
 
+
     public void logMessage(Message message, Server server, Channel channel) {
         String logMsg;
         if (message.getAttachments() != null && message.getAttachments().length > 0) {
-            logMsg = String.format("%s [%20s] \"%s\": %s",
+            logMsg = String.format("%s [%12s] [%20s] \"%s\": %s",
                     DATE_TIME_FORMATTER.format(DATE_TIME_PARSER.parse(message.getTimestamp())),
+                    base64Encode(message.getId()),
                     message.getAuthor().getId(),
                     message.getAuthor().getUsername(),
                     message.getAttachments()[0].toString());
         } else {
-            logMsg = String.format("%s [%20s] \"%s\": \"%s\"",
+            logMsg = String.format("%s [%12s] [%20s] \"%s\": \"%s\"",
                     DATE_TIME_FORMATTER.format(DATE_TIME_PARSER.parse(message.getTimestamp())),
+                    base64Encode(message.getId()),
                     message.getAuthor().getId(),
                     message.getAuthor().getUsername(),
                     resolveMentions(message, server));
@@ -94,13 +101,15 @@ public class ChatLogger {
     public void logPrivateMessage(Message message) {
         String logMsg;
         if (message.getAttachments() != null && message.getAttachments().length > 0) {
-            logMsg = String.format("%s [%20s]: %s",
+            logMsg = String.format("%s [%12s] [%20s]: %s",
                     DATE_TIME_FORMATTER.format(DATE_TIME_PARSER.parse(message.getTimestamp())),
+                    base64Encode(message.getId()),
                     message.getAuthor().getId(),
                     message.getAttachments()[0].toString());
         } else {
-            logMsg = String.format("%s [%20s]: \"%s\"",
+            logMsg = String.format("%s [%12s] [%20s]: \"%s\"",
                     DATE_TIME_FORMATTER.format(DATE_TIME_PARSER.parse(message.getTimestamp())),
+                    base64Encode(message.getId()),
                     message.getAuthor().getId(),
                     message.getContent());
         }
@@ -130,12 +139,17 @@ public class ChatLogger {
         return content;
     }
 
+
     private void logMessage(String message, Server server, Channel channel) {
+        logMessage(message, server.getId(), channel.getId(), channel.getName());
+    }
+
+    private void logMessage(String message, String serverId, String channelId, String channelName) {
         if (logFailure) {
             return;
         }
-        String srv = server.getId();
-        String ch = channel.getId();
+        String srv = serverId;
+        String ch = channelId;
         Path serverDir = LOG_PATH.resolve(srv);
         Path channelLog = serverDir.resolve(ch + ".log");
         boolean newFile = false;
@@ -157,7 +171,7 @@ public class ChatLogger {
         try (BufferedWriter writer = Files.newBufferedWriter(channelLog, StandardCharsets.UTF_8,
                 StandardOpenOption.APPEND)) {
             if (newFile) {
-                writer.write("-C- Channel #" + channel.getName() + "\n");
+                writer.write("-C- Channel #" + channelName + "\n");
             }
             writer.write(message);
             writer.write("\n");
@@ -169,4 +183,82 @@ public class ChatLogger {
         }
     }
 
+    public static String base64Encode(String id) {
+        long l = Long.parseLong(id);
+        return base64Encode(l);
+    }
+
+    public static String base64Encode(long id) {
+        return Base64.getUrlEncoder().encodeToString(Longs.toByteArray(id));
+    }
+
+    @Subscribe
+    public void logMessageDelete(MessageDeleteEvent event) {
+        Channel channel = apiClient.getChannelById(event.getChannelId());
+        logMessage(String.format("%s -C- Message [%12s] deleted",
+                DATE_TIME_FORMATTER.format(ZonedDateTime.now()),
+                base64Encode(event.getMessageId())),
+                channel.getParent(), channel);
+    }
+
+    @Subscribe
+    public void logMessageEdit(MessageEditEvent event) {
+        Message message = event.getMessage();
+        if (message.isPrivateMessage()) {
+            logPrivateMessageEdit(message);
+        } else {
+            Channel parentCh = apiClient.getChannelById(message.getChannelId());
+            if (parentCh == null) {
+                parentCh = DiscordApiClient.NO_CHANNEL;
+            }
+            Server parentSrv = parentCh.getParent();
+            if (parentSrv == null) {
+                parentSrv = DiscordApiClient.NO_SERVER;
+            }
+            logMessageEdit(message, parentSrv, parentCh);
+        }
+    }
+
+    public void logMessageEdit(Message message, Server server, Channel channel) {
+        String logMsg;
+        if (message.getAttachments() != null && message.getAttachments().length > 0) {
+            logMsg = String.format("%s -C- Edited: %s [%12s] [%20s]: \"%s\": %s",
+                    DATE_TIME_FORMATTER.format(ZonedDateTime.now()),
+                    DATE_TIME_FORMATTER.format(DATE_TIME_PARSER.parse(message.getTimestamp())),
+                    base64Encode(message.getId()),
+                    message.getAuthor().getId(),
+                    message.getAuthor().getUsername(),
+                    message.getAttachments()[0].toString());
+        } else {
+            logMsg = String.format("%s -C- Edited: %s [%12s] [%20s] \"%s\": \"%s\"",
+                    DATE_TIME_FORMATTER.format(ZonedDateTime.now()),
+                    DATE_TIME_FORMATTER.format(DATE_TIME_PARSER.parse(message.getTimestamp())),
+                    base64Encode(message.getId()),
+                    message.getAuthor().getId(),
+                    message.getAuthor().getUsername(),
+                    resolveMentions(message, server));
+        }
+        logMessage(logMsg, server, channel);
+    }
+
+    public void logPrivateMessageEdit(Message message) {
+        String logMsg;
+        if (message.getAttachments() != null && message.getAttachments().length > 0) {
+            logMsg = String.format("%s -C- Edited: %s [%12s] [%20s]: %s",
+                    DATE_TIME_FORMATTER.format(ZonedDateTime.now()),
+                    DATE_TIME_FORMATTER.format(DATE_TIME_PARSER.parse(message.getTimestamp())),
+                    base64Encode(message.getId()),
+                    message.getAuthor().getId(),
+                    message.getAttachments()[0].toString());
+        } else {
+            logMsg = String.format("%s -C- Edited: %s [%12s] [%20s]: \"%s\"",
+                    DATE_TIME_FORMATTER.format(ZonedDateTime.now()),
+                    DATE_TIME_FORMATTER.format(DATE_TIME_PARSER.parse(message.getTimestamp())),
+                    base64Encode(message.getId()),
+                    message.getAuthor().getId(),
+                    message.getContent());
+        }
+        logMessage(logMsg, PRIVATE_MESSAGES,
+                new Channel(message.getAuthor().getId(), message.getAuthor().getUsername()));
+    }
 }
