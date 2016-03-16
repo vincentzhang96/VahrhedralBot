@@ -185,19 +185,12 @@ public class DiscordWebSocketClient extends WebSocketClient {
     }
 
     private void handleMessageUpdate(JSONObject data) {
+        LOGGER.debug("Message edited: {}", data.toJSONString());
         Message message = jsonObjectToObject(data, Message.class);
         Channel channel = apiClient.getChannelById(message.getChannelId());
         if (channel == null || channel == NO_CHANNEL || channel.isPrivate()) {
-            LOGGER.debug("[0] '': Edited direct message from {}: {}",
-                    message.getAuthor().getUsername(),
-                    message.getContent());
             message.setPrivateMessage(true);
         } else {
-            LOGGER.debug("[{}] '{}': Edited message from {} in #{}: {}",
-                    channel.getParent().getId(), channel.getParent().getName(),
-                    message.getAuthor().getUsername(),
-                    channel.getName(),
-                    message.getContent());
             message.setPrivateMessage(false);
         }
         apiClient.getEventBus().post(new MessageEditEvent(message));
