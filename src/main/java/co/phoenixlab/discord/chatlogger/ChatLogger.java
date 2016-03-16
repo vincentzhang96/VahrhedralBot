@@ -63,7 +63,7 @@ public class ChatLogger {
             if (parentSrv == null) {
                 parentSrv = DiscordApiClient.NO_SERVER;
             }
-            logMessage(message, parentSrv, parentCh);
+            log(message, parentSrv, parentCh);
         }
     }
 
@@ -71,14 +71,14 @@ public class ChatLogger {
     public void onChannelChanged(ChannelChangeEvent channelChangeEvent) {
         if (channelChangeEvent.getChannelChange() == ChannelChangeEvent.ChannelChange.UPDATED) {
             Channel channel = channelChangeEvent.getChannel();
-            logMessage(DATE_TIME_FORMATTER.format(ZonedDateTime.now()) +
+            log(DATE_TIME_FORMATTER.format(ZonedDateTime.now()) +
                             " -C- Channel name changed to #" + channel.getName(),
                     channel.getParent(), channel);
         }
     }
 
 
-    public void logMessage(Message message, Server server, Channel channel) {
+    public void log(Message message, Server server, Channel channel) {
         String logMsg;
         if (message.getAttachments() != null && message.getAttachments().length > 0) {
             logMsg = String.format("%s [%12s] [%20s] \"%s\": \"%s\", %s",
@@ -96,7 +96,7 @@ public class ChatLogger {
                     message.getAuthor().getUsername(),
                     resolveMentions(message, server));
         }
-        logMessage(logMsg, server, channel);
+        log(logMsg, server, channel);
     }
 
     public void logPrivateMessage(Message message) {
@@ -115,7 +115,7 @@ public class ChatLogger {
                     message.getAuthor().getId(),
                     message.getContent());
         }
-        logMessage(logMsg, PRIVATE_MESSAGES,
+        log(logMsg, PRIVATE_MESSAGES,
                 new Channel(message.getAuthor().getId(), message.getAuthor().getUsername()));
     }
 
@@ -145,11 +145,11 @@ public class ChatLogger {
     }
 
 
-    private void logMessage(String message, Server server, Channel channel) {
-        logMessage(message, server.getId(), channel.getId(), channel.getName());
+    private void log(String message, Server server, Channel channel) {
+        log(message, server.getId(), channel.getId(), channel.getName());
     }
 
-    private void logMessage(String message, String serverId, String channelId, String channelName) {
+    private void log(String message, String serverId, String channelId, String channelName) {
         if (logFailure) {
             return;
         }
@@ -200,7 +200,8 @@ public class ChatLogger {
     @Subscribe
     public void logMessageDel(MessageDeleteEvent event) {
         Channel channel = apiClient.getChannelById(event.getChannelId());
-        logMessage(String.format("%s -C- Message [%12s] deleted",
+        VahrhedralBot.LOGGER.info("Test {} {}", channel.getId(), event.getChannelId());
+        log(String.format("%s -C- Message [%12s] deleted",
                 DATE_TIME_FORMATTER.format(ZonedDateTime.now()),
                 base64Encode(event.getMessageId())),
                 channel.getParent(), channel);
@@ -235,7 +236,7 @@ public class ChatLogger {
                     base64Encode(message.getId()),
                     resolveMentions(message, server));
         }
-        logMessage(logMsg, server, channel);
+        log(logMsg, server, channel);
     }
 
     public void logPrivateMessageEdit(Message message) {
@@ -254,7 +255,7 @@ public class ChatLogger {
                     message.getAuthor().getId(),
                     message.getContent());
         }
-        logMessage(logMsg, PRIVATE_MESSAGES,
+        log(logMsg, PRIVATE_MESSAGES,
                 new Channel(message.getAuthor().getId(), message.getAuthor().getUsername()));
     }
 }
