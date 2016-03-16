@@ -75,6 +75,9 @@ public class EventListener {
 
     @Subscribe
     public void onServerJoinLeave(ServerJoinLeaveEvent event) {
+        if (!bot.getMainCommandDispatcher().active().get()) {
+            return;
+        }
         if (event.isJoin()) {
             Server server = event.getServer();
             //  Default channel has same ID as server
@@ -89,6 +92,9 @@ public class EventListener {
 
     @Subscribe
     public void onMemberChangeEvent(MemberChangeEvent event) {
+        if (!bot.getMainCommandDispatcher().active().get()) {
+            return;
+        }
         Server server = event.getServer();
         //  Default channel has same ID as server
         Channel channel = bot.getApiClient().getChannelById(server.getId());
