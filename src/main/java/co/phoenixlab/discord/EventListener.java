@@ -22,9 +22,12 @@ public class EventListener {
 
     private Map<String, Consumer<Message>> messageListeners;
 
+    public Map<String, Consumer<MemberChangeEvent>> memberChangeEventListener;
+
     public EventListener(VahrhedralBot bot) {
         this.bot = bot;
         messageListeners = new HashMap<>();
+        memberChangeEventListener = new HashMap<>();
         messageListeners.put("mention-bot", message -> {
             User me = bot.getApiClient().getClientUser();
             for (User user : message.getMentions()) {
@@ -94,6 +97,11 @@ public class EventListener {
                 event.getMember().getUser().getUsername(),
                 event.getMember().getUser().getId()),
                 channel.getId());
+        memberChangeEventListener.values().forEach(c -> c.accept(event));
+    }
+
+    public boolean isJoin(MemberChangeEvent event) {
+        return event.getMemberChange() == MemberChangeEvent.MemberChange.ADDED;
     }
 
     public void registerMessageListner(String name, Consumer<Message> listener) {

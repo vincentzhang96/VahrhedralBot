@@ -122,17 +122,23 @@ public class ModCommands {
             apiClient.sendMessage("You cannot ban yourself", context.getChannel());
             return;
         }
+        banImpl(userId, user.getUsername(), context.getServer().getId(), context.getChannel().getId());
+    }
+
+    public void banImpl(String userId, String username, String serverId, String parent) {
         Map<String, String> headers = new HashMap<>();
         headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
         headers.put(HttpHeaders.AUTHORIZATION, apiClient.getToken());
         try {
             HttpResponse<JsonNode> response = Unirest.put("https://discordapp.com/api/guilds/" +
-                    context.getServer().getId() + "/bans/" + userId).
+                    serverId + "/bans/" + userId).
                     headers(headers).
                     asJson();
             //  Ignore
-            apiClient.sendMessage(loc.localize("commands.mod.ban.response", user.getUsername(), userId),
-                    context.getChannel());
+            if (parent != null) {
+                apiClient.sendMessage(loc.localize("commands.mod.ban.response", username, userId),
+                        parent);
+            }
         } catch (Exception e) {
             LOGGER.warn("Exception when trying to ban " + userId, e);
         }
