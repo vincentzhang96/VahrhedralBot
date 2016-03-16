@@ -24,10 +24,13 @@ public class EventListener {
 
     public Map<String, Consumer<MemberChangeEvent>> memberChangeEventListener;
 
+    public Map<String, String> joinMessageRedirect;
+
     public EventListener(VahrhedralBot bot) {
         this.bot = bot;
         messageListeners = new HashMap<>();
         memberChangeEventListener = new HashMap<>();
+        joinMessageRedirect = new HashMap<>();
         messageListeners.put("mention-bot", message -> {
             User me = bot.getApiClient().getClientUser();
             for (User user : message.getMentions()) {
@@ -93,10 +96,14 @@ public class EventListener {
         } else {
             return;
         }
+        String cid = channel.getId();
+        if (joinMessageRedirect.containsKey(server.getId())) {
+            cid = joinMessageRedirect.get(server.getId());
+        }
         bot.getApiClient().sendMessage(bot.getLocalizer().localize(key,
                 event.getMember().getUser().getUsername(),
                 event.getMember().getUser().getId()),
-                channel.getId());
+                cid);
         memberChangeEventListener.values().forEach(c -> c.accept(event));
     }
 
