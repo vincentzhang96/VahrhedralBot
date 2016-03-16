@@ -81,11 +81,12 @@ public class ChatLogger {
     public void logMessage(Message message, Server server, Channel channel) {
         String logMsg;
         if (message.getAttachments() != null && message.getAttachments().length > 0) {
-            logMsg = String.format("%s [%12s] [%20s] \"%s\": %s",
+            logMsg = String.format("%s [%12s] [%20s] \"%s\": \"%s\", %s",
                     DATE_TIME_FORMATTER.format(DATE_TIME_PARSER.parse(message.getTimestamp())),
                     base64Encode(message.getId()),
                     message.getAuthor().getId(),
                     message.getAuthor().getUsername(),
+                    resolveMentions(message, server),
                     message.getAttachments()[0].toString());
         } else {
             logMsg = String.format("%s [%12s] [%20s] \"%s\": \"%s\"",
@@ -101,10 +102,11 @@ public class ChatLogger {
     public void logPrivateMessage(Message message) {
         String logMsg;
         if (message.getAttachments() != null && message.getAttachments().length > 0) {
-            logMsg = String.format("%s [%12s] [%20s]: %s",
+            logMsg = String.format("%s [%12s] [%20s]: \"%s\", %s",
                     DATE_TIME_FORMATTER.format(DATE_TIME_PARSER.parse(message.getTimestamp())),
                     base64Encode(message.getId()),
                     message.getAuthor().getId(),
+                    message.getContent(),
                     message.getAttachments()[0].toString());
         } else {
             logMsg = String.format("%s [%12s] [%20s]: \"%s\"",
@@ -222,20 +224,12 @@ public class ChatLogger {
     public void logMessageEdit(Message message, Server server, Channel channel) {
         String logMsg;
         if (message.getAttachments() != null && message.getAttachments().length > 0) {
-            logMsg = String.format("%s -C- Edited: %s [%12s] [%20s]: \"%s\": %s",
-                    DATE_TIME_FORMATTER.format(ZonedDateTime.now()),
-                    DATE_TIME_FORMATTER.format(DATE_TIME_PARSER.parse(message.getTimestamp())),
-                    base64Encode(message.getId()),
-                    message.getAuthor().getId(),
-                    message.getAuthor().getUsername(),
-                    message.getAttachments()[0].toString());
+            //  Disallowed
+            throw new UnsupportedOperationException("Cannot log edits on embed messages");
         } else {
-            logMsg = String.format("%s -C- Edited: %s [%12s] [%20s] \"%s\": \"%s\"",
+            logMsg = String.format("%s -C- Edited: [%12s]: \"%s\"",
                     DATE_TIME_FORMATTER.format(ZonedDateTime.now()),
-                    DATE_TIME_FORMATTER.format(DATE_TIME_PARSER.parse(message.getTimestamp())),
                     base64Encode(message.getId()),
-                    message.getAuthor().getId(),
-                    message.getAuthor().getUsername(),
                     resolveMentions(message, server));
         }
         logMessage(logMsg, server, channel);
@@ -244,11 +238,10 @@ public class ChatLogger {
     public void logPrivateMessageEdit(Message message) {
         String logMsg;
         if (message.getAttachments() != null && message.getAttachments().length > 0) {
-            logMsg = String.format("%s -C- Edited: %s [%12s] [%20s]: %s",
+            logMsg = String.format("%s -C- Edited: [%12s]: \"%s\", %s",
                     DATE_TIME_FORMATTER.format(ZonedDateTime.now()),
-                    DATE_TIME_FORMATTER.format(DATE_TIME_PARSER.parse(message.getTimestamp())),
                     base64Encode(message.getId()),
-                    message.getAuthor().getId(),
+                    message.getContent(),
                     message.getAttachments()[0].toString());
         } else {
             logMsg = String.format("%s -C- Edited: %s [%12s] [%20s]: \"%s\"",
