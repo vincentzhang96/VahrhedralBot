@@ -121,6 +121,9 @@ public class ChatLogger {
 
     private String resolveMentions(Message message, Server server) {
         String content = message.getContent();
+        if (content == null) {
+            return "<NULL MESSAGE??>";
+        }
         Matcher matcher = MENTION_PATTERN.matcher(content);
         Map<String, String> replacements = new HashMap<>();
         while (matcher.find()) {
@@ -195,7 +198,7 @@ public class ChatLogger {
     }
 
     @Subscribe
-    public void logMessageDelete(MessageDeleteEvent event) {
+    public void logMessageDel(MessageDeleteEvent event) {
         Channel channel = apiClient.getChannelById(event.getChannelId());
         logMessage(String.format("%s -C- Message [%12s] deleted",
                 DATE_TIME_FORMATTER.format(ZonedDateTime.now()),

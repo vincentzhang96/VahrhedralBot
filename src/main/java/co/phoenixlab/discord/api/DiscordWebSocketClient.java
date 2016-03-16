@@ -1,7 +1,6 @@
 package co.phoenixlab.discord.api;
 
 import co.phoenixlab.common.lang.SafeNav;
-import co.phoenixlab.discord.VahrhedralBot;
 import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.entities.voice.VoiceServerUpdate;
 import co.phoenixlab.discord.api.entities.voice.VoiceStateUpdate;
@@ -180,7 +179,6 @@ public class DiscordWebSocketClient extends WebSocketClient {
     }
 
     private void handleMessageDelete(JSONObject data) {
-        VahrhedralBot.LOGGER.info("test delete {}", data.toJSONString());
         String messageId = (String) data.get("id");
         String channelId = (String) data.get("channelId");
         LOGGER.debug("Message {} deleted from {}", messageId, channelId);
