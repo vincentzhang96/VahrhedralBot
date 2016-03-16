@@ -11,9 +11,7 @@ import co.phoenixlab.discord.api.event.MessageReceivedEvent;
 import co.phoenixlab.discord.api.event.ServerJoinLeaveEvent;
 import com.google.common.eventbus.Subscribe;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class EventListener {
@@ -26,11 +24,14 @@ public class EventListener {
 
     public Map<String, String> joinMessageRedirect;
 
+    public Set<String> ignoredServers;
+
     public EventListener(VahrhedralBot bot) {
         this.bot = bot;
         messageListeners = new HashMap<>();
         memberChangeEventListener = new HashMap<>();
         joinMessageRedirect = new HashMap<>();
+        ignoredServers = new HashSet<>();
         messageListeners.put("mention-bot", message -> {
             User me = bot.getApiClient().getClientUser();
             for (User user : message.getMentions()) {
@@ -49,6 +50,12 @@ public class EventListener {
             return;
         }
 
+        Channel channel = bot.getApiClient().getChannelById(message.getChannelId());
+        if (channel != DiscordApiClient.NO_CHANNEL) {
+            if (ignoredServers.contains(channel.getParent().getId())) {
+                return;
+            }
+        }
         if (message.getContent().startsWith(bot.getConfig().getCommandPrefix())) {
             bot.getMainCommandDispatcher().handleCommand(message);
             return;
