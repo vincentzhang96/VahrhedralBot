@@ -200,7 +200,6 @@ public class ChatLogger {
     @Subscribe
     public void logMessageDel(MessageDeleteEvent event) {
         Channel channel = apiClient.getChannelById(event.getChannelId());
-        VahrhedralBot.LOGGER.info("Test {} {}", channel.getId(), event.getChannelId());
         log(String.format("%s -C- Message [%12s] deleted",
                 DATE_TIME_FORMATTER.format(ZonedDateTime.now()),
                 base64Encode(event.getMessageId())),

@@ -180,7 +180,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
 
     private void handleMessageDelete(JSONObject data) {
         String messageId = (String) data.get("id");
-        String channelId = (String) data.get("channelId");
+        String channelId = (String) data.get("channel_id");
         LOGGER.debug("Message {} deleted from {}", messageId, channelId);
         apiClient.getEventBus().post(new MessageDeleteEvent(messageId, channelId));
     }
