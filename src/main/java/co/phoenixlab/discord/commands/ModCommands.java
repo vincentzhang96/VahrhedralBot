@@ -131,7 +131,7 @@ public class ModCommands {
         headers.put(HttpHeaders.AUTHORIZATION, apiClient.getToken());
         try {
             HttpResponse<JsonNode> response = Unirest.put("https://discordapp.com/api/guilds/" +
-                    serverId + "/bans/" + userId).
+                    serverId + "/bans/" + userId + "?delete-message-days=1").
                     headers(headers).
                     asJson();
             //  Ignore
