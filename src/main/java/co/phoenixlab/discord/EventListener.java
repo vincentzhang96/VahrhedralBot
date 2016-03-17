@@ -51,7 +51,7 @@ public class EventListener {
         }
 
         Channel channel = bot.getApiClient().getChannelById(message.getChannelId());
-        if (channel != DiscordApiClient.NO_CHANNEL) {
+        if (channel != DiscordApiClient.NO_CHANNEL && channel.getParent() != null) {
             if (ignoredServers.contains(channel.getParent().getId())) {
                 return;
             }
