@@ -113,9 +113,11 @@ public class EventListener {
         if (joinMessageRedirect.containsKey(server.getId())) {
             cid = joinMessageRedirect.get(server.getId());
         }
+        User user = event.getMember().getUser();
         bot.getApiClient().sendMessage(bot.getLocalizer().localize(key,
-                event.getMember().getUser().getUsername(),
-                event.getMember().getUser().getId()),
+                user.getUsername(),
+                user.getId(),
+                user.getDiscriminator()),
                 cid);
         memberChangeEventListener.values().forEach(c -> c.accept(event));
     }
