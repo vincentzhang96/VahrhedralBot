@@ -234,7 +234,8 @@ public class Commands {
                     joined,
                     Optional.ofNullable(apiClient.getUserGames().get(id)).orElse("[misc.nothing]"),
                     "[" + Optional.ofNullable(apiClient.getUserPresences().get(id)).map(Presence::getDisplayKey).
-                            orElse("misc.unknown") + "]");
+                            orElse("misc.unknown") + "]",
+                    user.getDiscriminator());
             apiClient.sendMessage(response, context.getChannel());
         }
     }
