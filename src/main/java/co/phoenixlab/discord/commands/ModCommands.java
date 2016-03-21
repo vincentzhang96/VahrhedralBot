@@ -104,9 +104,31 @@ public class ModCommands {
         d.registerAlwaysActiveCommand("commands.admin.find", this::find);
         d.registerAlwaysActiveCommand("commands.mod.vanish", this::vanish);
         d.registerAlwaysActiveCommand("commands.mod.ban", this::ban);
+        d.registerAlwaysActiveCommand("commands.mod.jl", this::joinLeave);
 
         EventBus eventBus = bot.getApiClient().getEventBus();
         eventBus.register(new WeakEventSubscriber<>(memberJoinListener, eventBus, MemberChangeEvent.class));
+    }
+
+    private void joinLeave(MessageContext context, String args) {
+        if (args.isEmpty()) {
+            return;
+        }
+        args = args.toLowerCase();
+        String cid = args;
+        if ("default".equals(args)) {
+            cid = context.getServer().getId();
+        } else if ("this".equals(args)) {
+            cid = context.getChannel().getId();
+        }
+        Channel channel = apiClient.getChannelById(cid, context.getServer());
+        if (channel != NO_CHANNEL) {
+            bot.getEventListener().joinMessageRedirect.put(context.getServer().getId(), cid);
+            apiClient.sendMessage(loc.localize("commands.mod.jl.response", channel.getName(), channel.getId()),
+                    context.getChannel());
+        } else {
+            apiClient.sendMessage(loc.localize("commands.mod.jl.response.invalid", context.getChannel());
+        }
     }
 
     private void ban(MessageContext context, String args) {
