@@ -194,7 +194,7 @@ public class ChatLogger {
     }
 
     public static String base64Encode(long id) {
-        return Base64.getUrlEncoder().encodeToString(Longs.toByteArray(id));
+        return Base64.getUrlEncoder().encodeToString(Longs.toByteArray(id)).replace("=", "");
     }
 
     @Subscribe
