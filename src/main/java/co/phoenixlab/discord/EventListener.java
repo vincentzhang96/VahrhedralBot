@@ -1,16 +1,16 @@
 package co.phoenixlab.discord;
 
 import co.phoenixlab.discord.api.DiscordApiClient;
-import co.phoenixlab.discord.api.entities.Channel;
-import co.phoenixlab.discord.api.entities.Message;
-import co.phoenixlab.discord.api.entities.Server;
-import co.phoenixlab.discord.api.entities.User;
+import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.LogInEvent;
 import co.phoenixlab.discord.api.event.MemberChangeEvent;
 import co.phoenixlab.discord.api.event.MessageReceivedEvent;
 import co.phoenixlab.discord.api.event.ServerJoinLeaveEvent;
+import co.phoenixlab.discord.commands.Commands;
 import com.google.common.eventbus.Subscribe;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -25,6 +25,8 @@ public class EventListener {
     public Map<String, String> joinMessageRedirect;
 
     public Set<String> ignoredServers;
+
+    public int excessiveMentionThreshold;
 
     public EventListener(VahrhedralBot bot) {
         this.bot = bot;
@@ -41,6 +43,8 @@ public class EventListener {
                 }
             }
         });
+        excessiveMentionThreshold = 5;
+        messageListeners.put("mention-autotimeout", this::handleExcessiveMentions);
     }
 
     @Subscribe
@@ -71,6 +75,43 @@ public class EventListener {
         bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.mention.response",
                 message.getAuthor().getUsername()),
                 message.getChannelId(), new String[]{otherId});
+    }
+
+    private void handleExcessiveMentions(Message message) {
+        if (!bot.getMainCommandDispatcher().active().get()) {
+            return;
+        }
+        User author = message.getAuthor();
+        if (bot.getConfig().isAdmin(author.getId())) {
+            return;
+        }
+        Channel channel = bot.getApiClient().getChannelById(message.getChannelId());
+        Server server;
+        if (channel != DiscordApiClient.NO_CHANNEL && channel.getParent() != null) {
+            server = channel.getParent();
+        } else {
+            return;
+        }
+        if (!server.getId().equals("106293726271246336")) {
+            return;
+        }
+        Member member = bot.getApiClient().getUserMember(author, server);
+        if (member == DiscordApiClient.NO_MEMBER) {
+            return;
+        }
+        if (Duration.between(ZonedDateTime.
+                from(Commands.DATE_TIME_FORMATTER.parse(member.getJoinedAt())),
+                ZonedDateTime.now()).abs().compareTo(Duration.ofDays(3)) > 0) {
+            return;
+        }
+        Set<User> unique = new HashSet<>();
+        Collections.addAll(unique, message.getMentions());
+        if (unique.size() > excessiveMentionThreshold) {
+            bot.getCommands().getModCommands().applyTimeout(bot.getApiClient().getClientUser(), channel,
+                    server, author, Duration.ofHours(1));
+            bot.getApiClient().sendMessage("You have been timed out for excessive mentions. " +
+                    "Please contact a moderator if this is in error and you are in fact not a spambot", channel);
+        }
     }
 
     @Subscribe

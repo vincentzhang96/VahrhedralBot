@@ -266,44 +266,8 @@ public class ModCommands {
                     }
 
                     Duration duration = parseDuration(split[1]);
-                    if (duration != null && !duration.isNegative() && !duration.isZero()) {
-                        ServerTimeout timeout = new ServerTimeout(duration,
-                                Instant.now(), user.getId(), serverId,
-                                user.getUsername(), context.getAuthor().getId());
-                        TempServerConfig serverConfig = serverStorage.get(serverId);
-                        if (serverConfig == null) {
-                            serverConfig = new TempServerConfig(serverId);
-                            serverStorage.put(serverId, serverConfig);
-                        }
-                        ServerTimeoutStorage storage = serverConfig.getServerTimeouts();
-                        if (storage == null) {
-                            storage = new ServerTimeoutStorage();
-                            serverConfig.setServerTimeouts(storage);
-                        }
-                        if (applyTimeoutRole(user, server, channel)) {
-                            storage.getTimeouts().put(user.getId(), timeout);
-                            ScheduledFuture future = timeoutService.schedule(() ->
-                                    onTimeoutExpire(theUser, server), duration.getSeconds(), TimeUnit.SECONDS);
-                            timeout.setTimerFuture(future);
-                            saveServerConfig(serverConfig);
-                            String durationStr = formatDuration(duration);
-                            String instantStr = formatInstant(timeout.getEndTime());
-                            String msg = loc.localize("commands.mod.timeout.response",
-                                    user.getUsername(), user.getId(),
-                                    durationStr,
-                                    instantStr);
-                            apiClient.sendMessage(msg, channel);
-                            LOGGER.info("[{}] '{}': Timing out {} ({}) for {} (until {}), issued by {} ({})",
-                                    serverId, server.getName(),
-                                    user.getUsername(), user.getId(),
-                                    durationStr, instantStr,
-                                    context.getAuthor().getUsername(), context.getAuthor().getId());
-
-                        }
-                        //  No else with error - applyTimeoutRole does that for us
+                    if (applyTimeout(context.getAuthor(), channel, server, user, duration)) {
                         return;
-                    } else {
-                        LOGGER.warn("Invalid duration format: '{}'", args);
                     }
                 } else if (split.length == 1) {
                     if (isUserTimedOut(user, server)) {
@@ -336,6 +300,50 @@ public class ModCommands {
         }
         apiClient.sendMessage(loc.localize("commands.mod.timeout.response.invalid"),
                 channel);
+    }
+
+    public boolean applyTimeout(User issuingUser, Channel noticeChannel, Server server, User user, Duration duration) {
+        String serverId = server.getId();
+        if (duration != null && !duration.isNegative() && !duration.isZero()) {
+            ServerTimeout timeout = new ServerTimeout(duration,
+                    Instant.now(), user.getId(), serverId,
+                    user.getUsername(), issuingUser.getId());
+            TempServerConfig serverConfig = serverStorage.get(serverId);
+            if (serverConfig == null) {
+                serverConfig = new TempServerConfig(serverId);
+                serverStorage.put(serverId, serverConfig);
+            }
+            ServerTimeoutStorage storage = serverConfig.getServerTimeouts();
+            if (storage == null) {
+                storage = new ServerTimeoutStorage();
+                serverConfig.setServerTimeouts(storage);
+            }
+            if (applyTimeoutRole(user, server, noticeChannel)) {
+                storage.getTimeouts().put(user.getId(), timeout);
+                ScheduledFuture future = timeoutService.schedule(() ->
+                        onTimeoutExpire(user, server), duration.getSeconds(), TimeUnit.SECONDS);
+                timeout.setTimerFuture(future);
+                saveServerConfig(serverConfig);
+                String durationStr = formatDuration(duration);
+                String instantStr = formatInstant(timeout.getEndTime());
+                String msg = loc.localize("commands.mod.timeout.response",
+                        user.getUsername(), user.getId(),
+                        durationStr,
+                        instantStr);
+                apiClient.sendMessage(msg, noticeChannel);
+                LOGGER.info("[{}] '{}': Timing out {} ({}) for {} (until {}), issued by {} ({})",
+                        serverId, server.getName(),
+                        user.getUsername(), user.getId(),
+                        durationStr, instantStr,
+                        issuingUser.getUsername(), issuingUser.getId());
+
+            }
+            //  No else with error - applyTimeoutRole does that for us
+            return true;
+        } else {
+            LOGGER.warn("Invalid duration format");
+        }
+        return false;
     }
 
     private Duration parseDuration(String s) {
