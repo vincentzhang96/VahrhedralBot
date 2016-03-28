@@ -6,11 +6,9 @@ import co.phoenixlab.discord.api.event.LogInEvent;
 import co.phoenixlab.discord.api.event.MemberChangeEvent;
 import co.phoenixlab.discord.api.event.MessageReceivedEvent;
 import co.phoenixlab.discord.api.event.ServerJoinLeaveEvent;
-import co.phoenixlab.discord.commands.Commands;
 import com.google.common.eventbus.Subscribe;
 
 import java.time.Duration;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -99,11 +97,11 @@ public class EventListener {
         if (member == DiscordApiClient.NO_MEMBER) {
             return;
         }
-        if (Duration.between(ZonedDateTime.
-                from(Commands.DATE_TIME_FORMATTER.parse(member.getJoinedAt())),
-                ZonedDateTime.now()).abs().compareTo(Duration.ofDays(3)) > 0) {
-            return;
-        }
+//        if (Duration.between(ZonedDateTime.
+//                from(Commands.DATE_TIME_FORMATTER.parse(member.getJoinedAt())),
+//                ZonedDateTime.now()).abs().compareTo(Duration.ofDays(3)) > 0) {
+//            return;
+//        }
         Set<User> unique = new HashSet<>();
         Collections.addAll(unique, message.getMentions());
         if (unique.size() > excessiveMentionThreshold) {
