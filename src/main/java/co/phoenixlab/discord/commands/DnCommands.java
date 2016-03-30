@@ -110,7 +110,7 @@ public class DnCommands {
         String[] split = args.split(" ");
         if (split.length >= 1) {
             if ("bdo".equalsIgnoreCase(split[0])) {
-                apiClient.sendMessage("0% <#158252528885039104>", context.getChannel());
+                apiClient.sendMessage("**Level -1 Final Damage:** `-1.0%` <#158252528885039104>", context.getChannel());
                 return;
             }
             int fd = (int) parseStat(split[0]);
