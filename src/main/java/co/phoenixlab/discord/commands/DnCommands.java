@@ -109,6 +109,10 @@ public class DnCommands {
         args = args.replace(",", "");
         String[] split = args.split(" ");
         if (split.length >= 1) {
+            if ("bdo".equalsIgnoreCase(split[0])) {
+                apiClient.sendMessage("0% <#158252528885039104>", context.getChannel());
+                return;
+            }
             int fd = (int) parseStat(split[0]);
             int level = 80;
             if (split.length >= 2) {
