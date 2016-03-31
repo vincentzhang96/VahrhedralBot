@@ -37,6 +37,8 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.stream.Collectors;
 
 import static co.phoenixlab.discord.api.DiscordApiClient.*;
 import static co.phoenixlab.discord.api.entities.Permission.CHAT_MANAGE_MESSAGES;
@@ -88,6 +90,7 @@ public class Commands {
         d.registerCommand("commands.general.dn", this::dnCommands);
         d.registerCommand("commands.general.insult", this::insult);
         d.registerCommand("commands.general.minific", this::minific);
+        d.registerCommand("commands.general.gamepop", this::gamePop);
     }
 
     public AdminCommands getAdminCommands() {
@@ -238,6 +241,72 @@ public class Commands {
                     user.getDiscriminator());
             apiClient.sendMessage(response, context.getChannel());
         }
+    }
+
+    private void gamePop(MessageContext context, String args) {
+        DiscordApiClient api = context.getApiClient();
+        Server server = context.getServer();
+        Set<String> users;
+        Map<String, Presence> presences = api.getUserPresences();
+        if (server == null || server == NO_SERVER) {
+            users = api.getServers().stream().
+                    map(Server::getMembers).
+                    flatMap(Collection::stream).
+                    map(Member::getUser).
+                    map(User::getId).
+                    filter(id -> {
+                        Presence presence = presences.get(id);
+                        return presence != null && presence != Presence.OFFLINE;
+                    }).
+                    collect(Collectors.toSet());
+        } else {
+            users = server.getMembers().stream().
+                    map(Member::getUser).
+                    map(User::getId).
+                    filter(id -> {
+                        Presence presence = presences.get(id);
+                        return presence != null && presence != Presence.OFFLINE;
+                    }).
+                    collect(Collectors.toSet());
+        }
+        Map<String, String> games = api.getUserGames();
+
+        Map<String, LongAdder> gameCount = new HashMap<>();
+        long playing = 0L;
+        long noGame = 0L;
+        for (String serverUser : users) {
+            Presence presence = presences.get(serverUser);
+            if (presence == null || presence == Presence.OFFLINE) {
+                continue;
+            }
+            String game = games.get(serverUser);
+            if (game == null || game.trim().isEmpty() || "[misc.nothing]".equalsIgnoreCase(game.trim())) {
+                ++noGame;
+            } else {
+                LongAdder adder = gameCount.get(game);
+                if (adder == null) {
+                    adder = new LongAdder();
+                    gameCount.put(game, adder);
+                }
+                ++playing;
+                adder.increment();
+            }
+        }
+        List<Map.Entry<String, LongAdder>> sorted = gameCount.entrySet().stream().
+                sorted((e1, e2) -> -Integer.compare(e1.getValue().intValue(), e2.getValue().intValue())).
+                limit(5).
+                collect(Collectors.toList());
+        StringJoiner joiner = new StringJoiner("\n");
+        for (int i = 0; i < sorted.size(); i++) {
+            Map.Entry<String, LongAdder> val = sorted.get(i);
+            int count = val.getValue().intValue();
+            joiner.add(loc.localize("commands.general.gamepop.response.entry",
+                    i + 1, val.getKey(), count, ((float) count) / playing * 100F));
+        }
+        api.sendMessage(loc.localize("commands.general.gamepop.response.format",
+                users.size(), playing, gameCount.size(), noGame, joiner.toString()),
+                context.getChannel());
+
     }
 
 
