@@ -614,7 +614,7 @@ public class Commands {
         }
     }
 
-    private boolean checkPermission(Permission permission, Member member, Server server, DiscordApiClient apiClient) {
+    public boolean checkPermission(Permission permission, Member member, Server server, DiscordApiClient apiClient) {
         if (member.getUser().getId().equals(server.getOwnerId())) {
             return true;
         }

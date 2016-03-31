@@ -140,11 +140,23 @@ public class ModCommands {
         if (user == NO_USER) {
             userId = args;
         }
+        Channel channel = context.getChannel();
         if (userId.equals(context.getAuthor().getId())) {
-            apiClient.sendMessage("You cannot ban yourself", context.getChannel());
+            apiClient.sendMessage("You cannot ban yourself", channel);
             return;
         }
-        banImpl(userId, user.getUsername(), context.getServer().getId(), context.getChannel().getId());
+        if (userId.equals(apiClient.getClientUser().getId())) {
+            apiClient.sendMessage("You cannot ban the bot", channel);
+            return;
+        }
+        if (bot.getCommands().checkPermission(Permission.GEN_MANAGE_ROLES,
+                apiClient.getUserMember(userId, context.getServer()),
+                context.getServer(),
+                apiClient)) {
+            apiClient.sendMessage("You cannot ban an admin", channel);
+            return;
+        }
+        banImpl(userId, user.getUsername(), context.getServer().getId(), channel.getId());
     }
 
     public void banImpl(String userId, String username, String serverId, String parent) {
