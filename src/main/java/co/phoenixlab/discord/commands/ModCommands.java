@@ -359,7 +359,7 @@ public class ModCommands {
 
     private Duration parseDuration(String s) {
         //  Remove spaces
-        s = s.replace("\\s+", "").toLowerCase();
+        s = s.replaceAll("\\s", "").toLowerCase();
         long seconds = 0;
         StringBuilder timeBuilder = new StringBuilder();
         char[] chars = s.toCharArray();
