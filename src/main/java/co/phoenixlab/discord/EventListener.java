@@ -12,6 +12,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public class EventListener {
@@ -54,6 +55,12 @@ public class EventListener {
         if (!bot.getMainCommandDispatcher().active().get()) {
             return;
         }
+        Long time = currentDateTimeLastUse.get(message.getChannelId());
+        if (time != null && System.currentTimeMillis() - time < TimeUnit.SECONDS.toMillis(30)) {
+            return;
+        }
+        time = System.currentTimeMillis();
+        currentDateTimeLastUse.put(message.getChannelId(), time);
         DiscordApiClient api = bot.getApiClient();
         String content = message.getContent().toLowerCase();
         if (content.contains("current year")) {
