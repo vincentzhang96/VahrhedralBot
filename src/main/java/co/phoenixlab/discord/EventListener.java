@@ -60,12 +60,13 @@ public class EventListener {
             long time = currentDateTimeLastUse.get(channelId);
             if (time >= System.currentTimeMillis()) {
                 currentDateTimeLastUse.remove(channelId);
-            }
-            if (System.currentTimeMillis() - time < TimeUnit.SECONDS.toMillis(30)) {
+            } else if (System.currentTimeMillis() - time < TimeUnit.SECONDS.toMillis(30)) {
                 return;
             }
         }
-        currentDateTimeLastUse.put(channelId, System.currentTimeMillis());
+        long time = System.currentTimeMillis();
+        currentDateTimeLastUse.put(channelId, time);
+        VahrhedralBot.LOGGER.info("Cooldown {} at {}, in map {}", channelId, time, currentDateTimeLastUse.get(channelId));
         DiscordApiClient api = bot.getApiClient();
         String content = message.getContent().toLowerCase();
         if (content.contains("current year")) {
