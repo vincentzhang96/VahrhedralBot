@@ -9,6 +9,8 @@ import co.phoenixlab.discord.api.event.ServerJoinLeaveEvent;
 import com.google.common.eventbus.Subscribe;
 
 import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -25,6 +27,8 @@ public class EventListener {
     public Set<String> ignoredServers;
 
     public int excessiveMentionThreshold;
+
+    private Map<String, Long> currentDateTimeLastUse = new HashMap<>();
 
     public EventListener(VahrhedralBot bot) {
         this.bot = bot;
@@ -43,6 +47,47 @@ public class EventListener {
         });
         excessiveMentionThreshold = 5;
         messageListeners.put("mention-autotimeout", this::handleExcessiveMentions);
+        messageListeners.put("date-time", this::currentDateTime);
+    }
+
+    private void currentDateTime(Message message) {
+        if (!bot.getMainCommandDispatcher().active().get()) {
+            return;
+        }
+        DiscordApiClient api = bot.getApiClient();
+        String content = message.getContent().toLowerCase();
+        if (content.contains("current year")) {
+            api.sendMessage("NOFLIPIt's " + ZonedDateTime.now().getYear() + ", `" + message.getAuthor().getUsername() + "`.",
+                    message.getChannelId());
+        } else if (content.contains("current date")) {
+            api.sendMessage("NOFLIPIt's " + DateTimeFormatter.ofPattern("MMM dd uuuu").format(ZonedDateTime.now()) + ", `" +
+                    message.getAuthor().getUsername() + "`.",
+                    message.getChannelId());
+        } else if (content.contains("current day")) {
+            api.sendMessage("NOFLIPIt's the " + th(ZonedDateTime.now().getDayOfMonth()) + ", `" +
+                            message.getAuthor().getUsername() + "`.",
+                    message.getChannelId());
+        } else if (content.contains("current time")) {
+            api.sendMessage("NOFLIPIt's " + DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now()) + ", `" +
+                            message.getAuthor().getUsername() + "`.",
+                    message.getChannelId());
+        } else if (content.contains("current president")) {
+            api.sendMessage("NOFLIPIt's Bernie Trump, `" + message.getAuthor().getUsername() + "`.",
+                    message.getChannelId());
+        }
+    }
+
+    private String th(int i) {
+        switch (i) {
+            case 1:
+                return "1st";
+            case 2:
+                return "2nd";
+            case 3:
+                return "3rd";
+            default:
+                return Integer.toString(i) + "th";
+        }
     }
 
     @Subscribe

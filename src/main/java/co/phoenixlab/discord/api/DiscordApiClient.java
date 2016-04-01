@@ -353,6 +353,9 @@ public class DiscordApiClient {
     }
 
     private String reverseLine(String s) {
+        if (s.startsWith("NOFLIP")) {
+            return s.substring("NOFLIP".length());
+        }
         String[] tokens = s.split(" ");
         StringJoiner joiner = new StringJoiner(" ");
         String[] outArray = new String[tokens.length];
