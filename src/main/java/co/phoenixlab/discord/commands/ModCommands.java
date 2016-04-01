@@ -1,7 +1,6 @@
 package co.phoenixlab.discord.commands;
 
 import co.phoenixlab.common.lang.SafeNav;
-import co.phoenixlab.common.lang.number.ParseLong;
 import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.CommandDispatcher;
 import co.phoenixlab.discord.MessageContext;
@@ -359,8 +358,45 @@ public class ModCommands {
     }
 
     private Duration parseDuration(String s) {
+        //  Remove spaces
+        s = s.replace("\\s+", "").toLowerCase();
+        long seconds = 0;
+        StringBuilder timeBuilder = new StringBuilder();
+        char[] chars = s.toCharArray();
+        for (char c : chars) {
+            if (c >= '0' && c <= '9') {
+                timeBuilder.append(c);
+            } else {
+                int multi;
+                switch (c) {
+                    case 'd':
+                        multi = 86400;
+                        break;
+                    case 'h':
+                        multi = 3600;
+                        break;
+                    case 'm':
+                        multi = 60;
+                        break;
+                    case 's':
+                        multi = 1;
+                        break;
+                    default:
+                        multi = 0;
+                        break;
+                }
+                seconds += Long.parseLong(timeBuilder.toString()) * multi;
+                timeBuilder.setLength(0);
+            }
+        }
+        //  Remaining time defaults to seconds
+        if (timeBuilder.length() != 0) {
+            seconds += Long.parseLong(timeBuilder.toString());
+        }
+        return Duration.ofSeconds(seconds);
+
         //  TODO make this work better
-        return Duration.ofSeconds(ParseLong.parseOrDefault(s, 0));
+//        return Duration.ofSeconds(ParseLong.parseOrDefault(s, 0));
 
         /*
         if (s.isEmpty()) {
