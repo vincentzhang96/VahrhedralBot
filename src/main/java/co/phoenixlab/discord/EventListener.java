@@ -56,41 +56,61 @@ public class EventListener {
             return;
         }
         String channelId = message.getChannelId();
+        boolean cd = false;
         if (currentDateTimeLastUse.containsKey(channelId)) {
             long time = currentDateTimeLastUse.get(channelId);
             if (time >= System.currentTimeMillis()) {
                 currentDateTimeLastUse.remove(channelId);
             } else if (System.currentTimeMillis() - time < TimeUnit.SECONDS.toMillis(30)) {
-                return;
+                cd = true;
             }
         }
         long time = System.currentTimeMillis();
-        currentDateTimeLastUse.put(channelId, time);
         VahrhedralBot.LOGGER.info("Cooldown {} at {}, in map {}", channelId, time, currentDateTimeLastUse.get(channelId));
         DiscordApiClient api = bot.getApiClient();
         String content = message.getContent().toLowerCase();
         if (content.contains("current year")) {
+            if (cd) {
+                return;
+            }
             api.sendMessage("NOFLIPIt's " + ZonedDateTime.now().getYear() + ", `" + message.getAuthor().getUsername() + "`.",
                     channelId);
+            currentDateTimeLastUse.put(channelId, time);
         }
         if (content.contains("current date")) {
+            if (cd) {
+                return;
+            }
             api.sendMessage("NOFLIPIt's " + DateTimeFormatter.ofPattern("MMM dd uuuu").format(ZonedDateTime.now()) + ", `" +
                     message.getAuthor().getUsername() + "`.",
                     channelId);
+            currentDateTimeLastUse.put(channelId, time);
         }
         if (content.contains("current day")) {
+            if (cd) {
+                return;
+            }
             api.sendMessage("NOFLIPIt's the " + th(ZonedDateTime.now().getDayOfMonth()) + ", `" +
                             message.getAuthor().getUsername() + "`.",
                     channelId);
+            currentDateTimeLastUse.put(channelId, time);
         }
         if (content.contains("current time")) {
+            if (cd) {
+                return;
+            }
             api.sendMessage("NOFLIPIt's " + DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now()) + ", `" +
                             message.getAuthor().getUsername() + "`.",
                     channelId);
+            currentDateTimeLastUse.put(channelId, time);
         }
         if (content.contains("current president")) {
+            if (cd) {
+                return;
+            }
             api.sendMessage("NOFLIPIt's Bernie Trump, `" + message.getAuthor().getUsername() + "`.",
                     channelId);
+            currentDateTimeLastUse.put(channelId, time);
         }
     }
 
