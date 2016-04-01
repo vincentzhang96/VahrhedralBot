@@ -66,19 +66,23 @@ public class EventListener {
         if (content.contains("current year")) {
             api.sendMessage("NOFLIPIt's " + ZonedDateTime.now().getYear() + ", `" + message.getAuthor().getUsername() + "`.",
                     message.getChannelId());
-        } else if (content.contains("current date")) {
+        }
+        if (content.contains("current date")) {
             api.sendMessage("NOFLIPIt's " + DateTimeFormatter.ofPattern("MMM dd uuuu").format(ZonedDateTime.now()) + ", `" +
                     message.getAuthor().getUsername() + "`.",
                     message.getChannelId());
-        } else if (content.contains("current day")) {
+        }
+        if (content.contains("current day")) {
             api.sendMessage("NOFLIPIt's the " + th(ZonedDateTime.now().getDayOfMonth()) + ", `" +
                             message.getAuthor().getUsername() + "`.",
                     message.getChannelId());
-        } else if (content.contains("current time")) {
+        }
+        if (content.contains("current time")) {
             api.sendMessage("NOFLIPIt's " + DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now()) + ", `" +
                             message.getAuthor().getUsername() + "`.",
                     message.getChannelId());
-        } else if (content.contains("current president")) {
+        }
+        if (content.contains("current president")) {
             api.sendMessage("NOFLIPIt's Bernie Trump, `" + message.getAuthor().getUsername() + "`.",
                     message.getChannelId());
         }
