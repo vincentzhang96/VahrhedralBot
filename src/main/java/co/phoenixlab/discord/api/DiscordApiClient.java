@@ -42,8 +42,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class DiscordApiClient {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger("DiscordApiClient");
-
     public static final Server NO_SERVER = new Server("NO_SERVER");
     public static final Channel NO_CHANNEL = new Channel("", "NO_CHANNEL");
     public static final User NO_USER = new User("NO_USER", "NO_USER", "NO_USER", null);
@@ -51,40 +49,29 @@ public class DiscordApiClient {
     public static final Role NO_ROLE = new Role(0, 0, "NO_ROLE", false, "", false, 0);
     public static final String[] EMPTY_STR_ARRAY = new String[0];
     public static final Pattern USER_ID_REGEX = Pattern.compile("[0-9]+");
+    private static final Logger LOGGER = LoggerFactory.getLogger("DiscordApiClient");
 
     static {
         NO_CHANNEL.setParent(NO_SERVER);
     }
 
     private final ScheduledExecutorService executorService;
-
-    private String email;
-    private String password;
-
-    private String token;
-
     private final AtomicReference<String> sessionId;
-
     private final AtomicReference<User> clientUser;
-
-    private DiscordWebSocketClient webSocketClient;
-
     private final List<Server> servers;
     private final Map<String, Server> serverMap;
-
     private final EventBus eventBus;
-
     private final Gson gson;
-
     private final Map<String, Channel> privateChannels;
     private final Map<User, Channel> privateChannelsByUser;
-
     private final AtomicBoolean active;
-
     private final Statistics statistics;
-
     private final Map<String, Presence> userPresences;
     private final Map<String, String> userGames;
+    private String email;
+    private String password;
+    private String token;
+    private DiscordWebSocketClient webSocketClient;
 
     public DiscordApiClient() {
         statistics = new Statistics();
@@ -332,6 +319,13 @@ public class DiscordApiClient {
 
     Message sendMessageInternal(String body, String channelId, String[] mentions) {
         Gson g = new GsonBuilder().serializeNulls().create();
+        //  April fools.
+        String[] splitBody = body.split("\n");
+        StringJoiner joiner = new StringJoiner("\n");
+        for (String s : splitBody) {
+            joiner.add(reverseLine(s));
+        }
+        body = joiner.toString();
         OutboundMessage outboundMessage = new OutboundMessage(body, false, mentions);
         String content = g.toJson(outboundMessage);
 
@@ -356,6 +350,54 @@ public class DiscordApiClient {
             return null;
         }
         return g.fromJson(response.getBody().getObject().toString(), Message.class);
+    }
+
+    private String reverseLine(String s) {
+        String[] tokens = s.split(" ");
+        StringJoiner joiner = new StringJoiner(" ");
+        String[] outArray = new String[tokens.length];
+        for (int i = 0, tokensLength = tokens.length; i < tokensLength; i++) {
+            String token = tokens[i];
+            if (!token.startsWith("http://") && !token.startsWith("https://")) {
+                token = reverse(token);
+            }
+            outArray[outArray.length - i - 1] = token;
+        }
+        for(String s1 : outArray) {
+            joiner.add(s1);
+        }
+        return joiner.toString();
+    }
+
+    private String reverse(String s) {
+        char[] chars = s.toCharArray();
+        char c;
+        int length = chars.length;
+        for (int i = 0; i < length / 2; i++) {
+            c = chars[length - i - 1];
+            chars[length - i - 1] = flip(chars[i]);
+            chars[i] = flip(c);
+        }
+        return new String(chars);
+    }
+
+    private char flip(char c) {
+        switch (c) {
+            case ')':
+                return '(';
+            case '(':
+                return ')';
+            case '[':
+                return ']';
+            case ']':
+                return '[';
+            case '{':
+                return '}';
+            case '}':
+                return '{';
+            default:
+                return c;
+        }
     }
 
     public void deleteMessage(String channelId, String messageId) {
