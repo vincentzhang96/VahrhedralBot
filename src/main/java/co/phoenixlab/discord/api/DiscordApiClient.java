@@ -320,12 +320,12 @@ public class DiscordApiClient {
     Message sendMessageInternal(String body, String channelId, String[] mentions) {
         Gson g = new GsonBuilder().serializeNulls().create();
         //  April fools.
-        String[] splitBody = body.split("\n");
-        StringJoiner joiner = new StringJoiner("\n");
-        for (String s : splitBody) {
-            joiner.add(reverseLine(s));
-        }
-        body = joiner.toString();
+//        String[] splitBody = body.split("\n");
+//        StringJoiner joiner = new StringJoiner("\n");
+//        for (String s : splitBody) {
+//            joiner.add(reverseLine(s));
+//        }
+//        body = joiner.toString();
         OutboundMessage outboundMessage = new OutboundMessage(body, false, mentions);
         String content = g.toJson(outboundMessage);
 

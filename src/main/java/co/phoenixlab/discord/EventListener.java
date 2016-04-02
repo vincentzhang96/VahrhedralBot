@@ -48,7 +48,7 @@ public class EventListener {
         });
         excessiveMentionThreshold = 5;
         messageListeners.put("mention-autotimeout", this::handleExcessiveMentions);
-        messageListeners.put("date-time", this::currentDateTime);
+//        messageListeners.put("date-time", this::currentDateTime);
     }
 
     private void currentDateTime(Message message) {
