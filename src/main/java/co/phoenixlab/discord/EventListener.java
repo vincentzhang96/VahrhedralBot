@@ -237,7 +237,8 @@ public class EventListener {
         bot.getApiClient().sendMessage(bot.getLocalizer().localize(key,
                 user.getUsername(),
                 user.getId(),
-                user.getDiscriminator()),
+                user.getDiscriminator(),
+                DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())),
                 cid);
         memberChangeEventListener.values().forEach(c -> c.accept(event));
     }
