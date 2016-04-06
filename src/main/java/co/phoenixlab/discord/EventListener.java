@@ -31,6 +31,8 @@ public class EventListener {
 
     private Map<String, Long> currentDateTimeLastUse = new HashMap<>();
 
+    public Map<String, Deque<String>> newest = new HashMap<>();
+
     public EventListener(VahrhedralBot bot) {
         this.bot = bot;
         messageListeners = new HashMap<>();
@@ -203,9 +205,9 @@ public class EventListener {
             //  Default channel has same ID as server
             Channel channel = bot.getApiClient().getChannelById(server.getId());
             if (channel != DiscordApiClient.NO_CHANNEL) {
-                bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.on_join.response",
-                        bot.getApiClient().getClientUser().getUsername()),
-                        channel.getId());
+//                bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.on_join.response",
+//                        bot.getApiClient().getClientUser().getUsername()),
+//                        channel.getId());
             }
         }
     }
