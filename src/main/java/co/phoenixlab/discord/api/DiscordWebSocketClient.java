@@ -182,7 +182,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
     }
 
     private void handleGuildBanAdd(JSONObject data) {
-        String server = (String) data.get("server");
+        String server = (String) data.get("guild_id");
         JSONObject userJSON = (JSONObject) data.get("user");
         User user = jsonObjectToObject(userJSON, User.class);
         if (server.equals("106293726271246336")) {
