@@ -2,10 +2,7 @@ package co.phoenixlab.discord;
 
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.entities.*;
-import co.phoenixlab.discord.api.event.LogInEvent;
-import co.phoenixlab.discord.api.event.MemberChangeEvent;
-import co.phoenixlab.discord.api.event.MessageReceivedEvent;
-import co.phoenixlab.discord.api.event.ServerJoinLeaveEvent;
+import co.phoenixlab.discord.api.event.*;
 import com.google.common.eventbus.Subscribe;
 
 import java.time.Duration;
@@ -247,6 +244,22 @@ public class EventListener {
     public boolean isJoin(MemberChangeEvent event) {
         return event.getMemberChange() == MemberChangeEvent.MemberChange.ADDED;
     }
+
+    @Subscribe
+    public void onMemberPresenceUpdate(PresenceUpdateEvent event) {
+        //  not dnnacd
+        if (!event.getServer().getId().equals("106293726271246336")) {
+            return;
+        }
+        if (!event.getOldUsername().equals(event.getPresenceUpdate().getUser().getUsername())) {
+            //  167264528537485312 dnnacd #activity-log
+            bot.getApiClient().sendMessage(String.format("`%s` changed name to `%s` (#%s %s)",
+                    event.getOldUsername(), event.getPresenceUpdate().getUser().getUsername(),
+                    event.getPresenceUpdate().getUser().getDiscriminator(),
+                    event.getPresenceUpdate().getUser().getId()), "167264528537485312");
+        }
+    }
+
 
     public void registerMessageListner(String name, Consumer<Message> listener) {
         messageListeners.put(Objects.requireNonNull(name), Objects.requireNonNull(listener));

@@ -316,6 +316,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         if (server != NO_SERVER) {
             User updateUser = update.getUser();
             User user = apiClient.getUserById(updateUser.getId(), server);
+            String oldUsername = user.getUsername();
             SafeNav.of(updateUser.getAvatar()).ifPresent(user::setAvatar);
             SafeNav.of(updateUser.getUsername()).ifPresent(user::setUsername);
             Member member = apiClient.getUserMember(user, server);
@@ -329,7 +330,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
                         next(Game::getName).
                         orElse("[misc.nothing]"));
                 apiClient.getUserPresences().put(user.getId(), update.getStatus());
-                apiClient.getEventBus().post(new PresenceUpdateEvent(update, server));
+                apiClient.getEventBus().post(new PresenceUpdateEvent(oldUsername, update, server));
             } else {
                 LOGGER.warn("[{}] '{}': Orphan presence update received, ignored (userid={} username={}): Not found",
                         server.getId(), server.getName(),
