@@ -169,6 +169,9 @@ public class DiscordWebSocketClient extends WebSocketClient {
                     case "GUILD_BAN_ADD":
                         handleGuildBanAdd(data);
                         break;
+                    case "GUILD_BAN_DELETE":
+                        handleGuildBanDelete(data);
+                        break;
                     //  TODO
                     default:
                         LOGGER.warn("[0] '': Unknown message type {}:\n{}", type, data.toJSONString());
@@ -178,6 +181,18 @@ public class DiscordWebSocketClient extends WebSocketClient {
             }
         } finally {
             statistics.avgMessageHandleTime.add(MILLISECONDS.convert(System.nanoTime() - start, NANOSECONDS));
+        }
+    }
+
+    private void handleGuildBanDelete(JSONObject data) {
+        String server = (String) data.get("guild_id");
+        JSONObject userJSON = (JSONObject) data.get("user");
+        User user = jsonObjectToObject(userJSON, User.class);
+        if (server.equals("106293726271246336")) {
+            //  167264528537485312 dnnacd #activity-log
+            apiClient.sendMessage(String.format("`%s` (%s) was unbanned",
+                    user.getUsername(),
+                    user.getId()), "167264528537485312");
         }
     }
 
