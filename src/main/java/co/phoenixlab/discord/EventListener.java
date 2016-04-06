@@ -251,12 +251,12 @@ public class EventListener {
         if (!event.getServer().getId().equals("106293726271246336")) {
             return;
         }
-        if (!event.getOldUsername().equals(event.getPresenceUpdate().getUser().getUsername())) {
+        User user = event.getPresenceUpdate().getUser();
+        if (user.getUsername() != null && !event.getOldUsername().equals(user.getUsername())) {
             //  167264528537485312 dnnacd #activity-log
-            bot.getApiClient().sendMessage(String.format("`%s` changed name to `%s` (#%s %s)",
-                    event.getOldUsername(), event.getPresenceUpdate().getUser().getUsername(),
-                    event.getPresenceUpdate().getUser().getDiscriminator(),
-                    event.getPresenceUpdate().getUser().getId()), "167264528537485312");
+            bot.getApiClient().sendMessage(String.format("`%s` changed name to `%s` (%s)",
+                    event.getOldUsername(), user.getUsername(),
+                    user.getId()), "167264528537485312");
         }
     }
 
