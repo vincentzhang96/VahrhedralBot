@@ -723,9 +723,11 @@ public class ModCommands {
                 LOGGER.info("Expiring timeout for {} ({}) in {} ({})",
                         user.getUsername(), user.getId(),
                         server.getName(), server.getId());
-                apiClient.sendMessage(loc.localize("message.mod.timeout.expire",
-                        user.getId()),
-                        server.getId());
+                if (apiClient.getUserById(user.getId(), server) != NO_USER) {
+                    apiClient.sendMessage(loc.localize("message.mod.timeout.expire",
+                            user.getId()),
+                            server.getId());
+                }
                 removeTimeoutRole(user, server, apiClient.getChannelById(server.getId()));
                 return;
             }
