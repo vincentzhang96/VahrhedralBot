@@ -848,9 +848,9 @@ public class ModCommands {
                             LOGGER.info("Ending timeout for departed user {} ({}) in {} ({})",
                                     timeout.getLastUsername(), userId,
                                     server.getName(), server.getId());
-                            apiClient.sendMessage(loc.localize("message.mod.timeout.expire.not_found",
-                                    user.getId()),
-                                    server.getId());
+//                            apiClient.sendMessage(loc.localize("message.mod.timeout.expire.not_found",
+//                                    user.getId()),
+//                                    server.getId());
                             //  Don't need to remove the timeout role because leaving does that for us
                         } else {
                             //  Duplicated from onTimeoutExpire except without remove since we're removing in an iter
@@ -859,9 +859,9 @@ public class ModCommands {
                                     server.getName(), server.getId());
                             //  Only send message if they still have the role
                             if (removeTimeoutRole(user, server, apiClient.getChannelById(server.getId()))) {
-                                apiClient.sendMessage(loc.localize("message.mod.timeout.expire",
-                                        user.getId()),
-                                        server.getId());
+//                                apiClient.sendMessage(loc.localize("message.mod.timeout.expire",
+//                                        user.getId()),
+//                                        server.getId());
                             }
                         }
                         SafeNav.of(timeout.getTimerFuture()).ifPresent(f -> f.cancel(true));
