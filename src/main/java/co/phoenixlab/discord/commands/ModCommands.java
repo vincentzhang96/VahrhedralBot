@@ -204,7 +204,7 @@ public class ModCommands {
 
             int limit = numMsgs;
             String before = message.getId();
-            int sleepTime = 250;
+            int sleepTime = 50;
             //  Limit search to 5 pages (250 msgs)
             for (int k = 0; k < 5 && limit > 0; k++) {
                 Map<String, String> headers = new HashMap<>();
