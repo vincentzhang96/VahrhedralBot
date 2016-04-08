@@ -135,7 +135,7 @@ public class DnCommands {
             } else {
                 int low = fdCaps[level / 10 - 1];
                 int high = fdCaps[level / 10];
-                fdCap = (int) lerp(low, high, level - (level / 10 * 10D));
+                fdCap = (int) lerp(low, high, (level % 10) / 10D);
             }
             double ratio = (double) fd / fdCap;
             if (ratio < 0.417D) {
