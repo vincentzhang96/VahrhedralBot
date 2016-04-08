@@ -208,6 +208,7 @@ public class DiscordApiClient {
         remapServers();
         //  Update presences
         Arrays.stream(readyMessage.getServers()).
+                filter(Server::isAvailable).
                 map(ReadyServer::getPresences).
                 flatMap(Arrays::stream).
                 forEach(p -> {
@@ -329,7 +330,7 @@ public class DiscordApiClient {
         OutboundMessage outboundMessage = new OutboundMessage(body, false, mentions);
         String content = g.toJson(outboundMessage);
 
-        HttpResponse<JsonNode> response;
+        HttpResponse<String> response;
         Map<String, String> headers = new HashMap<>();
         headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
         headers.put(HttpHeaders.AUTHORIZATION, token);
@@ -337,7 +338,7 @@ public class DiscordApiClient {
             response = Unirest.post(ApiConst.CHANNELS_ENDPOINT + channelId + "/messages").
                     headers(headers).
                     body(content).
-                    asJson();
+                    asString();
         } catch (UnirestException e) {
             statistics.restErrorCount.increment();
             LOGGER.warn("Unable to send message", e);
@@ -349,7 +350,7 @@ public class DiscordApiClient {
             LOGGER.warn("Unable to send message: HTTP {}: {}", status, response.getStatusText());
             return null;
         }
-        return g.fromJson(response.getBody().getObject().toString(), Message.class);
+        return g.fromJson(response.getBody(), Message.class);
     }
 
     private String reverseLine(String s) {
@@ -626,7 +627,9 @@ public class DiscordApiClient {
     public void remapServers() {
         serverMap.clear();
         serverMap.putAll(servers.stream().collect(Collectors.toMap(Server::getId, Function.identity())));
-        servers.forEach(server -> server.getChannels().forEach(channel -> channel.setParent(server)));
+        servers.stream().
+                filter(Server::isAvailable).
+                forEach(server -> server.getChannels().forEach(channel -> channel.setParent(server)));
     }
 
     public Channel getChannelById(String id) {
@@ -634,6 +637,7 @@ public class DiscordApiClient {
             return NO_CHANNEL;
         }
         return servers.stream().
+                filter(Server::isAvailable).
                 map(Server::getChannels).
                 flatMap(Set::stream).
                 filter(c -> id.equals(c.getId())).

@@ -41,6 +41,8 @@ public class Server {
     @SerializedName("member_count")
     private int memberCount;
 
+    private boolean unavailable;
+
     public Server() {
         this(null);
     }
@@ -126,5 +128,17 @@ public class Server {
 
     public int getMemberCount() {
         return memberCount;
+    }
+
+    public boolean isUnavailable() {
+        return unavailable;
+    }
+
+    public boolean isAvailable() {
+        return !unavailable;
+    }
+
+    public void setUnavailable(boolean unavailable) {
+        this.unavailable = unavailable;
     }
 }
