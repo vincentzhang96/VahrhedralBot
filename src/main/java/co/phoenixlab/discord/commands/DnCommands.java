@@ -22,6 +22,10 @@ public class DnCommands {
     public static final int CRITDMG_90_CAP = 671160;
     public static final double CRITDMG_MAX_PERCENT = 1D;
     public static final double CRIT_MAX_PERCENT = 0.89D;
+    public static final int[] fdCaps = {
+            300, 420, 600, 850, 1290, 1850, 2974, 4520, 6367, 8622
+    };
+
     private final CommandDispatcher dispatcher;
     private final VahrhedralBot bot;
     private Localizer loc;
@@ -118,17 +122,30 @@ public class DnCommands {
             if (split.length >= 2) {
                 level = ParseInt.parseOrDefault(split[1], level);
             }
-            if (level != 80) {
+            if (level < 10 || level > 100) {
                 apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.level_out_of_range",
-                        80, 80),
+                        10, 100),
                         context.getChannel());
                 return;
             }
-            double a = 0.00774 * fd;
-            double b = 0.0000009093 * Math.pow(fd, 2.2);
-            double fdPercent = Math.min(100, Math.max(a, b));
+            double fdPercent;
+            int fdCap;
+            if (level % 10 == 0) {
+                fdCap = fdCaps[level / 10 - 1];
+            } else {
+                int low = fdCaps[level / 10 - 1];
+                int high = fdCaps[level / 10];
+                fdCap = (int) lerp(low, high, level - (level / 10 * 10D));
+            }
+            double ratio = (double) fd / fdCap;
+            if (ratio < 0.417D) {
+                fdPercent = (0.35D * fd) / fdCap;
+            } else {
+                fdPercent = Math.pow((double) fd / fdCap, 2.2D);
+            }
+            fdPercent = Math.max(0, Math.min(100D, fdPercent * 100));
             apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.format",
-                    level, fdPercent),
+                    level, fdPercent, fdCap),
                     context.getChannel());
             return;
         }
