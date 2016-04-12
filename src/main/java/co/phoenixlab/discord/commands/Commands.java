@@ -736,21 +736,26 @@ public class Commands {
 
     private void listMinificsCmd(DiscordApiClient apiClient, Channel ctxChannel) {
         StringJoiner joiner = new StringJoiner("\n");
+        Map<String, String> usernameCache = new HashMap<>();
         for (Minific minific : minificStorage.getMinifics()) {
             String content = minific.getContent();
-            String excerpt = content.substring(0, Math.min(content.length(), 30)).
-                    replace("\n", " ");
+//            String excerpt = content.substring(0, Math.min(content.length(), 30)).
+//                    replace("\n", " ");
+            String authorId = minific.getAuthorId();
+            String uname = usernameCache.get(authorId);
+            if (uname == null) {
+                uname = apiClient.getUserById(authorId).getUsername();
+                usernameCache.put(authorId, uname);
+            }
             joiner.add(loc.localize("commands.general.minific.response.manage.list.entry",
                     minific.getId(),
-                    apiClient.getUserById(minific.getAuthorId()).getUsername(),
-                    minific.getDate(),
-                    excerpt));
+                    uname,
+                    minific.getDate()));
         }
         apiClient.sendMessage(loc.localize("commands.general.minific.response.manage.list",
                 minificStorage.getMinifics().size(),
                 joiner.toString()),
                 ctxChannel);
-        saveMinificStorage();
     }
 
     private boolean setMinificAuthorCmd(DiscordApiClient apiClient, Channel ctxChannel, String s) {
