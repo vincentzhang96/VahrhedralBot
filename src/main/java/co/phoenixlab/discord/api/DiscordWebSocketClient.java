@@ -20,10 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -34,19 +31,18 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 public class DiscordWebSocketClient extends WebSocketClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("DiscordApiWebSocketClient");
-
-    private final DiscordApiClient apiClient;
-    private final JSONParser parser;
-    private final Gson gson;
-    private ScheduledFuture keepAliveFuture;
-    private final Statistics statistics;
-
     private static Map<String, String> header;
 
     static {
         header = new HashMap<>();
         header.put("Accept-Encoding", "gzip");
     }
+
+    private final DiscordApiClient apiClient;
+    private final JSONParser parser;
+    private final Gson gson;
+    private final Statistics statistics;
+    private ScheduledFuture keepAliveFuture;
 
     public DiscordWebSocketClient(DiscordApiClient apiClient, URI serverUri) {
         super(serverUri, new Draft_10(), header, 0);
@@ -368,7 +364,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
             }
         } else {
             LOGGER.warn("[{}] '{}': Orphan presence update received, ignored (userid={} username={})",
-                    update.getServerId(), (server == null ? "": server.getName()),
+                    update.getServerId(), (server == null ? "" : server.getName()),
                     update.getUser().getId(), update.getUser().getUsername());
         }
     }
@@ -528,8 +524,19 @@ public class DiscordWebSocketClient extends WebSocketClient {
     }
 
     private void handleGuildCreate(JSONObject data) {
-        Server server = jsonObjectToObject(data, Server.class);
+        ReadyServer server = jsonObjectToObject(data, ReadyServer
+                .class);
         server.getChannels().forEach(channel -> channel.setParent(server));
+        //  Update presences
+        if (server.getPresences() != null) {
+            Arrays.stream(server.getPresences()).forEach(p -> {
+                String id = p.getUser().getId();
+                apiClient.getUserPresences().put(id, p.getStatus());
+                apiClient.getUserGames().put(id, SafeNav.of(p.getGame()).next(Game::getName).orElse("[misc.nothing]"));
+            });
+        } else {
+            LOGGER.warn("No presences received on new server");
+        }
         apiClient.getServers().add(server);
         apiClient.getServerMap().put(server.getId(), server);
         apiClient.requestLargerServerUsers(server);
