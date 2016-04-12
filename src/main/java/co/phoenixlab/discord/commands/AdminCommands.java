@@ -79,6 +79,37 @@ public class AdminCommands {
         d.registerAlwaysActiveCommand("commands.admin.eval", this::eval);
         d.registerAlwaysActiveCommand("commands.admin.find", this::find);
         d.registerAlwaysActiveCommand("commands.admin.playing", this::updateNowPlaying);
+        d.registerAlwaysActiveCommand("commands.admin.integrity", this::checkIntegrity);
+    }
+
+    private void checkIntegrity(MessageContext context, String s) {
+        DiscordApiClient apiClient = context.getApiClient();
+        StringBuilder reportBuilder = new StringBuilder();
+        reportBuilder.append("**__INTEGRITY REPORT__**\n");
+
+        reportBuilder.append("**Server Map**\n");
+        for (Map.Entry<String, Server> entry : apiClient.getServerMap().entrySet()) {
+            String id = entry.getKey();
+            Server server = entry.getValue();
+            if (server == null) {
+                reportBuilder.append(id).append(" Null server\n");
+                continue;
+            }
+            if (!id.equals(server.getId())) {
+                reportBuilder.append(id).append(" Server ID does not match key: ").append(server.getId()).append("\n");
+            }
+            if (server.getMembers() == null) {
+                reportBuilder.append(id).append(" Null server member list\n");
+                continue;
+            }
+            long count = server.getMembers().stream().filter(m -> m == null).count();
+            if (count > 0) {
+                reportBuilder.append(id).append(" ").append(count).append(" null members\n");
+                continue;
+            }
+        }
+
+        apiClient.sendMessage(reportBuilder.toString(), context.getChannel());
     }
 
     private void adminStart(MessageContext context, String args) {
