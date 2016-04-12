@@ -33,6 +33,8 @@ public class User {
      */
     private URL avatarUrl;
 
+    private boolean bot;
+
     public User(String username, String id, String discriminator, String avatar) {
         this.username = username;
         this.id = id;
@@ -120,5 +122,9 @@ public class User {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    public boolean isBot() {
+        return bot;
     }
 }

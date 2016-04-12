@@ -137,7 +137,8 @@ public class EventListener {
                 return;
             }
         }
-        if (message.getContent().startsWith(bot.getConfig().getCommandPrefix())) {
+        if (!message.getAuthor().isBot() &&
+                message.getContent().startsWith(bot.getConfig().getCommandPrefix())) {
             bot.getMainCommandDispatcher().handleCommand(message);
             return;
         }
