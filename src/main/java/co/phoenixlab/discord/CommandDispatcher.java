@@ -53,6 +53,7 @@ public class CommandDispatcher {
 
     private void addHelpCommand() {
         registerCommand("commands.help", this::help);
+        registerCommand("commands.commands", this::help);
     }
 
     private void help(MessageContext context, String args) {
