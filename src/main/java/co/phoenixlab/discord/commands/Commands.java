@@ -238,7 +238,8 @@ public class Commands {
                     Optional.ofNullable(apiClient.getUserGames().get(id)).orElse("[misc.nothing]"),
                     "[" + Optional.ofNullable(apiClient.getUserPresences().get(id)).map(Presence::getDisplayKey).
                             orElse("misc.unknown") + "]",
-                    user.getDiscriminator());
+                    user.getDiscriminator(),
+                    user.isBot() ? loc.localize("commands.general.info.response.bot") : "");
             apiClient.sendMessage(response, context.getChannel());
         }
     }
