@@ -227,7 +227,7 @@ public class DiscordApiClient {
         }
     }
 
-    private void requestLargerServerUsers(Server server) {
+    public void requestLargerServerUsers(Server server) {
         org.json.JSONObject object = new org.json.JSONObject();
         object.put("op", 8);
         org.json.JSONObject requestBody = new org.json.JSONObject();

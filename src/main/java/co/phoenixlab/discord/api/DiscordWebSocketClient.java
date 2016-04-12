@@ -532,6 +532,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         server.getChannels().forEach(channel -> channel.setParent(server));
         apiClient.getServers().add(server);
         apiClient.getServerMap().put(server.getId(), server);
+        apiClient.requestLargerServerUsers(server);
         LOGGER.info("[{}] '{}': Joined server",
                 server.getId(), server.getName());
         apiClient.getEventBus().post(new ServerJoinLeaveEvent(server, true));
