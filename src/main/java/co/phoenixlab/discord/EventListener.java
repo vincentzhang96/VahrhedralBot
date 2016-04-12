@@ -40,6 +40,7 @@ public class EventListener {
         excessiveMentionThreshold = 5;
         messageListeners.put("mention-autotimeout", this::handleExcessiveMentions);
         messageListeners.put("invite-pm", this::onInviteLinkPrivateMessage);
+        messageListeners.put("other-prefixes", this::onOtherTypesCommand);
 //        messageListeners.put("date-time", this::currentDateTime);
     }
 
@@ -266,6 +267,17 @@ public class EventListener {
             User author = message.getAuthor();
             VahrhedralBot.LOGGER.info("Received invite link from {}#{} ({}), rejecting: {}",
                     author.getUsername(), author.getDiscriminator(), author.getId(), message.getContent());
+        }
+    }
+
+    private void onOtherTypesCommand(Message message) {
+        if (!message.isPrivateMessage()) {
+            return;
+        }
+        String content = message.getContent().toLowerCase();
+        if (content.startsWith("~") || content.startsWith("!") || content.startsWith("-")) {
+            bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.private.misc",
+                    bot.getConfig().getCommandPrefix()), message.getChannelId());
         }
     }
 
