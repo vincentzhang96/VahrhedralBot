@@ -236,6 +236,17 @@ public class EventListener {
                 user.getDiscriminator(),
                 DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())),
                 cid);
+
+        //  167264528537485312 dnnacd #activity-log
+        //  avoid duplicates
+        if (event.getServer().getId().equals("106293726271246336") && !"167264528537485312".equals(cid)) {
+            bot.getApiClient().sendMessage(bot.getLocalizer().localize(key,
+                    user.getUsername(),
+                    user.getId(),
+                    user.getDiscriminator(),
+                    DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())),
+                    "167264528537485312");
+        }
         memberChangeEventListener.values().forEach(c -> c.accept(event));
     }
 
