@@ -2,6 +2,7 @@ package co.phoenixlab.discord.api.entities;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -81,6 +82,9 @@ public class Server {
      * @return {@link #members}
      */
     public Set<Member> getMembers() {
+        if (members == null) {
+            members = new HashSet<>();
+        }
         return members;
     }
 
