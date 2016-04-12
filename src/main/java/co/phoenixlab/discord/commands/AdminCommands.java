@@ -71,7 +71,7 @@ public class AdminCommands {
         d.registerAlwaysActiveCommand("commands.admin.restart", this::adminRestart);
         d.registerAlwaysActiveCommand("commands.admin.blacklist", this::adminBlacklist);
         d.registerAlwaysActiveCommand("commands.admin.pardon", this::adminPardon);
-        d.registerAlwaysActiveCommand("commands.admin.join", this::adminJoin);
+//        d.registerAlwaysActiveCommand("commands.admin.join", this::adminJoin);
         d.registerAlwaysActiveCommand("commands.admin.telegram", this::adminTelegram);
         d.registerAlwaysActiveCommand("commands.admin.raw", this::adminRaw);
         d.registerAlwaysActiveCommand("commands.admin.prefix", this::adminPrefix);
