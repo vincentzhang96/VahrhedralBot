@@ -98,18 +98,41 @@ public class AdminCommands {
             if (!id.equals(server.getId())) {
                 reportBuilder.append(id).append(" Server ID does not match key: ").append(server.getId()).append("\n");
             }
-            if (server.getMembers() == null) {
-                reportBuilder.append(id).append(" Null server member list\n");
+            checkServer(reportBuilder, id, server);
+        }
+        reportBuilder.append("**Server List**\n");
+        for (Server server : apiClient.getServers()) {
+            if (server == null) {
+                reportBuilder.append("Null server\n");
                 continue;
             }
-            long count = server.getMembers().stream().filter(m -> m == null).count();
-            if (count > 0) {
-                reportBuilder.append(id).append(" ").append(count).append(" null members\n");
-                continue;
-            }
+            checkServer(reportBuilder, server.getId(), server);
         }
 
         apiClient.sendMessage(reportBuilder.toString(), context.getChannel());
+    }
+
+    private void checkServer(StringBuilder reportBuilder, String id, Server server) {
+        if (server.getMembers() == null) {
+            reportBuilder.append(id).append(" Null server member list\n");
+            return;
+        }
+        long count = server.getMembers().stream().
+                filter(m -> m == null).
+                count();
+        if (count > 0) {
+            reportBuilder.append(id).append(" ").append(count).append(" null members\n");
+            return;
+        }
+        count = server.getMembers().stream().
+                filter(m -> m != null).
+                map(Member::getUser).
+                filter(u -> u == null).
+                count();
+        if (count > 0) {
+            reportBuilder.append(id).append(" ").append(count).append(" null member users\n");
+            return;
+        }
     }
 
     private void adminStart(MessageContext context, String args) {
