@@ -14,20 +14,13 @@ import java.util.function.Consumer;
 public class EventListener {
 
     private final VahrhedralBot bot;
-
-    private Map<String, Consumer<Message>> messageListeners;
-
     public Map<String, Consumer<MemberChangeEvent>> memberChangeEventListener;
-
     public Map<String, String> joinMessageRedirect;
-
     public Set<String> ignoredServers;
-
     public int excessiveMentionThreshold;
-
-    private Map<String, Long> currentDateTimeLastUse = new HashMap<>();
-
     public Map<String, Deque<String>> newest = new HashMap<>();
+    private Map<String, Consumer<Message>> messageListeners;
+    private Map<String, Long> currentDateTimeLastUse = new HashMap<>();
 
     public EventListener(VahrhedralBot bot) {
         this.bot = bot;
@@ -46,6 +39,7 @@ public class EventListener {
         });
         excessiveMentionThreshold = 5;
         messageListeners.put("mention-autotimeout", this::handleExcessiveMentions);
+        messageListeners.put("invite-pm", this::onInviteLinkPrivateMessage);
 //        messageListeners.put("date-time", this::currentDateTime);
     }
 
@@ -79,7 +73,7 @@ public class EventListener {
                 return;
             }
             api.sendMessage("NOFLIPIt's " + DateTimeFormatter.ofPattern("MMM dd uuuu").format(ZonedDateTime.now()) + ", `" +
-                    message.getAuthor().getUsername() + "`.",
+                            message.getAuthor().getUsername() + "`.",
                     channelId);
             currentDateTimeLastUse.put(channelId, time);
         }
@@ -263,7 +257,17 @@ public class EventListener {
         }
     }
 
-
+    private void onInviteLinkPrivateMessage(Message message) {
+        if (!message.isPrivateMessage()) {
+            return;
+        }
+        if (message.getContent().startsWith("https://discord.gg/")) {
+            bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.private.invite"), message.getChannelId());
+            User author = message.getAuthor();
+            VahrhedralBot.LOGGER.info("Received invite link from {}#{} ({}), rejecting: {}",
+                    author.getUsername(), author.getDiscriminator(), author.getId(), message.getContent());
+        }
+    }
 
     public void registerMessageListner(String name, Consumer<Message> listener) {
         messageListeners.put(Objects.requireNonNull(name), Objects.requireNonNull(listener));
