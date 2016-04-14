@@ -93,6 +93,12 @@ public class DiscordWebSocketClient extends WebSocketClient {
                     statistics.errorCount.increment();
                     return;
                 }
+                int opCode = (int) msg.get("op");
+                if (opCode != 0) {
+                    LOGGER.warn("Unknown opcode {} received: {}", opCode,
+                            message);
+                    return;
+                }
                 String type = (String) msg.get("t");
                 JSONObject data = (JSONObject) msg.get("d");
                 switch (type) {
