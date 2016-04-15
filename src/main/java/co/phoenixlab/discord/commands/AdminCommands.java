@@ -32,7 +32,6 @@ import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static co.phoenixlab.discord.api.DiscordApiClient.NO_SERVER;
 import static co.phoenixlab.discord.api.DiscordApiClient.NO_USER;
 import static co.phoenixlab.discord.commands.CommandUtil.findUser;
 
@@ -400,7 +399,7 @@ public class AdminCommands {
         }
         Predicate<String> matcher = pattern.asPredicate();
         List<User> results;
-        if (context.getServer() == NO_SERVER || context.getServer() == null) {
+        if (context.getMessage().isPrivateMessage()) {
             Stream<User> userStream = Stream.empty();
             for (Server server : apiClient.getServers()) {
                 userStream = Stream.concat(userStream, server.getMembers().stream().
