@@ -400,7 +400,7 @@ public class AdminCommands {
         }
         Predicate<String> matcher = pattern.asPredicate();
         List<User> results;
-        if (context.getServer() == NO_SERVER) {
+        if (context.getServer() == NO_SERVER || context.getServer() == null) {
             Stream<User> userStream = Stream.empty();
             for (Server server : apiClient.getServers()) {
                 userStream = Stream.concat(userStream, server.getMembers().stream().
