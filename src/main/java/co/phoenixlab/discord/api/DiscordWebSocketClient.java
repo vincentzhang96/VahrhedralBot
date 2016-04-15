@@ -93,7 +93,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
                     statistics.errorCount.increment();
                     return;
                 }
-                int opCode = (int) msg.get("op");
+                int opCode = ((Number) msg.get("op")).intValue();
                 if (opCode != 0) {
                     LOGGER.warn("Unknown opcode {} received: {}", opCode,
                             message);
