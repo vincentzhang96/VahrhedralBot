@@ -153,10 +153,12 @@ public class Commands {
         if (args.isEmpty()) {
             args = "help";
         }
+        Message msg = new Message(m.getAuthor(), m.getChannelId(), m.getNonce(), m.getAttachments(),
+                m.getEmbeds(), m.isMentionEveryone(), args, m.getId(), m.getMentions(), m.getTimestamp(),
+                m.getEditedTimestamp());
+        msg.setPrivateMessage(m.isPrivateMessage());
         adminCommands.getAdminCommandDispatcher().
-                handleCommand(new Message(m.getAuthor(), m.getChannelId(), m.getNonce(), m.getAttachments(),
-                        m.getEmbeds(), m.isMentionEveryone(), args, m.getId(), m.getMentions(), m.getTimestamp(),
-                        m.getEditedTimestamp()));
+                handleCommand(msg);
     }
 
     private void mod(MessageContext context, String args) {
