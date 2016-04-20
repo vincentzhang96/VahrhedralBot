@@ -107,7 +107,7 @@ public class Commands {
 
     private void admin(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
-        Message message = context.getMessage();
+        Message m = context.getMessage();
         //  Easter egg
         if ("ku".equalsIgnoreCase(args)) {
             int number = random.nextInt(9) + 1;
@@ -142,10 +142,10 @@ public class Commands {
             return;
         }
         //  Permission check
-        if (!context.getBot().getConfig().isAdmin(message.getAuthor().getId())) {
+        if (!context.getBot().getConfig().isAdmin(m.getAuthor().getId())) {
             if (context.getDispatcher().active().get()) {
                 apiClient.sendMessage(
-                        loc.localize("commands.general.admin.response.reject", message.getAuthor().getUsername()),
+                        loc.localize("commands.general.admin.response.reject", m.getAuthor().getUsername()),
                         context.getChannel());
             }
             return;
@@ -154,8 +154,9 @@ public class Commands {
             args = "help";
         }
         adminCommands.getAdminCommandDispatcher().
-                handleCommand(new Message(message.getAuthor(), message.getChannelId(),
-                        args, message.getId(), message.getMentions(), message.getTimestamp()));
+                handleCommand(new Message(m.getAuthor(), m.getChannelId(), m.getNonce(), m.getAttachments(),
+                        m.getEmbeds(), m.isMentionEveryone(), args, m.getId(), m.getMentions(), m.getTimestamp(),
+                        m.getEditedTimestamp()));
     }
 
     private void mod(MessageContext context, String args) {

@@ -52,6 +52,23 @@ public class Message {
         this.editedTimestamp = editedTimestamp;
     }
 
+    public Message(boolean isPrivateMessage, Attachment[] attachments, User author, String channelId, String content,
+                   String editedTimestamp, Object[] embeds, String id, boolean mentionEveryone, User[] mentions,
+                   String nonce, String timestamp) {
+        this.isPrivateMessage = isPrivateMessage;
+        this.attachments = attachments;
+        this.author = author;
+        this.channelId = channelId;
+        this.content = content;
+        this.editedTimestamp = editedTimestamp;
+        this.embeds = embeds;
+        this.id = id;
+        this.mentionEveryone = mentionEveryone;
+        this.mentions = mentions;
+        this.nonce = nonce;
+        this.timestamp = timestamp;
+    }
+
     public Message(User author, String channelId, String content, String id, User[] mentions, String timestamp) {
         this(author, channelId, null, null, null, false, content, id, mentions, timestamp, null);
     }
