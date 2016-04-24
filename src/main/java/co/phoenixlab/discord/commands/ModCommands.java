@@ -115,7 +115,12 @@ public class ModCommands {
         if (context.getServer() == null || context.getServer() == NO_SERVER) {
             return;
         }
-        TempServerConfig config = serverStorage.get(context.getServer().getId());
+        String serverId = context.getServer().getId();
+        TempServerConfig config = serverStorage.get(serverId);
+        if (config == null) {
+            config = new TempServerConfig(serverId);
+            serverStorage.put(serverId, config);
+        }
         Channel channel = context.getChannel();
         if (args.isEmpty() || args.equalsIgnoreCase("none")) {
             config.setCustomWelcomeMessage("");
