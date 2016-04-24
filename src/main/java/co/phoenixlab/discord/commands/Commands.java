@@ -185,7 +185,7 @@ public class Commands {
                 m.getEmbeds(), m.isMentionEveryone(), args, m.getId(), m.getMentions(), m.getTimestamp(),
                 m.getEditedTimestamp());
         msg.setPrivateMessage(m.isPrivateMessage());
-        adminCommands.getAdminCommandDispatcher().
+        modCommands.getModCommandDispatcher().
                 handleCommand(msg);
     }
 
