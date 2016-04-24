@@ -163,7 +163,7 @@ public class Commands {
 
     private void mod(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
-        Message message = context.getMessage();
+        Message m = context.getMessage();
         User author = context.getAuthor();
         Server server = context.getServer();
 
@@ -171,18 +171,22 @@ public class Commands {
             apiClient.sendMessage(loc.localize("commands.common.cannot_use_private_message"), context.getChannel());
             return;
         }
-
-        if (!checkPermission(CHAT_MANAGE_MESSAGES, apiClient.getUserMember(author, server), server, apiClient)) {
-            apiClient.sendMessage(loc.localize("commands.general.mod.response.reject", author.getUsername()),
-                    context.getChannel());
-            return;
+        if (!context.getBot().getConfig().isAdmin(m.getAuthor().getId())) {
+            if (!checkPermission(CHAT_MANAGE_MESSAGES, apiClient.getUserMember(author, server), server, apiClient)) {
+                apiClient.sendMessage(loc.localize("commands.general.mod.response.reject", author.getUsername()),
+                        context.getChannel());
+                return;
+            }
         }
         if (args.isEmpty()) {
             args = "help";
         }
-        modCommands.getModCommandDispatcher().
-                handleCommand(new Message(message.getAuthor(), message.getChannelId(),
-                        args, message.getId(), message.getMentions(), message.getTimestamp()));
+        Message msg = new Message(m.getAuthor(), m.getChannelId(), m.getNonce(), m.getAttachments(),
+                m.getEmbeds(), m.isMentionEveryone(), args, m.getId(), m.getMentions(), m.getTimestamp(),
+                m.getEditedTimestamp());
+        msg.setPrivateMessage(m.isPrivateMessage());
+        adminCommands.getAdminCommandDispatcher().
+                handleCommand(msg);
     }
 
     private void listAdmins(MessageContext context, String s) {
