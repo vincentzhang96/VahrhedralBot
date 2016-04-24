@@ -8,6 +8,8 @@ public class TempServerConfig {
 
     private String voiceLogChannelId;
 
+    private String customWelcomeMessage;
+
     public TempServerConfig() {
     }
 
@@ -43,5 +45,13 @@ public class TempServerConfig {
 
     public void setServerId(String serverId) {
         this.serverId = serverId;
+    }
+
+    public String getCustomWelcomeMessage() {
+        return customWelcomeMessage;
+    }
+
+    public void setCustomWelcomeMessage(String customWelcomeMessage) {
+        this.customWelcomeMessage = customWelcomeMessage;
     }
 }

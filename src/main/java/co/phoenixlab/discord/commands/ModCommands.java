@@ -3,6 +3,7 @@ package co.phoenixlab.discord.commands;
 import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.CommandDispatcher;
+import co.phoenixlab.discord.EventListener;
 import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.VahrhedralBot;
 import co.phoenixlab.discord.api.ApiConst;
@@ -104,9 +105,31 @@ public class ModCommands {
         d.registerAlwaysActiveCommand("commands.mod.vanish", this::vanish);
         d.registerAlwaysActiveCommand("commands.mod.ban", this::ban);
         d.registerAlwaysActiveCommand("commands.mod.jl", this::joinLeave);
+        d.registerAlwaysActiveCommand("commands.mod.welcome", this::setWelcome);
 
         EventBus eventBus = bot.getApiClient().getEventBus();
         eventBus.register(new WeakEventSubscriber<>(memberJoinListener, eventBus, MemberChangeEvent.class));
+    }
+
+    private void setWelcome(MessageContext context, String args) {
+        if (context.getServer() == null || context.getServer() == NO_SERVER) {
+            return;
+        }
+        TempServerConfig config = serverStorage.get(context.getServer().getId());
+        Channel channel = context.getChannel();
+        if (args.isEmpty() || args.equalsIgnoreCase("none")) {
+            config.setCustomWelcomeMessage("");
+            apiClient.sendMessage(loc.localize("commands.mod.welcome.response.none"), channel);
+        } else if (args.equalsIgnoreCase("default")) {
+            config.setCustomWelcomeMessage(null);
+            apiClient.sendMessage(loc.localize("commands.mod.welcome.response.default"), channel);
+        } else {
+            config.setCustomWelcomeMessage(args);
+            apiClient.sendMessage(loc.localize("commands.mod.welcome.response.set",
+                    EventListener.createWelcomeMessage(context.getAuthor(), context.getServer(), args)),
+                    channel);
+        }
+        saveServerConfig(config);
     }
 
     private void joinLeave(MessageContext context, String args) {
@@ -947,5 +970,9 @@ public class ModCommands {
             joiner.add(loc.localize("time.seconds", seconds));
         }
         return joiner.toString();
+    }
+
+    public Map<String, TempServerConfig> getServerStorage() {
+        return serverStorage;
     }
 }

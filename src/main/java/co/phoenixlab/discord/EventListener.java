@@ -1,8 +1,10 @@
 package co.phoenixlab.discord;
 
+import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.*;
+import co.phoenixlab.discord.commands.tempstorage.TempServerConfig;
 import com.google.common.eventbus.Subscribe;
 
 import java.time.ZonedDateTime;
@@ -217,6 +219,13 @@ public class EventListener {
         if (channel == DiscordApiClient.NO_CHANNEL) {
             return;
         }
+        String cid = channel.getId();
+        if (joinMessageRedirect.containsKey(server.getId())) {
+            cid = joinMessageRedirect.get(server.getId());
+        }
+
+
+
         String key;
         if (event.getMemberChange() == MemberChangeEvent.MemberChange.ADDED) {
             key = "message.new_member.response";
@@ -225,18 +234,7 @@ public class EventListener {
         } else {
             return;
         }
-        String cid = channel.getId();
-        if (joinMessageRedirect.containsKey(server.getId())) {
-            cid = joinMessageRedirect.get(server.getId());
-        }
         User user = event.getMember().getUser();
-        bot.getApiClient().sendMessage(bot.getLocalizer().localize(key,
-                user.getUsername(),
-                user.getId(),
-                user.getDiscriminator(),
-                DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())),
-                cid);
-
         //  167264528537485312 dnnacd #activity-log
         //  avoid duplicates
         if (event.getServer().getId().equals("106293726271246336") && !"167264528537485312".equals(cid)) {
@@ -247,7 +245,33 @@ public class EventListener {
                     DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())),
                     "167264528537485312");
         }
+        TempServerConfig config = bot.getCommands().getModCommands().getServerStorage().get(server.getId());
+        String customWelcomeMessage = SafeNav.of(config).get(TempServerConfig::getCustomWelcomeMessage);
+        if (event.getMemberChange() == MemberChangeEvent.MemberChange.ADDED && customWelcomeMessage != null) {
+            if (!customWelcomeMessage.isEmpty()) {
+                bot.getApiClient().sendMessage(createWelcomeMessage(user, server, customWelcomeMessage),
+                        cid);
+            }
+        } else {
+            bot.getApiClient().sendMessage(bot.getLocalizer().localize(key,
+                    user.getUsername(),
+                    user.getId(),
+                    user.getDiscriminator(),
+                    DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())),
+                    cid);
+        }
+
         memberChangeEventListener.values().forEach(c -> c.accept(event));
+    }
+
+    public static String createWelcomeMessage(User user, Server server, String fmt) {
+        return fmt.
+                replace("$n", user.getUsername()).
+                replace("$d", user.getDiscriminator()).
+                replace("$i", user.getId()).
+                replace("$s", server.getName()).
+                replace("$t", DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())).
+                replace("$m", "<@" + user.getId() + ">");
     }
 
     public boolean isJoin(MemberChangeEvent event) {
