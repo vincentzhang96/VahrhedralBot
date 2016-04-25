@@ -543,6 +543,12 @@ public class DiscordWebSocketClient extends WebSocketClient {
         } else {
             LOGGER.warn("No presences received on new server");
         }
+        //  need to delete the null named versions
+        for (Iterator<Server> iterator = apiClient.getServers().iterator(); iterator.hasNext();) {
+            if (iterator.next().getId().equals(server.getId())) {
+                iterator.remove();
+            }
+        }
         apiClient.getServers().add(server);
         apiClient.getServerMap().put(server.getId(), server);
         apiClient.requestLargerServerUsers(server);
