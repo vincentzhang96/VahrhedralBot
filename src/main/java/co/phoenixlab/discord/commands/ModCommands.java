@@ -852,6 +852,7 @@ public class ModCommands {
         ServerTimeoutStorage storage;
         try (Reader reader = Files.newBufferedReader(path, UTF_8)) {
             config = gson.fromJson(reader, TempServerConfig.class);
+            serverStorage.put(config.getServerId(), config);
             storage = config.getServerTimeouts();
             if (storage != null) {
                 Server server = apiClient.getServerByID(config.getServerId());
@@ -859,7 +860,6 @@ public class ModCommands {
                     LOGGER.warn("Rejecting {} server storage file: server not found", config.getServerId());
                     return;
                 }
-                serverStorage.put(config.getServerId(), config);
                 LOGGER.info("Loaded {} ({}) server storage file",
                         server.getName(), server.getId(), storage.getTimeoutRoleId());
                 //  Prune expired entries
@@ -918,20 +918,21 @@ public class ModCommands {
         loadServerConfigFiles();
 
         //  Reapply timeouts that may have dropped during downtime
-        serverStorage.forEach((sid, conf) -> {
-            ServerTimeoutStorage st = conf.getServerTimeouts();
-            st.getTimeouts().forEach((uid, t) -> {
-                if (isUserTimedOut(uid, sid)) {
-                    //  Check if the user still has timeout role
-                    Server server = apiClient.getServerByID(sid);
-                    Set<Role> roles = apiClient.getMemberRoles(apiClient.getUserMember(uid, server), server);
-                    Set<String> roleIds = roles.stream().map(Role::getId).collect(Collectors.toSet());
-                    if (!roleIds.contains(st.getTimeoutRoleId())) {
-                        refreshTimeoutOnEvade(apiClient.getUserById(uid, server), server);
-                    }
-                }
-            });
-        });
+        //  Unnecessary and causes other failures?
+//        serverStorage.forEach((sid, conf) -> {
+//            ServerTimeoutStorage st = conf.getServerTimeouts();
+//            st.getTimeouts().forEach((uid, t) -> {
+//                if (isUserTimedOut(uid, sid)) {
+//                    //  Check if the user still has timeout role
+//                    Server server = apiClient.getServerByID(sid);
+//                    Set<Role> roles = apiClient.getMemberRoles(apiClient.getUserMember(uid, server), server);
+//                    Set<String> roleIds = roles.stream().map(Role::getId).collect(Collectors.toSet());
+//                    if (!roleIds.contains(st.getTimeoutRoleId())) {
+//                        refreshTimeoutOnEvade(apiClient.getUserById(uid, server), server);
+//                    }
+//                }
+//            });
+//        });
     }
 
     private String formatInstant(Instant instant) {
