@@ -7,6 +7,7 @@ import co.phoenixlab.discord.api.event.*;
 import co.phoenixlab.discord.commands.tempstorage.TempServerConfig;
 import com.google.common.eventbus.Subscribe;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -182,10 +183,10 @@ public class EventListener {
         Set<User> unique = new HashSet<>();
         Collections.addAll(unique, message.getMentions());
         if (unique.size() > excessiveMentionThreshold) {
-//            bot.getCommands().getModCommands().applyTimeout(bot.getApiClient().getClientUser(), channel,
-//                    server, author, Duration.ofHours(1));
-            bot.getCommands().getModCommands().banImpl(author.getId(), bot.getApiClient().getClientUser().getUsername(),
-                    server.getId(), channel.getId());
+            bot.getCommands().getModCommands().applyTimeout(bot.getApiClient().getClientUser(), channel,
+                    server, author, Duration.ofHours(1));
+//            bot.getCommands().getModCommands().banImpl(author.getId(), author.getUsername(),
+//                    server.getId(), channel.getId());
             bot.getApiClient().sendMessage(String.format("`%s#%s` (%s) has been banned for mention spam",
                     author.getUsername(), author.getDiscriminator(), author.getId()), channel);
         }
