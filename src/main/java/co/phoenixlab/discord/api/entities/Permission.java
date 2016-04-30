@@ -23,7 +23,9 @@ public enum Permission {
     VOICE_MUTE_MEMBERS(22),
     VOICE_DEAFEN_MEMBERS(23),
     VOICE_MOVE_MEMBERS(24),
-    VOICE_USE_VAD(25);
+    VOICE_USE_VAD(25),
+    NICK_CHANGE_NICKNAME(26),
+    NICK_MANAGE_NICKNAMES(27);
 
 
     private final int bitNum;
