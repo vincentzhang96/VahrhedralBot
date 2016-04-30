@@ -424,7 +424,8 @@ public class DiscordWebSocketClient extends WebSocketClient {
         if (server != NO_SERVER) {
             //  Fix missing join date time
             if (member.getJoinedAt() == null) {
-                member = new Member(member.getUser(), member.getRoles(), ZonedDateTime.now().toString());
+                member = new Member(member.getUser(), member.getRoles(), ZonedDateTime.now().toString(),
+                        member.getNick());
             }
             server.getMembers().add(member);
             LOGGER.debug("[{}] '{}': Added {}'s ({}) membership",

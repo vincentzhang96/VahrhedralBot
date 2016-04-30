@@ -23,14 +23,17 @@ public class Member {
     @SerializedName("joined_at")
     private final String joinedAt;
 
-    public Member(User user, List<String> roles, String joinedAt) {
+    private final String nick;
+
+    public Member(User user, List<String> roles, String joinedAt, String nick) {
         this.user = user;
         this.roles = roles;
         this.joinedAt = joinedAt;
+        this.nick = nick;
     }
 
     public Member() {
-        this(null, null, null);
+        this(null, null, null, null);
     }
 
     /**
@@ -49,6 +52,10 @@ public class Member {
 
     public String getJoinedAt() {
         return joinedAt;
+    }
+
+    public String getNick() {
+        return nick;
     }
 
     @Override
