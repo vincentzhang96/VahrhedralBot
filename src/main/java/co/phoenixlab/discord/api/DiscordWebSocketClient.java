@@ -380,6 +380,11 @@ public class DiscordWebSocketClient extends WebSocketClient {
         String serverId = (String) data.get("guild_id");
         Server server = apiClient.getServerByID(serverId);
         if (server != NO_SERVER) {
+            Member oldMember = apiClient.getUserMember(member.getUser(), server);
+            String oldNickname = null;
+            if (oldMember != null) {
+                oldNickname = oldMember.getNick();
+            }
             server.getMembers().remove(member);
             server.getMembers().add(member);
             LOGGER.debug("[{}] '{}': Updated {}'s ({}) membership",
