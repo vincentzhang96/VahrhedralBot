@@ -386,7 +386,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
                     server.getId(), server.getName(),
                     member.getUser().getUsername(), member.getUser().getId());
             apiClient.getEventBus().post(new MemberChangeEvent(member, server,
-                    MemberChangeEvent.MemberChange.UPDATED));
+                    MemberChangeEvent.MemberChange.UPDATED, oldNickname));
         } else {
             LOGGER.warn("[{}] '': Orphan member update received, ignored (userid={} username={})",
                     serverId,

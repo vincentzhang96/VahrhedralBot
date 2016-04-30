@@ -8,11 +8,17 @@ public class MemberChangeEvent {
     private final Member member;
     private final Server server;
     private final MemberChange memberChange;
+    private final String oldNickname;
 
     public MemberChangeEvent(Member member, Server server, MemberChange memberChange) {
+        this(member,  server,  memberChange,  null);
+    }
+
+    public MemberChangeEvent(Member member, Server server, MemberChange memberChange, String oldNickname) {
         this.member = member;
         this.server = server;
         this.memberChange = memberChange;
+        this.oldNickname = oldNickname;
     }
 
     public Member getMember() {
@@ -25,6 +31,10 @@ public class MemberChangeEvent {
 
     public MemberChange getMemberChange() {
         return memberChange;
+    }
+
+    public String getOldNickname() {
+        return oldNickname;
     }
 
     public enum MemberChange {
