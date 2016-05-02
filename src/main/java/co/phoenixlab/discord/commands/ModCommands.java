@@ -232,8 +232,9 @@ public class ModCommands {
 
             int limit = numMsgs;
             String before = message.getId();
-            int sleepTime = 50;
             //  Limit search to 5 pages (250 msgs)
+            //  Instead of deleting them when we find them, we build a list instead
+            List<String> messagesToDelete = new ArrayList<>(limit);
             for (int k = 0; k < 5 && limit > 0; k++) {
                 Map<String, String> headers = new HashMap<>();
                 headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
@@ -252,8 +253,7 @@ public class ModCommands {
                         JSONObject msg = ret.getJSONObject(i);
                         String mid = msg.getString("id");
                         before = mid;
-                        apiClient.deleteMessage(context.getChannel().getId(), mid);
-                        Thread.sleep(sleepTime);  //  Slow down to not flood discord
+                        messagesToDelete.add(mid);
                         limit--;
                     }
                 } else {
@@ -264,13 +264,24 @@ public class ModCommands {
                         String uid = msgUsr.getString("id");
                         before = mid;
                         if (userId.equals(uid)) {
-                            apiClient.deleteMessage(context.getChannel().getId(), mid);
-                            Thread.sleep(sleepTime);  //  Slow down to not flood discord
+                            messagesToDelete.add(mid);
                             limit--;
                         }
                     }
                 }
-                Thread.sleep(sleepTime); //  Slow down between page requests
+            }
+            long sleepTime;
+            //  Rate limit is 5 per 5 seconds per channel
+            //  So if we're under 5, just go ahead and blast it
+            //  Otherwise we'll need to space out our deletes
+            if (messagesToDelete.size() <= 5) {
+                sleepTime = 0L;
+            } else {
+                sleepTime = 1050L;  //  Add 50ms just to be safe
+            }
+            for (String mid : messagesToDelete) {
+                apiClient.deleteMessage(context.getChannel().getId(), mid);
+                Thread.sleep(sleepTime);
             }
         } catch (Exception e) {
             LOGGER.warn("Unable to get messages", e);
