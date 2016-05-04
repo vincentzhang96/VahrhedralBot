@@ -277,7 +277,7 @@ public class ModCommands {
             if (messagesToDelete.size() <= 5) {
                 sleepTime = 0L;
             } else {
-                sleepTime = 20L;
+                sleepTime = 200L;
             }
             for (String mid : messagesToDelete) {
                 apiClient.deleteMessage(context.getChannel().getId(), mid);
