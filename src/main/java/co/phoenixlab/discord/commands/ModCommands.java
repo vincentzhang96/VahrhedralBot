@@ -271,13 +271,13 @@ public class ModCommands {
                 }
             }
             long sleepTime;
-            //  Rate limit is 5 per 5 seconds per channel
+            //  Rate limit is 5 per 1 second per server
             //  So if we're under 5, just go ahead and blast it
             //  Otherwise we'll need to space out our deletes
             if (messagesToDelete.size() <= 5) {
                 sleepTime = 0L;
             } else {
-                sleepTime = 1050L;  //  Add 50ms just to be safe
+                sleepTime = 20L;
             }
             for (String mid : messagesToDelete) {
                 apiClient.deleteMessage(context.getChannel().getId(), mid);
