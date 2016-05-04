@@ -22,12 +22,10 @@ public class CommandDispatcher {
     private final VahrhedralBot bot;
 
     private final Map<String, CommandWrapper> commands;
-
+    private final Statistics statistics;
     private AtomicBoolean active;
-
     private String commandPrefix;
     private BiPredicate<CommandWrapper, MessageContext> customCommandDispatchChecker;
-    private final Statistics statistics;
 
     public CommandDispatcher(VahrhedralBot bot, String commandPrefix) {
         this.bot = bot;
@@ -62,22 +60,33 @@ public class CommandDispatcher {
             showDetailedCommandHelp(context, args, l);
             return;
         }
-        String header = l.localize("commands.help.response.head", commands.size());
-        StringJoiner joiner = new StringJoiner("\n", header, "");
-        for (Map.Entry<String, CommandWrapper> entry : commands.entrySet()) {
-            joiner.add(l.localize("commands.help.response.entry",
-                    commandPrefix, entry.getKey().toLowerCase(), entry.getValue().helpDesc));
-        }
-        final String result = joiner.toString();
+        LongAdder adder = new LongAdder();
+        StringJoiner joiner = new StringJoiner("\n", "", "");
+        commands.entrySet().stream().
+                filter(entry -> !entry.getValue().hidden).
+                forEach(entry -> {
+                    joiner.add(l.localize("commands.help.response.entry",
+                            commandPrefix, entry.getKey().toLowerCase(), entry.getValue().helpDesc));
+                    adder.increment();
+                });
+
+        String header = l.localize("commands.help.response.head", adder.intValue());
+        final String result = header + joiner.toString();
         context.getApiClient().sendMessage(result, context.getChannel());
     }
 
     private void showDetailedCommandHelp(MessageContext context, String args, Localizer l) {
         CommandWrapper wrapper = commands.get(args.toUpperCase());
         if (wrapper != null) {
-            context.getApiClient().sendMessage(l.localize("commands.help.response.detailed",
-                    args, wrapper.detailedHelp, wrapper.argumentsHelp),
-                    context.getChannel());
+            if (wrapper.examples != null) {
+                context.getApiClient().sendMessage(l.localize("commands.help.response.detailed.examples",
+                        args, wrapper.detailedHelp, wrapper.argumentsHelp, wrapper.examples),
+                        context.getChannel());
+            } else {
+                context.getApiClient().sendMessage(l.localize("commands.help.response.detailed",
+                        args, wrapper.detailedHelp, wrapper.argumentsHelp),
+                        context.getChannel());
+            }
         } else {
             context.getApiClient().sendMessage(l.localize("commands.help.response.not_found",
                     args),
@@ -85,25 +94,42 @@ public class CommandDispatcher {
         }
     }
 
+
     public void registerCommand(String commandNameBaseKey, Command command) {
+        registerCommand(commandNameBaseKey, command, false);
+    }
+
+    public void registerCommand(String commandNameBaseKey, Command command, boolean hidden) {
         Localizer localizer = bot.getLocalizer();
         String commandStr = localizer.localize(commandNameBaseKey + ".command").toUpperCase();
         String helpStr = localizer.localize(commandNameBaseKey + ".help");
         String detailedHelpStr = localizer.localize(commandNameBaseKey + ".detailed_help");
         String argumentsStr = localizer.localize(commandNameBaseKey + ".arguments");
+        String examplesStr = null;
+        if (localizer.containsKey(commandNameBaseKey + ".examples")) {
+            examplesStr = localizer.localize(commandNameBaseKey + ".examples");
+        }
         commands.put(commandStr, new CommandWrapper(command,
-                helpStr, detailedHelpStr, argumentsStr));
+                helpStr, detailedHelpStr, argumentsStr, examplesStr, false, hidden));
         LOGGER.debug("Registered command \"{}\"", commandNameBaseKey);
     }
 
     public void registerAlwaysActiveCommand(String commandNameBaseKey, Command command) {
+        registerAlwaysActiveCommand(commandNameBaseKey, command, false);
+    }
+
+    public void registerAlwaysActiveCommand(String commandNameBaseKey, Command command, boolean hidden) {
         Localizer localizer = bot.getLocalizer();
         String commandStr = localizer.localize(commandNameBaseKey + ".command").toUpperCase();
         String helpStr = localizer.localize(commandNameBaseKey + ".help");
         String detailedHelpStr = localizer.localize(commandNameBaseKey + ".detailed_help");
         String argumentsStr = localizer.localize(commandNameBaseKey + ".arguments");
+        String examplesStr = null;
+        if (localizer.containsKey(commandNameBaseKey + ".examples")) {
+            examplesStr = localizer.localize(commandNameBaseKey + ".examples");
+        }
         commands.put(commandStr, new CommandWrapper(command,
-                helpStr, detailedHelpStr, argumentsStr, true));
+                helpStr, detailedHelpStr, argumentsStr, examplesStr, true, hidden));
         LOGGER.debug("Registered command \"{}\"", commandNameBaseKey);
     }
 
@@ -206,18 +232,25 @@ public class CommandDispatcher {
         final String helpDesc;
         final String detailedHelp;
         final String argumentsHelp;
+        final String examples;
         final boolean alwaysActive;
+        final boolean hidden;
 
-        public CommandWrapper(Command command, String helpDesc, String detailedHelp, String argumentsHelp) {
-            this(command, helpDesc, detailedHelp, argumentsHelp, false);
+        public CommandWrapper(Command command, String helpDesc, String detailedHelp, String argumentsHelp,
+                              String examples) {
+            this(command, helpDesc, detailedHelp, argumentsHelp, examples, false, false);
         }
 
-        public CommandWrapper(Command command, String helpDesc, String detailedHelp, String argumentsHelp, boolean alwaysActive) {
+        public CommandWrapper(Command command, String helpDesc, String detailedHelp, String argumentsHelp,
+                              String examples,
+                              boolean alwaysActive, boolean hidden) {
             this.command = command;
             this.helpDesc = helpDesc;
             this.detailedHelp = detailedHelp;
             this.argumentsHelp = argumentsHelp;
+            this.examples = examples;
             this.alwaysActive = alwaysActive;
+            this.hidden = hidden;
         }
 
     }
