@@ -16,6 +16,7 @@ import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
 import org.java_websocket.client.DefaultSSLWebSocketClientFactory;
+import org.json.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -405,7 +406,7 @@ public class DiscordApiClient {
     }
 
     public void deleteMessage(String channelId, String messageId) {
-        deleteMessage(messageId, channelId, true);
+        deleteMessage(channelId, messageId, true);
     }
 
     public void deleteMessage(String channelId, String messageId, boolean async) {
@@ -414,7 +415,7 @@ public class DiscordApiClient {
         }
 
         if (async) {
-            executorService.submit(() -> deleteMessage(messageId, channelId, false));
+            executorService.submit(() -> deleteMessage(channelId, messageId, false));
             return;
         }
 
@@ -435,6 +436,47 @@ public class DiscordApiClient {
             statistics.restErrorCount.increment();
             LOGGER.warn("Unable to delete message: HTTP {}: {}", status, response.getStatusText());
             return;
+        }
+    }
+
+    public void bulkDeleteMessages(String channelId, String[] messageIds) {
+        bulkDeleteMessages(channelId, messageIds, true);
+    }
+
+    public void bulkDeleteMessages(String channelId, String[] messageIds, boolean async) {
+        if (channelId == null || messageIds == null) {
+            return;
+        }
+
+        if (async) {
+            executorService.submit(() -> bulkDeleteMessages(channelId, messageIds, false));
+            return;
+        }
+
+        HttpResponse<String> response;
+        Map<String, String> headers = new HashMap<>();
+        headers.put(HttpHeaders.AUTHORIZATION, token);
+        headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+        org.json.JSONObject body = new org.json.JSONObject();
+        body.put("messages", new JSONArray(messageIds));
+        try {
+            String url = ApiConst.CHANNELS_ENDPOINT + channelId + "/messages/bulk_delete";
+            System.out.println(url);
+            response = Unirest.post(url).
+                    headers(headers).
+                    body(body.toString()).
+                    asString();
+        } catch (UnirestException e) {
+            statistics.restErrorCount.increment();
+            LOGGER.warn("Unable to delete messages", e);
+            return;
+        }
+        int status = response.getStatus();
+        if (status != 204) {
+            statistics.restErrorCount.increment();
+            LOGGER.warn("Unable to delete messages: HTTP {}: {}: {}", status, response.getStatusText(), response.getBody());
+        } else {
+            LOGGER.info("Bulk deleted {} messages", messageIds.length);
         }
     }
 

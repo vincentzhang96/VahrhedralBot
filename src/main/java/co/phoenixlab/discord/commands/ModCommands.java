@@ -212,6 +212,8 @@ public class ModCommands {
         }
 
         try {
+            final int cap = 100;
+            final int capPages = 10;
             String[] vals = args.split(" ");
             String userId;
             int numMsgs;
@@ -221,10 +223,10 @@ public class ModCommands {
                 if (user == NO_USER) {
                     userId = vals[0];
                 }
-                numMsgs = Math.max(1, Math.min(50, Integer.parseInt(vals[1])));
+                numMsgs = Math.max(1, Math.min(cap, Integer.parseInt(vals[1])));
             } else if (vals.length == 1) {
                 userId = "";
-                numMsgs = Math.max(1, Math.min(50, Integer.parseInt(vals[0])));
+                numMsgs = Math.max(1, Math.min(cap, Integer.parseInt(vals[0])));
             } else {
                 userId = "";
                 numMsgs = 10;
@@ -232,10 +234,10 @@ public class ModCommands {
 
             int limit = numMsgs;
             String before = message.getId();
-            //  Limit search to 5 pages (250 msgs)
+            //  Limit search to 10 pages (500 msgs)
             //  Instead of deleting them when we find them, we build a list instead
             List<String> messagesToDelete = new ArrayList<>(limit);
-            for (int k = 0; k < 5 && limit > 0; k++) {
+            for (int k = 0; k < capPages && limit > 0; k++) {
                 Map<String, String> headers = new HashMap<>();
                 headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
                 headers.put(HttpHeaders.AUTHORIZATION, apiClient.getToken());
@@ -270,19 +272,10 @@ public class ModCommands {
                     }
                 }
             }
-            long sleepTime;
-            //  Rate limit is 5 per 1 second per server
-            //  So if we're under 5, just go ahead and blast it
-            //  Otherwise we'll need to space out our deletes
-            if (messagesToDelete.size() <= 5) {
-                sleepTime = 0L;
-            } else {
-                sleepTime = 200L;
-            }
-            for (String mid : messagesToDelete) {
-                apiClient.deleteMessage(context.getChannel().getId(), mid);
-                Thread.sleep(sleepTime);
-            }
+            LOGGER.info("Deleting {} messages", messagesToDelete.size());
+            //  Using bulk delete endpoint
+            apiClient.bulkDeleteMessages(context.getChannel().getId(),
+                    messagesToDelete.toArray(new String[messagesToDelete.size()]));
         } catch (Exception e) {
             LOGGER.warn("Unable to get messages", e);
         }
