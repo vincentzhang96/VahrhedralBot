@@ -211,7 +211,7 @@ public class DnCommands {
                 double eMHp = rawHp / (1D - (mDef / 100D));
 
                 apiClient.sendMessage(loc.localize("commands.dn.defense.response.format",
-                        def, mDef, (long) eDHp, (long) eMHp, level),
+                        def, mDef, (long) eDHp, (long) eMHp, level, (int) getDefCap(level)),
                         context.getChannel());
 
                 return;
@@ -223,8 +223,7 @@ public class DnCommands {
                 context.getChannel());
     }
 
-    private double calculateDef(double def, int level) {
-        double defPercent;
+    private double getDefCap(int level) {
         double defCap;
         if (level % 10 == 0) {
             defCap = defenseCaps[level / 10 - 1];
@@ -233,7 +232,12 @@ public class DnCommands {
             double high = defenseCaps[level / 10];
             defCap = lerp(low, high, (level % 10) / 10D);
         }
-        defPercent = def / defCap;
+        return defCap;
+    }
+
+    private double calculateDef(double def, int level) {
+        double defPercent;
+        defPercent = def / getDefCap(level);
         defPercent = Math.max(0, Math.min(DEFENSE_MAX_PERCENT, defPercent)) * 100D;
         return defPercent;
     }
