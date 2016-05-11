@@ -11,19 +11,21 @@ import co.phoenixlab.discord.api.entities.Message;
 
 public class DnCommands {
 
-    public static final double DEFENSE_80_SCALAR = 0.0009326D;
-    public static final double DEFENSE_90_SCALAR = 0.0006D;
-    public static final double DEFENSE_80_CONSTANT = 0.0037D;
-    public static final double DEFENSE_90_CONSTANT = 0D;
     public static final double DEFENSE_MAX_PERCENT = 85D;
-    public static final int CRIT_80_CAP = 127685;
-    public static final int CRIT_90_CAP = 235880;
-    public static final int CRITDMG_80_CAP = 431970;
-    public static final int CRITDMG_90_CAP = 671160;
     public static final double CRITDMG_MAX_PERCENT = 1D;
     public static final double CRIT_MAX_PERCENT = 0.89D;
-    public static final int[] fdCaps = {
+    public static final double FD_MAX_PERCENT = 1D;
+    public static final double[] fdCaps = {
             300, 420, 600, 850, 1290, 1850, 2974, 4520, 6367, 8622
+    };
+    public static final double[] defenseCaps = {
+            3000, 4200, 6000, 8400, 15000, 29250, 68186, 106722, 165816, 233730, 443058
+    };
+    public static final double[] critCaps = {
+            4000, 5600, 8000, 11200, 20000, 37200, 68800, 127685, 236880, 367290, 776790
+    };
+    public static final double[] critDmgCaps = {
+            10600, 14840, 21200, 29680, 50350, 103350, 211337, 431970, 671160, 832524, 1075998
     };
 
     private final CommandDispatcher dispatcher;
@@ -53,22 +55,34 @@ public class DnCommands {
         args = args.replace(",", "");
         String[] split = args.split(" ");
         if (split.length >= 1) {
+            if ("bdo".equalsIgnoreCase(split[0])) {
+                apiClient.sendMessage("**Level -1 Final Damage:** `-1.0%` <#158252528885039104>", context.getChannel());
+                return;
+            }
             int crit = (int) parseStat(split[0]);
             int level = 80;
             if (split.length >= 2) {
                 level = ParseInt.parseOrDefault(split[1], level);
             }
-            if (level < 80 || level > 90) {
+            if (level < 10 || level > 100) {
                 apiClient.sendMessage(loc.localize("commands.dn.crit.response.level_out_of_range",
-                        80, 90),
+                        10, 100),
                         context.getChannel());
                 return;
             }
-            double alpha = (double)(level - 80) / 10D;
-            double percent = crit / (lerp(CRIT_80_CAP, CRIT_90_CAP, alpha));
-            percent = Math.max(0, Math.min(CRIT_MAX_PERCENT, percent)) * 100D;
+            double critPercent;
+            double critCap;
+            if (level % 10 == 0) {
+                critCap = critCaps[level / 10 - 1];
+            } else {
+                double low = critCaps[level / 10 - 1];
+                double high = critCaps[level / 10];
+                critCap = lerp(low, high, (level % 10) / 10D);
+            }
+            critPercent = crit / critCap;
+            critPercent = Math.max(0, Math.min(CRIT_MAX_PERCENT, critPercent)) * 100D;
             apiClient.sendMessage(loc.localize("commands.dn.crit.response.format",
-                    level, percent),
+                    level, critPercent, critCap),
                     context.getChannel());
             return;
         }
@@ -83,22 +97,34 @@ public class DnCommands {
         args = args.replace(",", "");
         String[] split = args.split(" ");
         if (split.length >= 1) {
-            int crit = (int) parseStat(split[0]);
+            if ("bdo".equalsIgnoreCase(split[0])) {
+                apiClient.sendMessage("**Level -1 Final Damage:** `-1.0%` <#158252528885039104>", context.getChannel());
+                return;
+            }
+            int critdmg = (int) parseStat(split[0]);
             int level = 80;
             if (split.length >= 2) {
                 level = ParseInt.parseOrDefault(split[1], level);
             }
-            if (level < 80 || level > 90) {
+            if (level < 10 || level > 100) {
                 apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.level_out_of_range",
-                        80, 90),
+                        10, 100),
                         context.getChannel());
                 return;
             }
-            double alpha = (double)(level - 80) / 10D;
-            double percent = crit / (lerp(CRITDMG_80_CAP, CRITDMG_90_CAP, alpha));
-            percent = Math.max(0, Math.min(CRITDMG_MAX_PERCENT, percent)) * 100D + 200D;
+            double critDmgPercent;
+            double critDmgCap;
+            if (level % 10 == 0) {
+                critDmgCap = critDmgCaps[level / 10 - 1];
+            } else {
+                double low = critDmgCaps[level / 10 - 1];
+                double high = critDmgCaps[level / 10];
+                critDmgCap = lerp(low, high, (level % 10) / 10D);
+            }
+            critDmgPercent = critdmg / critDmgCap;
+            critDmgPercent = Math.max(0, Math.min(CRITDMG_MAX_PERCENT, critDmgPercent)) * 100D + 200D;
             apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.format",
-                    level, percent),
+                    level, critDmgPercent, critDmgCap),
                     context.getChannel());
             return;
         }
@@ -129,21 +155,21 @@ public class DnCommands {
                 return;
             }
             double fdPercent;
-            int fdCap;
+            double fdCap;
             if (level % 10 == 0) {
                 fdCap = fdCaps[level / 10 - 1];
             } else {
-                int low = fdCaps[level / 10 - 1];
-                int high = fdCaps[level / 10];
-                fdCap = (int) lerp(low, high, (level % 10) / 10D);
+                double low = fdCaps[level / 10 - 1];
+                double high = fdCaps[level / 10];
+                fdCap = lerp(low, high, (level % 10) / 10D);
             }
-            double ratio = (double) fd / fdCap;
+            double ratio = fd / fdCap;
             if (ratio < 0.417D) {
                 fdPercent = (0.35D * fd) / fdCap;
             } else {
-                fdPercent = Math.pow((double) fd / fdCap, 2.2D);
+                fdPercent = Math.pow(fd / fdCap, 2.2D);
             }
-            fdPercent = Math.max(0, Math.min(100D, fdPercent * 100));
+            fdPercent = Math.max(0, Math.min(FD_MAX_PERCENT, fdPercent)) * 100D;
             apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.format",
                     level, fdPercent, fdCap),
                     context.getChannel());
@@ -172,17 +198,14 @@ public class DnCommands {
                 if (split.length >= 4) {
                     level = ParseInt.parseOrDefault(split[3], level);
                 }
-                double def = calculateDef(rawDef, level);
-                double mDef = calculateDef(rawMDef, level);
-                if (def < 0 || mDef < 0) {
+                if (level < 10 || level > 100) {
                     apiClient.sendMessage(loc.localize("commands.dn.defense.response.level_out_of_range",
-                            80, 90),
+                            10, 100),
                             context.getChannel());
                     return;
                 }
-                //  Cap defense is 85%
-                def = Math.min(def, DEFENSE_MAX_PERCENT);
-                mDef = Math.min(mDef, DEFENSE_MAX_PERCENT);
+                double def = calculateDef(rawDef, level);
+                double mDef = calculateDef(rawMDef, level);
 
                 double eDHp = rawHp / (1D - (def / 100D));
                 double eMHp = rawHp / (1D - (mDef / 100D));
@@ -201,13 +224,18 @@ public class DnCommands {
     }
 
     private double calculateDef(double def, int level) {
-        if (level < 80 || level > 90) {
-            return -1;
+        double defPercent;
+        double defCap;
+        if (level % 10 == 0) {
+            defCap = defenseCaps[level / 10 - 1];
+        } else {
+            double low = defenseCaps[level / 10 - 1];
+            double high = defenseCaps[level / 10];
+            defCap = lerp(low, high, (level % 10) / 10D);
         }
-        double alpha = (double)(level - 80) / 10D;
-        double scalar = lerp(DEFENSE_80_SCALAR, DEFENSE_90_SCALAR, alpha);
-        double constant = lerp(DEFENSE_80_CONSTANT, DEFENSE_90_CONSTANT, alpha);
-        return scalar * def + constant;
+        defPercent = def / defCap;
+        defPercent = Math.max(0, Math.min(DEFENSE_MAX_PERCENT, defPercent)) * 100D;
+        return defPercent;
     }
 
     private double lerp(double a, double b, double alpha) {
