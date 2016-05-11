@@ -82,7 +82,7 @@ public class DnCommands {
             critPercent = crit / critCap;
             critPercent = Math.max(0, Math.min(CRIT_MAX_PERCENT, critPercent)) * 100D;
             apiClient.sendMessage(loc.localize("commands.dn.crit.response.format",
-                    level, critPercent, critCap),
+                    level, critPercent, (int) critCap),
                     context.getChannel());
             return;
         }
@@ -124,7 +124,7 @@ public class DnCommands {
             critDmgPercent = critdmg / critDmgCap;
             critDmgPercent = Math.max(0, Math.min(CRITDMG_MAX_PERCENT, critDmgPercent)) * 100D + 200D;
             apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.format",
-                    level, critDmgPercent, critDmgCap),
+                    level, critDmgPercent, (int) critDmgCap),
                     context.getChannel());
             return;
         }
@@ -171,7 +171,7 @@ public class DnCommands {
             }
             fdPercent = Math.max(0, Math.min(FD_MAX_PERCENT, fdPercent)) * 100D;
             apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.format",
-                    level, fdPercent, fdCap),
+                    level, fdPercent, (int) fdCap),
                     context.getChannel());
             return;
         }
