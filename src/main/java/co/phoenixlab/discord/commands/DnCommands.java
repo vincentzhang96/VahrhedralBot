@@ -30,13 +30,52 @@ public class DnCommands {
             9644.0, 10300.0, 10955.0, 11611.0, 12266.0, 12922.0
     };
     public static final double[] defenseCaps = {
-            3000, 4200, 6000, 8400, 15000, 29250, 68186, 106722, 165816, 233730, 443058
+            750.0, 870.0, 990.0, 1110.0, 1230.0, 1350.0, 1470.0, 1590.0,
+            1710.0, 1830.0, 1950.0, 2070.0, 2190.0, 2310.0, 2850.0, 3000.0,
+            3150.0, 3300.0, 3450.0, 3600.0, 3750.0, 3900.0, 4050.0, 4200.0,
+            4425.0, 4650.0, 4875.0, 5100.0, 5325.0, 5550.0, 5775.0, 6000.0,
+            6300.0, 6600.0, 6900.0, 7200.0, 7500.0, 7800.0, 8100.0, 8400.0,
+            9000.0, 9600.0, 10200.0, 10800.0, 11475.0, 12150.0, 12825.0,
+            13500.0, 14250.0, 15000.0, 15750.0, 16912.0, 18277.0, 19695.0,
+            21157.0, 22672.0, 24427.0, 26355.0, 28125.0, 29250.0, 30868.0,
+            33056.0, 35685.0, 38771.0, 42331.0, 46383.0, 50943.0, 56137.0,
+            61977.0, 68186.0, 72523.0, 76637.0, 80534.0, 84201.0, 88328.0,
+            92188.0, 95006.0, 99837.0, 104590.0, 106722.0, 112014.0, 117306.0,
+            122598.0, 127890.0, 134064.0, 140238.0, 146412.0, 152586.0,
+            158760.0, 165816.0, 187278.0, 209916.0, 233730.0, 258720.0,
+            286135.0, 314874.0, 344935.0, 376320.0, 409027.0, 443058.0
     };
     public static final double[] critCaps = {
-            4000, 5600, 8000, 11200, 20000, 37200, 68800, 127685, 236880, 367290, 776790
+            1000.0, 1160.0, 1320.0, 1480.0, 1640.0, 1800.0, 1960.0, 2120.0,
+            2280.0, 2440.0, 2600.0, 2760.0, 2920.0, 3080.0, 3800.0, 4000.0,
+            4200.0, 4400.0, 4600.0, 4800.0, 5000.0, 5200.0, 5400.0, 5600.0,
+            5900.0, 6200.0, 6500.0, 6800.0, 7100.0, 7400.0, 7700.0, 8000.0,
+            8400.0, 8800.0, 9200.0, 9600.0, 10000.0, 10400.0, 10800.0, 11200.0,
+            12000.0, 12800.0, 13600.0, 14400.0, 15300.0, 16200.0, 17100.0,
+            18000.0, 19000.0, 20000.0, 21500.0, 23000.0, 24600.0, 26200.0,
+            27900.0, 29600.0, 31400.0, 33200.0, 35200.0, 37200.0, 40200.0,
+            43200.0, 46200.0, 49200.0, 52400.0, 55600.0, 58800.0, 62000.0,
+            65400.0, 68800.0, 74745.0, 80619.0, 86438.0, 92373.0, 98284.0,
+            104245.0, 110176.0, 116008.0, 121899.0, 127685.0, 138684.0, 149565.0,
+            160545.0, 171433.0, 182263.0, 192994.0, 203931.0, 214891.0, 225855.0,
+            236880.0, 277830.0, 321300.0, 367290.0, 415800.0, 468877.0, 524790.0,
+            583537.0, 645120.0, 709537.0, 776790.0
     };
     public static final double[] critDmgCaps = {
-            10600, 14840, 21200, 29680, 50350, 103350, 211337, 431970, 671160, 832524, 1075998
+            2650.0, 3074.0, 3498.0, 3922.0, 4346.0, 4770.0, 5194.0, 5618.0,
+            6042.0, 6466.0, 6890.0, 7314.0, 7738.0, 8162.0, 10070.0, 10600.0,
+            11130.0, 11660.0, 12190.0, 12720.0, 13250.0, 13780.0, 14310.0,
+            14840.0, 15635.0, 16430.0, 17225.0, 18020.0, 18815.0, 19610.0,
+            20405.0, 21200.0, 22260.0, 23320.0, 24380.0, 25440.0, 26500.0,
+            27560.0, 28620.0, 29680.0, 31641.0, 33575.0, 35510.0, 37206.0,
+            39326.0, 41419.0, 43513.0, 45553.0, 47832.0, 50350.0, 55650.0,
+            59757.0, 64580.0, 69589.0, 74756.0, 80109.0, 86310.0, 93121.0,
+            99375.0, 103350.0, 107987.0, 113950.0, 121237.0, 129850.0, 139787.0,
+            151050.0, 163637.0, 177894.0, 193794.0, 211337.0, 228555.0, 245520.0,
+            262220.0, 278587.0, 296902.0, 320100.0, 343263.0, 374976.0, 407979.0,
+            431970.0, 453390.0, 474810.0, 496230.0, 517650.0, 542640.0, 567630.0,
+            592620.0, 617610.0, 642600.0, 671160.0, 769692.0, 801108.0, 832524.0,
+            863940.0, 899283.0, 934626.0, 969969.0, 1005312.0, 1040655.0, 1075998.0
     };
 
     private final CommandDispatcher dispatcher;
@@ -75,9 +114,9 @@ public class DnCommands {
             if (split.length >= 2) {
                 level = ParseInt.parseOrDefault(split[1], level);
             }
-            if (level < 10 || level > 100) {
+            if (level < 1 || level > 100) {
                 apiClient.sendMessage(loc.localize("commands.dn.crit.response.level_out_of_range",
-                        10, 100),
+                        1, 100),
                         context.getChannel());
                 return;
             }
@@ -117,21 +156,14 @@ public class DnCommands {
             if (split.length >= 2) {
                 level = ParseInt.parseOrDefault(split[1], level);
             }
-            if (level < 10 || level > 100) {
+            if (level < 1 || level > 100) {
                 apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.level_out_of_range",
-                        10, 100),
+                        1, 100),
                         context.getChannel());
                 return;
             }
             double critDmgPercent;
-            double critDmgCap;
-            if (level % 10 == 0) {
-                critDmgCap = critDmgCaps[level / 10 - 1];
-            } else {
-                double low = critDmgCaps[level / 10 - 1];
-                double high = critDmgCaps[level / 10];
-                critDmgCap = lerp(low, high, (level % 10) / 10D);
-            }
+            double critDmgCap = critDmgCaps[level - 1];
             critDmgPercent = critdmg / critDmgCap;
             critDmgPercent = Math.max(0, Math.min(CRITDMG_MAX_PERCENT, critDmgPercent)) * 100D + 200D;
             apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.format",
@@ -159,9 +191,9 @@ public class DnCommands {
             if (split.length >= 2) {
                 level = ParseInt.parseOrDefault(split[1], level);
             }
-            if (level < 10 || level > 100) {
+            if (level < 1 || level > 100) {
                 apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.level_out_of_range",
-                        10, 100),
+                        1, 100),
                         context.getChannel());
                 return;
             }
@@ -202,20 +234,21 @@ public class DnCommands {
                 if (split.length >= 4) {
                     level = ParseInt.parseOrDefault(split[3], level);
                 }
-                if (level < 10 || level > 100) {
+                if (level < 1 || level > 100) {
                     apiClient.sendMessage(loc.localize("commands.dn.defense.response.level_out_of_range",
-                            10, 100),
+                            1, 100),
                             context.getChannel());
                     return;
                 }
-                double def = calculateDef(rawDef, level);
-                double mDef = calculateDef(rawMDef, level);
+                double defCap = defenseCaps[level - 1];
+                double def = calculateDef(rawDef, defCap);
+                double mDef = calculateDef(rawMDef, defCap);
 
                 double eDHp = rawHp / (1D - (def / 100D));
                 double eMHp = rawHp / (1D - (mDef / 100D));
 
                 apiClient.sendMessage(loc.localize("commands.dn.defense.response.format",
-                        def, mDef, (long) eDHp, (long) eMHp, level, (int) getDefCap(level)),
+                        def, mDef, (long) eDHp, (long) eMHp, level, (int) defCap),
                         context.getChannel());
 
                 return;
@@ -227,21 +260,9 @@ public class DnCommands {
                 context.getChannel());
     }
 
-    private double getDefCap(int level) {
-        double defCap;
-        if (level % 10 == 0) {
-            defCap = defenseCaps[level / 10 - 1];
-        } else {
-            double low = defenseCaps[level / 10 - 1];
-            double high = defenseCaps[level / 10];
-            defCap = lerp(low, high, (level % 10) / 10D);
-        }
-        return defCap;
-    }
-
-    private double calculateDef(double def, int level) {
+    private double calculateDef(double def, double defCap) {
         double defPercent;
-        defPercent = def / getDefCap(level);
+        defPercent = def / defCap;
         defPercent = Math.max(0, Math.min(DEFENSE_MAX_PERCENT, defPercent)) * 100D;
         return defPercent;
     }
