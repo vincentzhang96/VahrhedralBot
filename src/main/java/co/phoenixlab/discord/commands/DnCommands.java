@@ -121,14 +121,7 @@ public class DnCommands {
                 return;
             }
             double critPercent;
-            double critCap;
-            if (level % 10 == 0) {
-                critCap = critCaps[level / 10 - 1];
-            } else {
-                double low = critCaps[level / 10 - 1];
-                double high = critCaps[level / 10];
-                critCap = lerp(low, high, (level % 10) / 10D);
-            }
+            double critCap = critCaps[level - 1];
             critPercent = crit / critCap;
             critPercent = Math.max(0, Math.min(CRIT_MAX_PERCENT, critPercent)) * 100D;
             apiClient.sendMessage(loc.localize("commands.dn.crit.response.format",
