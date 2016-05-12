@@ -161,7 +161,7 @@ public class DnCommands {
             critDmgPercent = Math.max(0, Math.min(CRITDMG_MAX_PERCENT, critDmgPercent)) * 100D + 200D;
             apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.format",
                     level, critDmgPercent, (int) (critDmgCap * CRITDMG_MAX_PERCENT),
-                    (int) (CRITDMG_MAX_PERCENT * 100D)),
+                    (int) (CRITDMG_MAX_PERCENT * 100D) + 200),
                     context.getChannel());
             return;
         }
