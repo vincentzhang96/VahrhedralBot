@@ -167,31 +167,64 @@ public class DnCommands {
         //  Strip commas
         args = args.replace(",", "");
         String[] split = args.split(" ");
-        if (split.length >= 1) {
-            int fd = (int) parseStat(split[0]);
-            int level = 80;
-            if (split.length >= 2) {
-                level = ParseInt.parseOrDefault(split[1], level);
+        try {
+            if (split.length >= 1) {
+                String quantity = split[0];
+                if (quantity.endsWith("%")) {
+                    double fdPercent = Math.min(Double.parseDouble(quantity.substring(0, quantity.length() - 1)) / 100D,
+                            1D);
+                    if (fdPercent < 0) {
+                        throw new IllegalArgumentException("must be at least 0%");
+                    }
+                    int level = 80;
+                    if (split.length >= 2) {
+                        level = ParseInt.parseOrDefault(split[1], level);
+                    }
+                    if (level < 1 || level > 100) {
+                        apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.level_out_of_range",
+                                1, 100),
+                                context.getChannel());
+                        return;
+                    }
+                    double fd;
+                    if (fdPercent < 0.146D) {
+                        fd = 2.857142857D * fdPercent * fdCaps[level - 1];
+                    } else {
+                        //  Since we know fdPercent must be between 0 and 100, we can't overflow
+                        //noinspection NumericOverflow
+                        fd = fdCaps[level - 1] * Math.pow(fdPercent, 1D / 2.2D);
+                    }
+                    apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.format.required",
+                            level, (int) fd, fdPercent * 100D),
+                            context.getChannel());
+                } else {
+                    int fd = (int) parseStat(quantity);
+                    int level = 80;
+                    if (split.length >= 2) {
+                        level = ParseInt.parseOrDefault(split[1], level);
+                    }
+                    if (level < 1 || level > 100) {
+                        apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.level_out_of_range",
+                                1, 100),
+                                context.getChannel());
+                        return;
+                    }
+                    double fdPercent;
+                    double fdCap = fdCaps[level - 1];
+                    double ratio = fd / fdCap;
+                    if (ratio < 0.417D) {
+                        fdPercent = (0.35D * fd) / fdCap;
+                    } else {
+                        fdPercent = Math.pow(fd / fdCap, 2.2D);
+                    }
+                    fdPercent = Math.max(0, Math.min(FD_MAX_PERCENT, fdPercent)) * 100D;
+                    apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.format",
+                            level, fdPercent, (int) (fdCap * FD_MAX_PERCENT), (int) (FD_MAX_PERCENT * 100D)),
+                            context.getChannel());
+                }
             }
-            if (level < 1 || level > 100) {
-                apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.level_out_of_range",
-                        1, 100),
-                        context.getChannel());
-                return;
-            }
-            double fdPercent;
-            double fdCap = fdCaps[level - 1];
-            double ratio = fd / fdCap;
-            if (ratio < 0.417D) {
-                fdPercent = (0.35D * fd) / fdCap;
-            } else {
-                fdPercent = Math.pow(fd / fdCap, 2.2D);
-            }
-            fdPercent = Math.max(0, Math.min(FD_MAX_PERCENT, fdPercent)) * 100D;
-            apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.format",
-                    level, fdPercent, (int) (fdCap * FD_MAX_PERCENT), (int) (FD_MAX_PERCENT * 100D)),
-                    context.getChannel());
             return;
+        } catch (Exception ignored) {
         }
         apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.invalid",
                 bot.getMainCommandDispatcher().getCommandPrefix()),
