@@ -105,24 +105,47 @@ public class DnCommands {
         args = args.replace(",", "");
         String[] split = args.split(" ");
         if (split.length >= 1) {
-            int crit = (int) parseStat(split[0]);
-            int level = 80;
-            if (split.length >= 2) {
-                level = ParseInt.parseOrDefault(split[1], level);
-            }
-            if (level < 1 || level > 100) {
-                apiClient.sendMessage(loc.localize("commands.dn.crit.response.level_out_of_range",
-                        1, 100),
+            String value = split[0];
+            if (value.endsWith("%")) {
+                double critPercent = Math.min(Double.parseDouble(value.substring(0, value.length() - 1)) / 100D,
+                        CRIT_MAX_PERCENT);
+                if (critPercent < 0) {
+                    throw new IllegalArgumentException("must be at least 0%");
+                }
+                int level = 80;
+                if (split.length >= 2) {
+                    level = ParseInt.parseOrDefault(split[1], level);
+                }
+                if (level < 1 || level > 100) {
+                    apiClient.sendMessage(loc.localize("commands.dn.crit.response.level_out_of_range",
+                            1, 100),
+                            context.getChannel());
+                    return;
+                }
+                double crit = critCaps[level - 1] * critPercent;
+                apiClient.sendMessage(loc.localize("commands.dn.crit.response.format.required",
+                        level, (int) crit, critPercent * 100D),
                         context.getChannel());
-                return;
+            } else {
+                int crit = (int) parseStat(split[0]);
+                int level = 80;
+                if (split.length >= 2) {
+                    level = ParseInt.parseOrDefault(split[1], level);
+                }
+                if (level < 1 || level > 100) {
+                    apiClient.sendMessage(loc.localize("commands.dn.crit.response.level_out_of_range",
+                            1, 100),
+                            context.getChannel());
+                    return;
+                }
+                double critPercent;
+                double critCap = critCaps[level - 1];
+                critPercent = crit / critCap;
+                critPercent = Math.max(0, Math.min(CRIT_MAX_PERCENT, critPercent)) * 100D;
+                apiClient.sendMessage(loc.localize("commands.dn.crit.response.format",
+                        level, critPercent, (int) (critCap * CRIT_MAX_PERCENT), (int) (CRIT_MAX_PERCENT * 100D)),
+                        context.getChannel());
             }
-            double critPercent;
-            double critCap = critCaps[level - 1];
-            critPercent = crit / critCap;
-            critPercent = Math.max(0, Math.min(CRIT_MAX_PERCENT, critPercent)) * 100D;
-            apiClient.sendMessage(loc.localize("commands.dn.crit.response.format",
-                    level, critPercent, (int) (critCap * CRIT_MAX_PERCENT), (int) (CRIT_MAX_PERCENT * 100D)),
-                    context.getChannel());
             return;
         }
         apiClient.sendMessage(loc.localize("commands.dn.crit.response.invalid",
@@ -136,25 +159,48 @@ public class DnCommands {
         args = args.replace(",", "");
         String[] split = args.split(" ");
         if (split.length >= 1) {
-            int critdmg = (int) parseStat(split[0]);
-            int level = 80;
-            if (split.length >= 2) {
-                level = ParseInt.parseOrDefault(split[1], level);
-            }
-            if (level < 1 || level > 100) {
-                apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.level_out_of_range",
-                        1, 100),
+            String value = split[0];
+            if (value.endsWith("%")) {
+                double critDmgPercent = Math.min(Double.parseDouble(value.substring(0, value.length() - 1)) / 100D - 2D,
+                        CRITDMG_MAX_PERCENT);
+                if (critDmgPercent < 0) {
+                    throw new IllegalArgumentException("must be at least 0%");
+                }
+                int level = 80;
+                if (split.length >= 2) {
+                    level = ParseInt.parseOrDefault(split[1], level);
+                }
+                if (level < 1 || level > 100) {
+                    apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.level_out_of_range",
+                            1, 100),
+                            context.getChannel());
+                    return;
+                }
+                double critDmg = critDmgCaps[level - 1] * critDmgPercent;
+                apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.format.required",
+                        level, (int) critDmg, (critDmgPercent + 2D) * 100D),
                         context.getChannel());
-                return;
+            } else {
+                int critdmg = (int) parseStat(value);
+                int level = 80;
+                if (split.length >= 2) {
+                    level = ParseInt.parseOrDefault(split[1], level);
+                }
+                if (level < 1 || level > 100) {
+                    apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.level_out_of_range",
+                            1, 100),
+                            context.getChannel());
+                    return;
+                }
+                double critDmgPercent;
+                double critDmgCap = critDmgCaps[level - 1];
+                critDmgPercent = critdmg / critDmgCap;
+                critDmgPercent = Math.max(0, Math.min(CRITDMG_MAX_PERCENT, critDmgPercent)) * 100D + 200D;
+                apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.format",
+                        level, critDmgPercent, (int) (critDmgCap * CRITDMG_MAX_PERCENT),
+                        (int) (CRITDMG_MAX_PERCENT * 100D) + 200),
+                        context.getChannel());
             }
-            double critDmgPercent;
-            double critDmgCap = critDmgCaps[level - 1];
-            critDmgPercent = critdmg / critDmgCap;
-            critDmgPercent = Math.max(0, Math.min(CRITDMG_MAX_PERCENT, critDmgPercent)) * 100D + 200D;
-            apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.format",
-                    level, critDmgPercent, (int) (critDmgCap * CRITDMG_MAX_PERCENT),
-                    (int) (CRITDMG_MAX_PERCENT * 100D) + 200),
-                    context.getChannel());
             return;
         }
         apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.invalid",
