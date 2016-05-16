@@ -11,7 +11,7 @@ import co.phoenixlab.discord.api.entities.Message;
 
 public class DnCommands {
 
-    public static final double DEFENSE_MAX_PERCENT = 85D;
+    public static final double DEFENSE_MAX_PERCENT = 0.85D;
     public static final double CRITDMG_MAX_PERCENT = 1D;
     public static final double CRIT_MAX_PERCENT = 0.89D;
     public static final double FD_MAX_PERCENT = 1D;
@@ -309,7 +309,8 @@ public class DnCommands {
                 double eMHp = rawHp / (1D - (mDef / 100D));
 
                 apiClient.sendMessage(loc.localize("commands.dn.defense.response.format",
-                        def, mDef, (long) eDHp, (long) eMHp, level, (int) defCap),
+                        def, mDef, (long) eDHp, (long) eMHp, level, (int) defCap,
+                        (int) (DEFENSE_MAX_PERCENT * 100D)),
                         context.getChannel());
 
                 return;
