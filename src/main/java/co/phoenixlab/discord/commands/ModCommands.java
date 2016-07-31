@@ -187,9 +187,9 @@ public class ModCommands {
                 }
             }
         }
-        if ("default".equals(args)) {
+        if ("default".equals(cid)) {
             cid = context.getServer().getId();
-        } else if ("this".equals(args)) {
+        } else if ("this".equals(cid)) {
             cid = context.getChannel().getId();
         }
         Channel channel = apiClient.getChannelById(cid, context.getServer());
