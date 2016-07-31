@@ -19,6 +19,7 @@ public class EventListener {
     private final VahrhedralBot bot;
     public Map<String, Consumer<MemberChangeEvent>> memberChangeEventListener;
     public Map<String, String> joinMessageRedirect;
+    public Map<String, String> leaveMessageRedirect;
     public Set<String> ignoredServers;
     public int excessiveMentionThreshold;
     public Map<String, Deque<String>> newest = new HashMap<>();
@@ -30,6 +31,7 @@ public class EventListener {
         messageListeners = new HashMap<>();
         memberChangeEventListener = new HashMap<>();
         joinMessageRedirect = new HashMap<>();
+        leaveMessageRedirect = new HashMap<>();
         ignoredServers = new HashSet<>();
         messageListeners.put("mention-bot", message -> {
             User me = bot.getApiClient().getClientUser();
@@ -221,17 +223,13 @@ public class EventListener {
             return;
         }
         String cid = channel.getId();
-        if (joinMessageRedirect.containsKey(server.getId())) {
-            cid = joinMessageRedirect.get(server.getId());
-        }
-
-
-
         String key;
         if (event.getMemberChange() == MemberChangeEvent.MemberChange.ADDED) {
             key = "message.new_member.response";
+            cid = SafeNav.of(joinMessageRedirect.get(server.getId())).orElse(cid);
         } else if (event.getMemberChange() == MemberChangeEvent.MemberChange.DELETED) {
             key = "message.member_quit.response";
+            cid = SafeNav.of(leaveMessageRedirect.get(server.getId())).orElse(cid);
         } else {
             return;
         }
@@ -248,10 +246,16 @@ public class EventListener {
         }
         TempServerConfig config = bot.getCommands().getModCommands().getServerStorage().get(server.getId());
         String customWelcomeMessage = SafeNav.of(config).get(TempServerConfig::getCustomWelcomeMessage);
+        String customLeaveMessage = SafeNav.of(config).get(TempServerConfig::getCustomLeaveMessage);
         if (event.getMemberChange() == MemberChangeEvent.MemberChange.ADDED && customWelcomeMessage != null) {
             if (!customWelcomeMessage.isEmpty()) {
-                bot.getApiClient().sendMessage(createWelcomeMessage(user, server, customWelcomeMessage),
-                        cid);
+                bot.getApiClient().sendMessage(createJoinLeaveMessage(user, server, customWelcomeMessage),
+                    cid);
+            }
+        } else if (event.getMemberChange() == MemberChangeEvent.MemberChange.DELETED && customLeaveMessage != null) {
+            if (!customLeaveMessage.isEmpty()) {
+                bot.getApiClient().sendMessage(createJoinLeaveMessage(user, server, customLeaveMessage),
+                    cid);
             }
         } else {
             bot.getApiClient().sendMessage(bot.getLocalizer().localize(key,
@@ -261,11 +265,10 @@ public class EventListener {
                     DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())),
                     cid);
         }
-
         memberChangeEventListener.values().forEach(c -> c.accept(event));
     }
 
-    public static String createWelcomeMessage(User user, Server server, String fmt) {
+    public static String createJoinLeaveMessage(User user, Server server, String fmt) {
         return fmt.
                 replace("$n", user.getUsername()).
                 replace("$d", user.getDiscriminator()).

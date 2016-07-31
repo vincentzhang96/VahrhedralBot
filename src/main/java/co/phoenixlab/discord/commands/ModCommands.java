@@ -78,6 +78,12 @@ public class ModCommands {
 
     private final ScheduledExecutorService timeoutService;
 
+    enum JoinLeave {
+        JOIN,
+        LEAVE,
+        BOTH
+    }
+
     public ModCommands(VahrhedralBot bot) {
         this.bot = bot;
         dispatcher = new CommandDispatcher(bot, "");
@@ -106,6 +112,7 @@ public class ModCommands {
         d.registerAlwaysActiveCommand("commands.mod.ban", this::ban);
         d.registerAlwaysActiveCommand("commands.mod.jl", this::joinLeave);
         d.registerAlwaysActiveCommand("commands.mod.welcome", this::setWelcome);
+        d.registerAlwaysActiveCommand("commands.mod.farewell", this::setFarewell);
 
         EventBus eventBus = bot.getApiClient().getEventBus();
         eventBus.register(new WeakEventSubscriber<>(memberJoinListener, eventBus, MemberChangeEvent.class));
@@ -131,8 +138,34 @@ public class ModCommands {
         } else {
             config.setCustomWelcomeMessage(args);
             apiClient.sendMessage(loc.localize("commands.mod.welcome.response.set",
-                    EventListener.createWelcomeMessage(context.getAuthor(), context.getServer(), args)),
+                    EventListener.createJoinLeaveMessage(context.getAuthor(), context.getServer(), args)),
                     channel);
+        }
+        saveServerConfig(config);
+    }
+
+    private void setFarewell(MessageContext context, String args) {
+        if (context.getServer() == null || context.getServer() == NO_SERVER) {
+            return;
+        }
+        String serverId = context.getServer().getId();
+        TempServerConfig config = serverStorage.get(serverId);
+        if (config == null) {
+            config = new TempServerConfig(serverId);
+            serverStorage.put(serverId, config);
+        }
+        Channel channel = context.getChannel();
+        if (args.isEmpty() || args.equalsIgnoreCase("none")) {
+            config.setCustomLeaveMessage("");
+            apiClient.sendMessage(loc.localize("commands.mod.farewell.response.none"), channel);
+        } else if (args.equalsIgnoreCase("default")) {
+            config.setCustomLeaveMessage(null);
+            apiClient.sendMessage(loc.localize("commands.mod.farewell.response.default"), channel);
+        } else {
+            config.setCustomLeaveMessage(args);
+            apiClient.sendMessage(loc.localize("commands.mod.farewell.response.set",
+                EventListener.createJoinLeaveMessage(context.getAuthor(), context.getServer(), args)),
+                channel);
         }
         saveServerConfig(config);
     }
@@ -142,7 +175,18 @@ public class ModCommands {
             return;
         }
         args = args.toLowerCase();
-        String cid = args;
+        String[] split = args.split(" ");
+        String cid = split[0];
+        JoinLeave target = JoinLeave.BOTH;
+        if (split.length != 1) {
+            String jlStr = split[1].toLowerCase();
+            for (JoinLeave joinLeave : JoinLeave.values()) {
+                if (joinLeave.name().toLowerCase().startsWith(jlStr)) {
+                    target = joinLeave;
+                    break;
+                }
+            }
+        }
         if ("default".equals(args)) {
             cid = context.getServer().getId();
         } else if ("this".equals(args)) {

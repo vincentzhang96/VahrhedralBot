@@ -10,6 +10,8 @@ public class TempServerConfig {
 
     private String customWelcomeMessage;
 
+    private String customLeaveMessage;
+
     public TempServerConfig() {
     }
 
@@ -53,5 +55,13 @@ public class TempServerConfig {
 
     public void setCustomWelcomeMessage(String customWelcomeMessage) {
         this.customWelcomeMessage = customWelcomeMessage;
+    }
+
+    public String getCustomLeaveMessage() {
+        return customLeaveMessage;
+    }
+
+    public void setCustomLeaveMessage(String customLeaveMessage) {
+        this.customLeaveMessage = customLeaveMessage;
     }
 }
