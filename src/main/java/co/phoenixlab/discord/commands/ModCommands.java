@@ -331,7 +331,9 @@ public class ModCommands {
             String[] split = args.split(" ", 2);
             String uid = split[0];
             if (uid.length() > 4) {
-                if (uid.startsWith("<@")) {
+                if (uid.startsWith("<@!")) {
+                    uid = uid.substring(3, uid.length() - 1);
+                } else if (uid.startsWith("<@")) {
                     uid = uid.substring(2, uid.length() - 1);
                 }
                 if (!uid.matches("[0-9]+")) {
