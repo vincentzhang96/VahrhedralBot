@@ -63,18 +63,19 @@ public class AdminCommands {
 
     public void registerAdminCommands() {
         CommandDispatcher d = dispatcher;
+        if (!bot.getConfig().isSelfBot()) {
+            d.registerAlwaysActiveCommand("commands.admin.blacklist", this::adminBlacklist);
+            d.registerAlwaysActiveCommand("commands.admin.pardon", this::adminPardon);
+//            d.registerAlwaysActiveCommand("commands.admin.join", this::adminJoin);
+            d.registerAlwaysActiveCommand("commands.admin.telegram", this::adminTelegram);
+        }
         d.registerAlwaysActiveCommand("commands.admin.start", this::adminStart);
         d.registerAlwaysActiveCommand("commands.admin.stop", this::adminStop);
         d.registerAlwaysActiveCommand("commands.admin.status", this::adminStatus);
         d.registerAlwaysActiveCommand("commands.admin.kill", this::adminKill);
         d.registerAlwaysActiveCommand("commands.admin.restart", this::adminRestart);
-        d.registerAlwaysActiveCommand("commands.admin.blacklist", this::adminBlacklist);
-        d.registerAlwaysActiveCommand("commands.admin.pardon", this::adminPardon);
-//        d.registerAlwaysActiveCommand("commands.admin.join", this::adminJoin);
-        d.registerAlwaysActiveCommand("commands.admin.telegram", this::adminTelegram);
         d.registerAlwaysActiveCommand("commands.admin.raw", this::adminRaw);
         d.registerAlwaysActiveCommand("commands.admin.prefix", this::adminPrefix);
-        d.registerAlwaysActiveCommand("commands.admin.sandwich", this::makeSandwich);
         d.registerAlwaysActiveCommand("commands.admin.eval", this::eval);
         d.registerAlwaysActiveCommand("commands.admin.find", this::find);
         d.registerAlwaysActiveCommand("commands.admin.playing", this::updateNowPlaying);
@@ -87,41 +88,52 @@ public class AdminCommands {
         reportBuilder.append("**__INTEGRITY REPORT__**\n");
 
         reportBuilder.append("**Server Map**\n");
+        boolean ok = true;
         for (Map.Entry<String, Server> entry : apiClient.getServerMap().entrySet()) {
             String id = entry.getKey();
             Server server = entry.getValue();
             if (server == null) {
                 reportBuilder.append(id).append(" Null server\n");
+                ok = false;
                 continue;
             }
             if (!id.equals(server.getId())) {
                 reportBuilder.append(id).append(" Server ID does not match key: ").append(server.getId()).append("\n");
+                ok = false;
             }
-            checkServer(reportBuilder, id, server);
+            ok &= checkServer(reportBuilder, id, server);
         }
+        if (ok) {
+            reportBuilder.append(":ok:");
+        }
+        ok = true;
         reportBuilder.append("**Server List**\n");
         for (Server server : apiClient.getServers()) {
             if (server == null) {
                 reportBuilder.append("Null server\n");
+                ok = false;
                 continue;
             }
-            checkServer(reportBuilder, server.getId(), server);
+            ok &= checkServer(reportBuilder, server.getId(), server);
+        }
+        if (ok) {
+            reportBuilder.append(":ok:");
         }
 
         apiClient.sendMessage(reportBuilder.toString(), context.getChannel());
     }
 
-    private void checkServer(StringBuilder reportBuilder, String id, Server server) {
+    private boolean checkServer(StringBuilder reportBuilder, String id, Server server) {
         if (server.getMembers() == null) {
             reportBuilder.append(id).append(" Null server member list\n");
-            return;
+            return false;
         }
         long count = server.getMembers().stream().
                 filter(m -> m == null).
                 count();
         if (count > 0) {
             reportBuilder.append(id).append(" ").append(count).append(" null members\n");
-            return;
+            return false;
         }
         count = server.getMembers().stream().
                 filter(m -> m != null).
@@ -130,8 +142,9 @@ public class AdminCommands {
                 count();
         if (count > 0) {
             reportBuilder.append(id).append(" ").append(count).append(" null member users\n");
-            return;
+            return false;
         }
+        return true;
     }
 
     private void adminStart(MessageContext context, String args) {

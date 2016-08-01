@@ -104,15 +104,17 @@ public class ModCommands {
 
     public void registerModCommands() {
         CommandDispatcher d = dispatcher;
-        d.registerAlwaysActiveCommand("commands.mod.timeout", this::timeout);
-        d.registerAlwaysActiveCommand("commands.mod.stoptimeout", this::stopTimeout);
-        d.registerAlwaysActiveCommand("commands.mod.settimeoutrole", this::setTimeoutRole);
+        if (!bot.getConfig().isSelfBot()) {
+            d.registerAlwaysActiveCommand("commands.mod.timeout", this::timeout);
+            d.registerAlwaysActiveCommand("commands.mod.stoptimeout", this::stopTimeout);
+            d.registerAlwaysActiveCommand("commands.mod.settimeoutrole", this::setTimeoutRole);
+            d.registerAlwaysActiveCommand("commands.mod.vanish", this::vanish);
+            d.registerAlwaysActiveCommand("commands.mod.ban", this::ban);
+            d.registerAlwaysActiveCommand("commands.mod.jl", this::joinLeave);
+            d.registerAlwaysActiveCommand("commands.mod.welcome", this::setWelcome);
+            d.registerAlwaysActiveCommand("commands.mod.farewell", this::setFarewell);
+        }
         d.registerAlwaysActiveCommand("commands.admin.find", this::find);
-        d.registerAlwaysActiveCommand("commands.mod.vanish", this::vanish);
-        d.registerAlwaysActiveCommand("commands.mod.ban", this::ban);
-        d.registerAlwaysActiveCommand("commands.mod.jl", this::joinLeave);
-        d.registerAlwaysActiveCommand("commands.mod.welcome", this::setWelcome);
-        d.registerAlwaysActiveCommand("commands.mod.farewell", this::setFarewell);
 
         EventBus eventBus = bot.getApiClient().getEventBus();
         eventBus.register(new WeakEventSubscriber<>(memberJoinListener, eventBus, MemberChangeEvent.class));
