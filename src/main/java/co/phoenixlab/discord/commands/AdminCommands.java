@@ -104,7 +104,7 @@ public class AdminCommands {
             ok &= checkServer(reportBuilder, id, server);
         }
         if (ok) {
-            reportBuilder.append(":ok:");
+            reportBuilder.append(":ok:\n");
         }
         ok = true;
         reportBuilder.append("**Server List**\n");
