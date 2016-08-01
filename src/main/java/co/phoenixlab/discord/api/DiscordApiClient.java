@@ -260,7 +260,7 @@ public class DiscordApiClient {
         if (!oldUser.getAvatar().equals(update.getAvatar())) {
             LOGGER.info("Avatar changed from '{}' to '{}'", oldUser.getAvatar(), update.getAvatar());
         }
-        if (!oldEmail.equals(email)) {
+        if ((oldEmail == null) || !oldEmail.equals(email)) {
             LOGGER.info("Email changed from '{}' to '{}'", oldEmail, email);
         }
         //  Fire off a change to ourself across all servers as well

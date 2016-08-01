@@ -21,9 +21,9 @@ public class Member {
     private final List<String> roles;
 
     @SerializedName("joined_at")
-    private final String joinedAt;
+    private String joinedAt;
 
-    private final String nick;
+    private String nick;
 
     public Member(User user, List<String> roles, String joinedAt, String nick) {
         this.user = user;
@@ -56,6 +56,14 @@ public class Member {
 
     public String getNick() {
         return nick;
+    }
+
+    public void setJoinedAt(String joinedAt) {
+        this.joinedAt = joinedAt;
+    }
+
+    public void setNick(String nick) {
+        this.nick = nick;
     }
 
     @Override

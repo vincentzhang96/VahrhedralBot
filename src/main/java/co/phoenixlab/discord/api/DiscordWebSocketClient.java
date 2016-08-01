@@ -387,6 +387,9 @@ public class DiscordWebSocketClient extends WebSocketClient {
             String oldNickname = null;
             if (oldMember != null) {
                 oldNickname = oldMember.getNick();
+                if (member.getJoinedAt() == null) {
+                    member.setJoinedAt(oldMember.getJoinedAt());
+                }
             }
             server.getMembers().remove(member);
             server.getMembers().add(member);
@@ -639,7 +642,6 @@ public class DiscordWebSocketClient extends WebSocketClient {
         outer.put("op", 3);
         outer.put("d", data);
         String out = outer.toString();
-        LOGGER.info(out);
         send(out);
     }
 
