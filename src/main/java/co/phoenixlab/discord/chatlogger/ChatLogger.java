@@ -201,10 +201,23 @@ public class ChatLogger {
     @Subscribe
     public void logMessageDel(MessageDeleteEvent event) {
         Channel channel = apiClient.getChannelById(event.getChannelId());
-        log(String.format("%s -C- Message [%12s] deleted",
+        if (channel == null) {
+            channel = apiClient.getPrivateChannelById(event.getChannelId());
+        }
+        if (channel == null) {
+            return;
+        }
+        if (channel.isPrivate()) {
+            log(String.format("%s -C- Message [%12s] deleted",
+                DATE_TIME_FORMATTER.format(ZonedDateTime.now()),
+                base64Encode(event.getMessageId())),
+                PRIVATE_MESSAGES, channel);
+        } else {
+            log(String.format("%s -C- Message [%12s] deleted",
                 DATE_TIME_FORMATTER.format(ZonedDateTime.now()),
                 base64Encode(event.getMessageId())),
                 channel.getParent(), channel);
+        }
     }
 
     @Subscribe
