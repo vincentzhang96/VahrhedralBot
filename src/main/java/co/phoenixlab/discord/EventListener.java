@@ -139,7 +139,9 @@ public class EventListener {
         Message message = messageReceivedEvent.getMessage();
         boolean isCommand = message.getContent().startsWith(bot.getConfig().getCommandPrefix());
         if (isSelfBot() && isCommand) {
-            bot.getMainCommandDispatcher().handleCommand(message);
+            if (message.getAuthor().equals(bot.getApiClient().getClientUser())) {
+                bot.getMainCommandDispatcher().handleCommand(message);
+            }
             return;
         }
         if (bot.getConfig().getBlacklist().contains(message.getAuthor().getId())) {
