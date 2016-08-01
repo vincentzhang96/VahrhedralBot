@@ -186,6 +186,9 @@ public class CommandDispatcher {
                     wrapper.command.handleCommand(messageContext, args);
                     statistics.acceptedCommandHandleTime.
                             add(MILLISECONDS.convert(System.nanoTime() - handleStartTime, NANOSECONDS));
+                    if (bot.getConfig().isSelfBot()) {
+                        bot.getApiClient().deleteMessage(msg.getChannelId(), msg.getId());
+                    }
                     statistics.commandsHandledSuccessfully.increment();
                     return;
                 }
