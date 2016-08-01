@@ -49,6 +49,16 @@ public class EventListener {
 //        messageListeners.put("date-time", this::currentDateTime);
     }
 
+    public static String createJoinLeaveMessage(User user, Server server, String fmt) {
+        return fmt.
+            replace("$n", user.getUsername()).
+            replace("$d", user.getDiscriminator()).
+            replace("$i", user.getId()).
+            replace("$s", server.getName()).
+            replace("$t", DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())).
+            replace("$m", "<@" + user.getId() + ">");
+    }
+
     private void currentDateTime(Message message) {
         if (!bot.getMainCommandDispatcher().active().get()) {
             return;
@@ -71,7 +81,7 @@ public class EventListener {
                 return;
             }
             api.sendMessage("NOFLIPIt's " + ZonedDateTime.now().getYear() + ", `" + message.getAuthor().getUsername() + "`.",
-                    channelId);
+                channelId);
             currentDateTimeLastUse.put(channelId, time);
         }
         if (content.contains("current date")) {
@@ -79,8 +89,8 @@ public class EventListener {
                 return;
             }
             api.sendMessage("NOFLIPIt's " + DateTimeFormatter.ofPattern("MMM dd uuuu").format(ZonedDateTime.now()) + ", `" +
-                            message.getAuthor().getUsername() + "`.",
-                    channelId);
+                    message.getAuthor().getUsername() + "`.",
+                channelId);
             currentDateTimeLastUse.put(channelId, time);
         }
         if (content.contains("current day")) {
@@ -88,8 +98,8 @@ public class EventListener {
                 return;
             }
             api.sendMessage("NOFLIPIt's the " + th(ZonedDateTime.now().getDayOfMonth()) + ", `" +
-                            message.getAuthor().getUsername() + "`.",
-                    channelId);
+                    message.getAuthor().getUsername() + "`.",
+                channelId);
             currentDateTimeLastUse.put(channelId, time);
         }
         if (content.contains("current time")) {
@@ -97,8 +107,8 @@ public class EventListener {
                 return;
             }
             api.sendMessage("NOFLIPIt's " + DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now()) + ", `" +
-                            message.getAuthor().getUsername() + "`.",
-                    channelId);
+                    message.getAuthor().getUsername() + "`.",
+                channelId);
             currentDateTimeLastUse.put(channelId, time);
         }
         if (content.contains("current president")) {
@@ -106,7 +116,7 @@ public class EventListener {
                 return;
             }
             api.sendMessage("NOFLIPIt's Bernie Trump, `" + message.getAuthor().getUsername() + "`.",
-                    channelId);
+                channelId);
             currentDateTimeLastUse.put(channelId, time);
         }
     }
@@ -127,6 +137,11 @@ public class EventListener {
     @Subscribe
     public void onMessageRecieved(MessageReceivedEvent messageReceivedEvent) {
         Message message = messageReceivedEvent.getMessage();
+        boolean isCommand = message.getContent().startsWith(bot.getConfig().getCommandPrefix());
+        if (isSelfBot() && isCommand) {
+            bot.getMainCommandDispatcher().handleCommand(message);
+            return;
+        }
         if (bot.getConfig().getBlacklist().contains(message.getAuthor().getId())) {
             return;
         }
@@ -137,8 +152,7 @@ public class EventListener {
                 return;
             }
         }
-        if (!message.getAuthor().isBot() &&
-                message.getContent().startsWith(bot.getConfig().getCommandPrefix())) {
+        if (isCommand && !message.getAuthor().isBot()) {
             bot.getMainCommandDispatcher().handleCommand(message);
             return;
         }
@@ -146,16 +160,22 @@ public class EventListener {
     }
 
     private void handleMention(Message message) {
+        if (isSelfBot()) {
+            return;
+        }
         if (!bot.getMainCommandDispatcher().active().get()) {
             return;
         }
         String otherId = message.getAuthor().getId();
         bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.mention.response",
-                message.getAuthor().getUsername()),
-                message.getChannelId(), new String[]{otherId});
+            message.getAuthor().getUsername()),
+            message.getChannelId(), new String[]{otherId});
     }
 
     private void handleExcessiveMentions(Message message) {
+        if (isSelfBot()) {
+            return;
+        }
         if (!bot.getMainCommandDispatcher().active().get()) {
             return;
         }
@@ -186,16 +206,19 @@ public class EventListener {
         Collections.addAll(unique, message.getMentions());
         if (unique.size() > excessiveMentionThreshold) {
             bot.getCommands().getModCommands().applyTimeout(bot.getApiClient().getClientUser(), channel,
-                    server, author, Duration.ofHours(1));
+                server, author, Duration.ofHours(1));
 //            bot.getCommands().getModCommands().banImpl(author.getId(), author.getUsername(),
 //                    server.getId(), channel.getId());
             bot.getApiClient().sendMessage(String.format("`%s#%s` (%s) has been banned for mention spam",
-                    author.getUsername(), author.getDiscriminator(), author.getId()), channel);
+                author.getUsername(), author.getDiscriminator(), author.getId()), channel);
         }
     }
 
     @Subscribe
     public void onServerJoinLeave(ServerJoinLeaveEvent event) {
+        if (isSelfBot()) {
+            return;
+        }
         if (!bot.getMainCommandDispatcher().active().get()) {
             return;
         }
@@ -213,6 +236,9 @@ public class EventListener {
 
     @Subscribe
     public void onMemberChangeEvent(MemberChangeEvent event) {
+        if (isSelfBot()) {
+            return;
+        }
         if (!bot.getMainCommandDispatcher().active().get()) {
             return;
         }
@@ -238,11 +264,11 @@ public class EventListener {
         //  avoid duplicates
         if (event.getServer().getId().equals("106293726271246336") && !"167264528537485312".equals(cid)) {
             bot.getApiClient().sendMessage(bot.getLocalizer().localize(key,
-                    user.getUsername(),
-                    user.getId(),
-                    user.getDiscriminator(),
-                    DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())),
-                    "167264528537485312");
+                user.getUsername(),
+                user.getId(),
+                user.getDiscriminator(),
+                DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())),
+                "167264528537485312");
         }
         TempServerConfig config = bot.getCommands().getModCommands().getServerStorage().get(server.getId());
         String customWelcomeMessage = SafeNav.of(config).get(TempServerConfig::getCustomWelcomeMessage);
@@ -259,23 +285,13 @@ public class EventListener {
             }
         } else {
             bot.getApiClient().sendMessage(bot.getLocalizer().localize(key,
-                    user.getUsername(),
-                    user.getId(),
-                    user.getDiscriminator(),
-                    DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())),
-                    cid);
+                user.getUsername(),
+                user.getId(),
+                user.getDiscriminator(),
+                DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())),
+                cid);
         }
         memberChangeEventListener.values().forEach(c -> c.accept(event));
-    }
-
-    public static String createJoinLeaveMessage(User user, Server server, String fmt) {
-        return fmt.
-                replace("$n", user.getUsername()).
-                replace("$d", user.getDiscriminator()).
-                replace("$i", user.getId()).
-                replace("$s", server.getName()).
-                replace("$t", DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())).
-                replace("$m", "<@" + user.getId() + ">");
     }
 
     public boolean isJoin(MemberChangeEvent event) {
@@ -284,6 +300,9 @@ public class EventListener {
 
     @Subscribe
     public void onMemberPresenceUpdate(PresenceUpdateEvent event) {
+        if (isSelfBot()) {
+            return;
+        }
         //  not dnnacd
         if (!event.getServer().getId().equals("106293726271246336")) {
             return;
@@ -292,12 +311,15 @@ public class EventListener {
         if (user.getUsername() != null && !event.getOldUsername().equals(user.getUsername())) {
             //  167264528537485312 dnnacd #activity-log
             bot.getApiClient().sendMessage(String.format("`%s` changed name to `%s` (%s)",
-                    event.getOldUsername(), user.getUsername(),
-                    user.getId()), "167264528537485312");
+                event.getOldUsername(), user.getUsername(),
+                user.getId()), "167264528537485312");
         }
     }
 
     private void onInviteLinkPrivateMessage(Message message) {
+        if (isSelfBot()) {
+            return;
+        }
         if (!message.isPrivateMessage()) {
             return;
         }
@@ -305,19 +327,26 @@ public class EventListener {
             bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.private.invite"), message.getChannelId());
             User author = message.getAuthor();
             VahrhedralBot.LOGGER.info("Received invite link from {}#{} ({}), rejecting: {}",
-                    author.getUsername(), author.getDiscriminator(), author.getId(), message.getContent());
+                author.getUsername(), author.getDiscriminator(), author.getId(), message.getContent());
         }
     }
 
     private void onOtherTypesCommand(Message message) {
+        if (isSelfBot()) {
+            return;
+        }
         if (!message.isPrivateMessage()) {
             return;
         }
         String content = message.getContent().toLowerCase();
         if (content.startsWith("~") || content.startsWith("!") || content.startsWith("-")) {
             bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.private.misc",
-                    bot.getConfig().getCommandPrefix()), message.getChannelId());
+                bot.getConfig().getCommandPrefix()), message.getChannelId());
         }
+    }
+
+    private boolean isSelfBot() {
+        return bot.getConfig().isSelfBot();
     }
 
     public void registerMessageListner(String name, Consumer<Message> listener) {

@@ -12,6 +12,7 @@ public class Configuration {
     private transient int prefixLength;
     private Set<String> blacklist;
     private Set<String> admins;
+    private boolean selfBot;
 
     public Configuration() {
         email = "";
@@ -21,6 +22,7 @@ public class Configuration {
         prefixLength = 0;
         blacklist = new HashSet<>();
         admins = new HashSet<>();
+        selfBot = false;
     }
 
     public String getEmail() {
@@ -74,5 +76,13 @@ public class Configuration {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public boolean isSelfBot() {
+        return selfBot;
+    }
+
+    public void setSelfBot(boolean selfBot) {
+        this.selfBot = selfBot;
     }
 }

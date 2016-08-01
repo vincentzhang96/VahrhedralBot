@@ -174,6 +174,9 @@ public class DiscordWebSocketClient extends WebSocketClient {
                     case "GUILD_BAN_DELETE":
                         handleGuildBanDelete(data);
                         break;
+                    case "MESSAGE_ACK":
+                        //  Ignored
+                        break;
                     //  TODO
                     default:
                         LOGGER.warn("[0] '': Unknown message type {}:\n{}", type, data.toJSONString());
@@ -364,14 +367,14 @@ public class DiscordWebSocketClient extends WebSocketClient {
                 apiClient.getUserPresences().put(user.getId(), update.getStatus());
                 apiClient.getEventBus().post(new PresenceUpdateEvent(oldUsername, update, server));
             } else {
-                LOGGER.warn("[{}] '{}': Orphan presence update received, ignored (userid={} username={}): Not found",
-                        server.getId(), server.getName(),
-                        update.getUser().getId(), update.getUser().getUsername());
+//                LOGGER.warn("[{}] '{}': Orphan presence update received, ignored (userid={} username={}): Not found",
+//                        server.getId(), server.getName(),
+//                        update.getUser().getId(), update.getUser().getUsername());
             }
         } else {
-            LOGGER.warn("[{}] '{}': Orphan presence update received, ignored (userid={} username={})",
-                    update.getServerId(), (server == null ? "" : server.getName()),
-                    update.getUser().getId(), update.getUser().getUsername());
+//            LOGGER.warn("[{}] '{}': Orphan presence update received, ignored (userid={} username={})",
+//                    update.getServerId(), (server == null ? "" : server.getName()),
+//                    update.getUser().getId(), update.getUser().getUsername());
         }
     }
 

@@ -3,6 +3,9 @@ target/
 
 # Config
 config/
+chatlogs/
+logs/
+
 
 # Windows image file caches
 Thumbs.db

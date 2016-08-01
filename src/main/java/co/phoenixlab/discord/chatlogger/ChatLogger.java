@@ -53,7 +53,8 @@ public class ChatLogger {
     public void onMessageRecieved(MessageReceivedEvent messageReceivedEvent) {
         Message message = messageReceivedEvent.getMessage();
         if (message.isPrivateMessage()) {
-            logPrivateMessage(message);
+            Channel parentCh = apiClient.getPrivateChannelById(message.getChannelId());
+            logPrivateMessage(message, parentCh.getRecipient());
         } else {
             Channel parentCh = apiClient.getChannelById(message.getChannelId());
             if (parentCh == null) {
@@ -99,7 +100,7 @@ public class ChatLogger {
         log(logMsg, server, channel);
     }
 
-    public void logPrivateMessage(Message message) {
+    public void logPrivateMessage(Message message, User partner) {
         String logMsg;
         if (message.getAttachments() != null && message.getAttachments().length > 0) {
             logMsg = String.format("%s [%12s] [%20s]: \"%s\", %s",
@@ -116,7 +117,7 @@ public class ChatLogger {
                     message.getContent());
         }
         log(logMsg, PRIVATE_MESSAGES,
-                new Channel(message.getAuthor().getId(), message.getAuthor().getUsername()));
+                new Channel(partner.getId(), partner.getUsername()));
     }
 
     private String resolveMentions(Message message, Server server) {
@@ -210,7 +211,8 @@ public class ChatLogger {
     public void logMessageEdit(MessageEditEvent event) {
         Message message = event.getMessage();
         if (message.isPrivateMessage()) {
-            logPrivateMessageEdit(message);
+            Channel parentCh = apiClient.getPrivateChannelById(message.getChannelId());
+            logPrivateMessageEdit(message, parentCh.getRecipient());
         } else {
             Channel parentCh = apiClient.getChannelById(message.getChannelId());
             if (parentCh == null) {
@@ -238,7 +240,7 @@ public class ChatLogger {
         log(logMsg, server, channel);
     }
 
-    public void logPrivateMessageEdit(Message message) {
+    public void logPrivateMessageEdit(Message message, User partner) {
         String logMsg;
         if (message.getAttachments() != null && message.getAttachments().length > 0) {
             logMsg = String.format("%s -C- Edited: [%12s]: \"%s\", %s",
@@ -255,6 +257,6 @@ public class ChatLogger {
                     message.getContent());
         }
         log(logMsg, PRIVATE_MESSAGES,
-                new Channel(message.getAuthor().getId(), message.getAuthor().getUsername()));
+                new Channel(partner.getId(), partner.getUsername()));
     }
 }
