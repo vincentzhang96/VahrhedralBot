@@ -2,7 +2,6 @@ package co.phoenixlab.discord.dntrack;
 
 import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.common.lang.number.ParseInt;
-import co.phoenixlab.discord.VahrhedralBot;
 import co.phoenixlab.discord.dntrack.event.RegionDescriptor;
 import co.phoenixlab.discord.dntrack.event.VersionUpdateEvent;
 import com.google.common.eventbus.EventBus;
@@ -51,11 +50,16 @@ public class VersionTracker implements Runnable {
                 if (remoteVersion > lastVersion) {
                     //  New version!
                     if (lastVersion != -1) {
+                        LOGGER.info("DN {} version updated from {} to {}",
+                            region.getRegionCode(), lastVersion, remoteVersion);
                         //  Only post an event if this isn't our first check
                         VersionUpdateEvent event = new VersionUpdateEvent(region, lastVersion, remoteVersion, now);
                         lastChangeEvent.set(event);
                         //  Post the event
                         bus.post(event);
+                    } else {
+                        LOGGER.info("DN {} initial version for this session is {}",
+                            region.getRegionCode(), remoteVersion);
                     }
                     version.set(remoteVersion);
                 }
@@ -65,7 +69,7 @@ public class VersionTracker implements Runnable {
             }
         } catch (Exception e) {
             //  Ignored (kinda)
-            VahrhedralBot.LOGGER.warn("Failed version check for " + region.getRegionCode(), e);
+            LOGGER.warn("Failed version check for " + region.getRegionCode(), e);
         }
     }
 

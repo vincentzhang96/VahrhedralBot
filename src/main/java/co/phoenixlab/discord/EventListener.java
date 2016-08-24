@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 
 public class EventListener {
 
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("M/d HH:mm z");
     private final VahrhedralBot bot;
     private final ScheduledExecutorService executorService;
     private Map<String, VersionTracker> versionTrackers = new HashMap<>();
@@ -55,10 +56,11 @@ public class EventListener {
         messageListeners.put("mention-autotimeout", this::handleExcessiveMentions);
         messageListeners.put("invite-pm", this::onInviteLinkPrivateMessage);
         messageListeners.put("other-prefixes", this::onOtherTypesCommand);
-
-        for (RegionDescriptor regionDescriptor : bot.getConfig().getDnRegions()) {
-            versionTrackers.put(regionDescriptor.getRegionCode(),
-                new VersionTracker(regionDescriptor, bot.getApiClient().getEventBus()));
+        if (!bot.getConfig().isSelfBot()) {
+            for (RegionDescriptor regionDescriptor : bot.getConfig().getDnRegions()) {
+                versionTrackers.put(regionDescriptor.getRegionCode(),
+                    new VersionTracker(regionDescriptor, bot.getApiClient().getEventBus()));
+            }
         }
 
 //        messageListeners.put("date-time", this::currentDateTime);
@@ -161,7 +163,8 @@ public class EventListener {
                     api.sendMessage(loc.localize("dn.track.version.updated",
                         loc.localize(event.getRegion().getRegionNameKey()),
                         event.getOldVersion(),
-                        event.getNewVersion()), chid);
+                        event.getNewVersion(),
+                        DATE_TIME_FORMATTER.format(event.getTimestamp())), chid);
                 }
             }
         }

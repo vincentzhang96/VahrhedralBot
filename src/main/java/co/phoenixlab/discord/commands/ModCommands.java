@@ -113,11 +113,35 @@ public class ModCommands {
             d.registerAlwaysActiveCommand("commands.mod.jl", this::joinLeave);
             d.registerAlwaysActiveCommand("commands.mod.welcome", this::setWelcome);
             d.registerAlwaysActiveCommand("commands.mod.farewell", this::setFarewell);
+            d.registerAlwaysActiveCommand("commands.mod.dntrack", this::setDnTrackChannel);
         }
         d.registerAlwaysActiveCommand("commands.admin.find", this::find);
 
         EventBus eventBus = bot.getApiClient().getEventBus();
         eventBus.register(new WeakEventSubscriber<>(memberJoinListener, eventBus, MemberChangeEvent.class));
+    }
+
+    private void setDnTrackChannel(MessageContext context, String args) {
+        if (context.getServer() == null || context.getServer() == NO_SERVER) {
+            return;
+        }
+        String serverId = context.getServer().getId();
+        TempServerConfig config = serverStorage.get(serverId);
+        if (config == null) {
+            config = new TempServerConfig(serverId);
+            serverStorage.put(serverId, config);
+        }
+        Channel channel = context.getChannel();
+        if (args.equalsIgnoreCase("off")) {
+            config.setDnTrackChannel(null);
+            apiClient.sendMessage(loc.localize("commands.mod.dntrack.response.none"), channel);
+        } else {
+            config.setDnTrackChannel(channel.getId());
+            apiClient.sendMessage(loc.localize("commands.mod.dntrack.response.set"),
+                channel);
+        }
+        saveServerConfig(config);
+
     }
 
     private void setWelcome(MessageContext context, String args) {
