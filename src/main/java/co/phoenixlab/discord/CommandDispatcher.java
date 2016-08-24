@@ -1,7 +1,9 @@
 package co.phoenixlab.discord;
 
+import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.api.entities.Message;
+import co.phoenixlab.discord.api.entities.Server;
 import co.phoenixlab.discord.stats.RunningAverage;
 import org.slf4j.Logger;
 
@@ -63,12 +65,12 @@ public class CommandDispatcher {
         LongAdder adder = new LongAdder();
         StringJoiner joiner = new StringJoiner("\n", "", "");
         commands.entrySet().stream().
-                filter(entry -> !entry.getValue().hidden).
-                forEach(entry -> {
-                    joiner.add(l.localize("commands.help.response.entry",
-                            commandPrefix, entry.getKey().toLowerCase(), entry.getValue().helpDesc));
-                    adder.increment();
-                });
+            filter(entry -> !entry.getValue().hidden).
+            forEach(entry -> {
+                joiner.add(l.localize("commands.help.response.entry",
+                    commandPrefix, entry.getKey().toLowerCase(), entry.getValue().helpDesc));
+                adder.increment();
+            });
 
         String header = l.localize("commands.help.response.head", adder.intValue());
         final String result = header + joiner.toString();
@@ -80,17 +82,17 @@ public class CommandDispatcher {
         if (wrapper != null) {
             if (wrapper.examples != null) {
                 context.getApiClient().sendMessage(l.localize("commands.help.response.detailed.examples",
-                        args, wrapper.detailedHelp, wrapper.argumentsHelp, wrapper.examples),
-                        context.getChannel());
+                    args, wrapper.detailedHelp, wrapper.argumentsHelp, wrapper.examples),
+                    context.getChannel());
             } else {
                 context.getApiClient().sendMessage(l.localize("commands.help.response.detailed",
-                        args, wrapper.detailedHelp, wrapper.argumentsHelp),
-                        context.getChannel());
+                    args, wrapper.detailedHelp, wrapper.argumentsHelp),
+                    context.getChannel());
             }
         } else {
             context.getApiClient().sendMessage(l.localize("commands.help.response.not_found",
-                    args),
-                    context.getChannel());
+                args),
+                context.getChannel());
         }
     }
 
@@ -110,7 +112,7 @@ public class CommandDispatcher {
             examplesStr = localizer.localize(commandNameBaseKey + ".examples");
         }
         commands.put(commandStr, new CommandWrapper(command,
-                helpStr, detailedHelpStr, argumentsStr, examplesStr, false, hidden));
+            helpStr, detailedHelpStr, argumentsStr, examplesStr, false, hidden));
         LOGGER.debug("Registered command \"{}\"", commandNameBaseKey);
     }
 
@@ -129,7 +131,7 @@ public class CommandDispatcher {
             examplesStr = localizer.localize(commandNameBaseKey + ".examples");
         }
         commands.put(commandStr, new CommandWrapper(command,
-                helpStr, detailedHelpStr, argumentsStr, examplesStr, true, hidden));
+            helpStr, detailedHelpStr, argumentsStr, examplesStr, true, hidden));
         LOGGER.debug("Registered command \"{}\"", commandNameBaseKey);
     }
 
@@ -163,8 +165,16 @@ public class CommandDispatcher {
         try {
             statistics.commandsReceived.increment();
             String content = msg.getContent();
-            LOGGER.info("Received command {} from {} ({})",
-                    content, msg.getAuthor().getUsername(), msg.getAuthor().getId());
+            MessageContext messageContext = new MessageContext(msg, bot, this);
+            String serverName = SafeNav.of(messageContext.getServer())
+                .next(Server::getName)
+                .orElse("a private message");
+            String serverId = SafeNav.of(messageContext.getServer())
+                .next(Server::getId)
+                .orElse("N/A");
+            LOGGER.info("Received command {} from {} ({}) in {} ({})",
+                content, msg.getAuthor().getUsername(), msg.getAuthor().getId(),
+                serverName, serverId);
             //  Remove prefix
             String noPrefix = content.substring(commandPrefix.length());
             //  Split
@@ -179,13 +189,12 @@ public class CommandDispatcher {
             String args = (split.length > 1 ? split[1] : "").trim();
             CommandWrapper wrapper = commands.get(cmd);
             if (wrapper != null) {
-                MessageContext messageContext = new MessageContext(msg, bot, this);
                 if (shouldCommandBeDispatched(wrapper, messageContext)) {
                     LOGGER.debug("Dispatching command {}", cmd);
                     long handleStartTime = System.nanoTime();
                     wrapper.command.handleCommand(messageContext, args);
                     statistics.acceptedCommandHandleTime.
-                            add(MILLISECONDS.convert(System.nanoTime() - handleStartTime, NANOSECONDS));
+                        add(MILLISECONDS.convert(System.nanoTime() - handleStartTime, NANOSECONDS));
                     if (bot.getConfig().isSelfBot()) {
                         bot.getApiClient().deleteMessage(msg.getChannelId(), msg.getId());
                     }
@@ -211,7 +220,7 @@ public class CommandDispatcher {
 
     public boolean shouldCommandBeDispatched(CommandWrapper command, MessageContext context) {
         return (command.alwaysActive || active().get()) &&
-                customCommandDispatchChecker.test(command, context);
+            customCommandDispatchChecker.test(command, context);
     }
 
     public static class Statistics {
