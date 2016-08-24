@@ -393,8 +393,11 @@ public class EventListener {
         versionTrackers.clear();
         if (!bot.getConfig().isSelfBot()) {
             for (RegionDescriptor regionDescriptor : bot.getConfig().getDnRegions()) {
+                VersionTracker tracker = new VersionTracker(regionDescriptor, bot.getApiClient().getEventBus());
                 versionTrackers.put(regionDescriptor.getRegionCode(),
-                    new VersionTracker(regionDescriptor, bot.getApiClient().getEventBus()));
+                    tracker);
+                executorService.execute(tracker);
+                executorService.schedule(tracker, 1, TimeUnit.MINUTES);
             }
         }
         bot.getCommands().onLogIn(logInEvent);
