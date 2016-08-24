@@ -69,7 +69,7 @@
         </Logger>
         <Logger name="DnTrack" level="trace" additivity="false">
             <AppenderRef ref="Console" level="info"/>
-            <AppenderRef ref="DnTrack" level="debug"/>
+            <AppenderRef ref="DnTrackFile" level="debug"/>
         </Logger>
         <Root level="error">
             <AppenderRef ref="Console"/>

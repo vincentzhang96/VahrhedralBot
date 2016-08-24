@@ -65,7 +65,6 @@ public class VahrhedralBot implements Runnable {
 
     public VahrhedralBot() {
         taskQueue = new TaskQueue();
-        eventListener = new EventListener(this);
     }
 
     @Override
@@ -79,6 +78,7 @@ public class VahrhedralBot implements Runnable {
             LOGGER.error("Unable to load configuration", e);
             return;
         }
+        eventListener = new EventListener(this);
         loadLocalization();
         versionInfo = loadVersionInfo();
         commandDispatcher = new CommandDispatcher(this, config.getCommandPrefix());
