@@ -1,5 +1,6 @@
 package co.phoenixlab.discord.commands;
 
+import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.common.lang.number.ParseInt;
 import co.phoenixlab.common.lang.number.ParseLong;
 import co.phoenixlab.common.localization.Localizer;
@@ -111,10 +112,13 @@ public class DnCommands {
         if (args.isEmpty()) {
             StringJoiner joiner = new StringJoiner("\n");
             for (VersionTracker tracker : trackers.values()) {
+                String lastVersionChangeTimeStr = SafeNav.of(tracker.getLastVersionChangeTime())
+                    .next(EventListener.UPDATE_FORMATTER::format)
+                    .orElse("unknown");
                 joiner.add(loc.localize("commands.dn.track.version.all.entry",
                     loc.localize(tracker.getRegion().getRegionNameKey()),
                     tracker.getCurrentVersion(),
-                    EventListener.UPDATE_FORMATTER.format(tracker.getLastVersionChangeTime()),
+                    lastVersionChangeTimeStr,
                     tracker.getRegion().getRegionCode()));
             }
             api.sendMessage(loc.localize("commands.dn.track.version.all.format", joiner.toString()),
@@ -123,10 +127,13 @@ public class DnCommands {
             String regionCode = args.toLowerCase();
             VersionTracker tracker = trackers.get(regionCode);
             if (tracker != null) {
+                String lastVersionChangeTimeStr = SafeNav.of(tracker.getLastVersionChangeTime())
+                    .next(EventListener.UPDATE_FORMATTER::format)
+                    .orElse("unknown");
                 api.sendMessage(loc.localize("commands.dn.track.version.current",
                     loc.localize(tracker.getRegion().getRegionNameKey()),
                     tracker.getCurrentVersion(),
-                    EventListener.UPDATE_FORMATTER.format(tracker.getLastVersionChangeTime()),
+                    lastVersionChangeTimeStr,
                     tracker.getRegion().getRegionCode()),
                     context.getChannel());
             } else {
