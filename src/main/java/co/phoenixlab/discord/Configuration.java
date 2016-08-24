@@ -1,5 +1,7 @@
 package co.phoenixlab.discord;
 
+import co.phoenixlab.discord.dntrack.event.RegionDescriptor;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -12,6 +14,7 @@ public class Configuration {
     private transient int prefixLength;
     private Set<String> blacklist;
     private Set<String> admins;
+    private RegionDescriptor[] dnRegions;
     private boolean selfBot;
 
     public Configuration() {
@@ -22,6 +25,7 @@ public class Configuration {
         prefixLength = 0;
         blacklist = new HashSet<>();
         admins = new HashSet<>();
+        dnRegions = new RegionDescriptor[0];
         selfBot = false;
     }
 
@@ -84,5 +88,13 @@ public class Configuration {
 
     public void setSelfBot(boolean selfBot) {
         this.selfBot = selfBot;
+    }
+
+    public RegionDescriptor[] getDnRegions() {
+        return dnRegions;
+    }
+
+    public void setDnRegions(RegionDescriptor[] dnRegions) {
+        this.dnRegions = dnRegions;
     }
 }

@@ -12,6 +12,8 @@ public class TempServerConfig {
 
     private String customLeaveMessage;
 
+    private String dnTrackChannel;
+
     public TempServerConfig() {
     }
 
@@ -63,5 +65,13 @@ public class TempServerConfig {
 
     public void setCustomLeaveMessage(String customLeaveMessage) {
         this.customLeaveMessage = customLeaveMessage;
+    }
+
+    public String getDnTrackChannel() {
+        return dnTrackChannel;
+    }
+
+    public void setDnTrackChannel(String dnTrackChannel) {
+        this.dnTrackChannel = dnTrackChannel;
     }
 }

@@ -1,22 +1,30 @@
 package co.phoenixlab.discord;
 
 import co.phoenixlab.common.lang.SafeNav;
+import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.*;
 import co.phoenixlab.discord.commands.tempstorage.TempServerConfig;
+import co.phoenixlab.discord.dntrack.VersionTracker;
+import co.phoenixlab.discord.dntrack.event.RegionDescriptor;
+import co.phoenixlab.discord.dntrack.event.VersionUpdateEvent;
 import com.google.common.eventbus.Subscribe;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public class EventListener {
 
     private final VahrhedralBot bot;
+    private final ScheduledExecutorService executorService;
+    private Map<String, VersionTracker> versionTrackers = new HashMap<>();
     public Map<String, Consumer<MemberChangeEvent>> memberChangeEventListener;
     public Map<String, String> joinMessageRedirect;
     public Map<String, String> leaveMessageRedirect;
@@ -28,6 +36,7 @@ public class EventListener {
 
     public EventListener(VahrhedralBot bot) {
         this.bot = bot;
+        executorService = Executors.newSingleThreadScheduledExecutor();
         messageListeners = new HashMap<>();
         memberChangeEventListener = new HashMap<>();
         joinMessageRedirect = new HashMap<>();
@@ -46,6 +55,12 @@ public class EventListener {
         messageListeners.put("mention-autotimeout", this::handleExcessiveMentions);
         messageListeners.put("invite-pm", this::onInviteLinkPrivateMessage);
         messageListeners.put("other-prefixes", this::onOtherTypesCommand);
+
+        for (RegionDescriptor regionDescriptor : bot.getConfig().getDnRegions()) {
+            versionTrackers.put(regionDescriptor.getRegionCode(),
+                new VersionTracker(regionDescriptor, bot.getApiClient().getEventBus()));
+        }
+
 //        messageListeners.put("date-time", this::currentDateTime);
     }
 
@@ -131,6 +146,24 @@ public class EventListener {
                 return "3rd";
             default:
                 return Integer.toString(i) + "th";
+        }
+    }
+
+    @Subscribe
+    public void onVersionChange(VersionUpdateEvent event) {
+        DiscordApiClient api = bot.getApiClient();
+        for (Server server : api.getServers()) {
+            TempServerConfig config = bot.getCommands().getModCommands().getServerStorage().get(server.getId());
+            if (config != null) {
+                String chid = config.getDnTrackChannel();
+                if (chid != null) {
+                    Localizer loc = bot.getLocalizer();
+                    api.sendMessage(loc.localize("dn.track.version.updated",
+                        loc.localize(event.getRegion().getRegionNameKey()),
+                        event.getOldVersion(),
+                        event.getNewVersion()), chid);
+                }
+            }
         }
     }
 
