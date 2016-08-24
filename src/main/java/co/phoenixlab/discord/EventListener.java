@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 
 public class EventListener {
 
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("M/d HH:mm z");
+    public static final DateTimeFormatter UPDATE_FORMATTER = DateTimeFormatter.ofPattern("M/d HH:mm z");
     private final VahrhedralBot bot;
     private final ScheduledExecutorService executorService;
     private Map<String, VersionTracker> versionTrackers = new HashMap<>();
@@ -157,7 +157,7 @@ public class EventListener {
                         loc.localize(event.getRegion().getRegionNameKey()),
                         event.getOldVersion(),
                         event.getNewVersion(),
-                        DATE_TIME_FORMATTER.format(event.getTimestamp())), chid);
+                        UPDATE_FORMATTER.format(event.getTimestamp())), chid);
                 }
             }
         }
@@ -229,7 +229,7 @@ public class EventListener {
             return;
         }
 //        if (Duration.between(ZonedDateTime.
-//                from(Commands.DATE_TIME_FORMATTER.parse(member.getJoinedAt())),
+//                from(Commands.UPDATE_FORMATTER.parse(member.getJoinedAt())),
 //                ZonedDateTime.now()).abs().compareTo(Duration.ofDays(3)) > 0) {
 //            return;
 //        }
@@ -403,4 +403,7 @@ public class EventListener {
         bot.getCommands().onLogIn(logInEvent);
     }
 
+    public Map<String, VersionTracker> getVersionTrackers() {
+        return versionTrackers;
+    }
 }

@@ -4,10 +4,15 @@ import co.phoenixlab.common.lang.number.ParseInt;
 import co.phoenixlab.common.lang.number.ParseLong;
 import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.CommandDispatcher;
+import co.phoenixlab.discord.EventListener;
 import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.VahrhedralBot;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.entities.Message;
+import co.phoenixlab.discord.dntrack.VersionTracker;
+
+import java.util.Map;
+import java.util.StringJoiner;
 
 public class DnCommands {
 
@@ -93,10 +98,46 @@ public class DnCommands {
         dispatcher.registerCommand("commands.dn.finaldamage", this::finalDamageCalculator);
         dispatcher.registerCommand("commands.dn.crit", this::critChanceCalculator);
         dispatcher.registerCommand("commands.dn.critdmg", this::critDamageCalculator);
+        dispatcher.registerCommand("commands.dn.track.version", this::getVersion);
     }
 
     public CommandDispatcher getDispatcher() {
         return dispatcher;
+    }
+
+    private void getVersion(MessageContext context, String args) {
+        DiscordApiClient api = context.getApiClient();
+        Map<String, VersionTracker> trackers = bot.getEventListener().getVersionTrackers();
+        if (args.isEmpty()) {
+            StringJoiner joiner = new StringJoiner("\n");
+            for (VersionTracker tracker : trackers.values()) {
+                joiner.add(loc.localize("commands.dn.track.version.all.entry",
+                    loc.localize(tracker.getRegion().getRegionNameKey()),
+                    tracker.getCurrentVersion(),
+                    EventListener.UPDATE_FORMATTER.format(tracker.getLastVersionChangeTime()),
+                    tracker.getRegion().getRegionCode()));
+            }
+            api.sendMessage(loc.localize("commands.dn.track.version.all.format", joiner.toString()),
+                context.getChannel());
+        } else {
+            String regionCode = args.toLowerCase();
+            VersionTracker tracker = trackers.get(regionCode);
+            if (tracker != null) {
+                api.sendMessage(loc.localize("commands.dn.track.version.current",
+                    loc.localize(tracker.getRegion().getRegionNameKey()),
+                    tracker.getCurrentVersion(),
+                    EventListener.UPDATE_FORMATTER.format(tracker.getLastVersionChangeTime()),
+                    tracker.getRegion().getRegionCode()),
+                    context.getChannel());
+            } else {
+                StringJoiner joiner = new StringJoiner(", ");
+                trackers.keySet().stream()
+                    .sorted(String.CASE_INSENSITIVE_ORDER)
+                    .forEach(k -> joiner.add("`" + k + "`"));
+                api.sendMessage(loc.localize("commands.dn.track.version.not_found", joiner.toString()),
+                    context.getChannel());
+            }
+        }
     }
 
     private void critChanceCalculator(MessageContext context, String args) {
