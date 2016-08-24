@@ -40,6 +40,15 @@
             </Policies>
             <DefaultRolloverStrategy max="20"/>
         </RollingRandomAccessFile>
+        <RollingRandomAccessFile name="DnTrackFile" fileName="logs/dntrack.log" filePattern="logs/dntrack_%i.log">
+            <PatternLayout>
+                <Pattern>%d{HH:mm:ss.SSS} [%t] [%-5level] %msg%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <OnStartupTriggeringPolicy />
+            </Policies>
+            <DefaultRolloverStrategy max="20"/>
+        </RollingRandomAccessFile>
     </Appenders>
     <Loggers>
         <Logger name="VahrhedralBot" level="trace" additivity="false">
@@ -57,6 +66,10 @@
         <Logger name="VoiceClient" level="trace" additivity="false">
             <AppenderRef ref="Console" level="info"/>
             <AppenderRef ref="VoiceFile" level="debug"/>
+        </Logger>
+        <Logger name="DnTrack" level="trace" additivity="false">
+            <AppenderRef ref="Console" level="info"/>
+            <AppenderRef ref="DnTrack" level="debug"/>
         </Logger>
         <Root level="error">
             <AppenderRef ref="Console"/>
