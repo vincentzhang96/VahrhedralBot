@@ -56,13 +56,6 @@ public class EventListener {
         messageListeners.put("mention-autotimeout", this::handleExcessiveMentions);
         messageListeners.put("invite-pm", this::onInviteLinkPrivateMessage);
         messageListeners.put("other-prefixes", this::onOtherTypesCommand);
-        if (!bot.getConfig().isSelfBot()) {
-            for (RegionDescriptor regionDescriptor : bot.getConfig().getDnRegions()) {
-                versionTrackers.put(regionDescriptor.getRegionCode(),
-                    new VersionTracker(regionDescriptor, bot.getApiClient().getEventBus()));
-            }
-        }
-
 //        messageListeners.put("date-time", this::currentDateTime);
     }
 
@@ -397,6 +390,13 @@ public class EventListener {
 
     @Subscribe
     public void onLogIn(LogInEvent logInEvent) {
+        versionTrackers.clear();
+        if (!bot.getConfig().isSelfBot()) {
+            for (RegionDescriptor regionDescriptor : bot.getConfig().getDnRegions()) {
+                versionTrackers.put(regionDescriptor.getRegionCode(),
+                    new VersionTracker(regionDescriptor, bot.getApiClient().getEventBus()));
+            }
+        }
         bot.getCommands().onLogIn(logInEvent);
     }
 
