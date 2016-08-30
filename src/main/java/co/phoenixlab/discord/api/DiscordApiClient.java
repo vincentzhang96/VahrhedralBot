@@ -762,11 +762,15 @@ public class DiscordApiClient {
     }
 
     public User getUserById(String userId) {
+        return getUserById(userId, true);
+    }
+
+    public User getUserById(String userId, boolean useApi) {
         if (userId == null) {
             return NO_USER;
         }
         for (Server server : servers) {
-            User user = getUserById(userId, server);
+            User user = getUserById(userId, server, useApi);
             if (user != NO_USER) {
                 return user;
             }
@@ -775,6 +779,10 @@ public class DiscordApiClient {
     }
 
     public User getUserById(String userId, Server server) {
+        return getUserById(userId, server, true);
+    }
+
+    public User getUserById(String userId, Server server, boolean useApi) {
         if (userId == null) {
             return NO_USER;
         }
@@ -792,16 +800,18 @@ public class DiscordApiClient {
             }
         }
         //  Try API endpoint
-        try {
-            Member member = getMemberHttp(server.getId(), userId);
-            if (member != NO_MEMBER) {
-                server.getMembers().add(member);
-                return member.getUser();
-            } else {
-                LOGGER.warn("User {} not found via HTTP", userId);
+        if (useApi) {
+            try {
+                Member member = getMemberHttp(server.getId(), userId);
+                if (member != NO_MEMBER) {
+                    server.getMembers().add(member);
+                    return member.getUser();
+                } else {
+                    LOGGER.warn("User {} not found via HTTP", userId);
+                }
+            } catch (Exception e) {
+                LOGGER.warn("Unable to get user " + userId + " via HTTP", e);
             }
-        } catch (Exception e) {
-            LOGGER.warn("Unable to get user " + userId + " via HTTP", e);
         }
         return NO_USER;
     }

@@ -671,7 +671,7 @@ public class Commands {
                 }
                 for (Minific fic : minificStorage.getMinifics()) {
                     if (fic.getId().equals(args)) {
-                        User user = apiClient.getUserById(fic.getAuthorId());
+                        User user = apiClient.getUserById(fic.getAuthorId(), false);
                         apiClient.sendMessage(loc.localize("commands.general.minific.response.random",
                                 fic.getId(), user.getUsername(), fic.getDate(), fic.getContent()),
                                 context.getChannel());
