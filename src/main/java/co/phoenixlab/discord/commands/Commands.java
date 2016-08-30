@@ -167,7 +167,7 @@ public class Commands {
         User author = context.getAuthor();
         Server server = context.getServer();
 
-        if (server == NO_SERVER) {
+        if (m.isPrivateMessage()) {
             apiClient.sendMessage(loc.localize("commands.common.cannot_use_private_message"), context.getChannel());
             return;
         }
