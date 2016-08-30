@@ -221,20 +221,25 @@ public class Commands {
             apiClient.sendMessage(loc.localize("commands.general.info.response.not_found"),
                     message.getChannelId());
         } else {
-            String joined;
+            String joined = "N/A";
             Member member = apiClient.getUserMember(user, context.getServer());
             String memberJoinDate = member.getJoinedAt();
-            if (member != NO_MEMBER && memberJoinDate != null) {
-                ZonedDateTime joinTime = ZonedDateTime.parse(memberJoinDate, DateTimeFormatter.ISO_DATE_TIME);
-                joinTime = joinTime.withZoneSameInstant(ZoneId.systemDefault());
-                joined = DATE_TIME_FORMATTER.format(joinTime);
-            } else {
-                joined = "N/A";
+            String nickname = "N/A";
+            if (member != NO_MEMBER) {
+                if (memberJoinDate != null) {
+                    ZonedDateTime joinTime = ZonedDateTime.parse(memberJoinDate, DateTimeFormatter.ISO_DATE_TIME);
+                    joinTime = joinTime.withZoneSameInstant(ZoneId.systemDefault());
+                    joined = DATE_TIME_FORMATTER.format(joinTime);
+                }
+                nickname = member.getNick();
+                if (nickname == null) {
+                    nickname = loc.localize("commands.general.info.response.none");
+                }
             }
             String avatar = (user.getAvatar() == null ? loc.localize("commands.general.info.response.no_avatar") :
                     user.getAvatarUrl().toExternalForm());
             String id = user.getId();
-            String nickname = SafeNav.of(member.getNick()).orElse(loc.localize("commands.general.info.response.none"));
+
             String response = loc.localize("commands.general.info.response.format",
                     user.getUsername(), id,
                     config.getBlacklist().contains(id) ?
