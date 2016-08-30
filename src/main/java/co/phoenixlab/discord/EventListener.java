@@ -390,12 +390,12 @@ public class EventListener {
 
     @Subscribe
     public void onLogIn(LogInEvent logInEvent) {
-        versionTrackers.clear();
-        if (!bot.getConfig().isSelfBot()) {
+        if (!bot.getConfig().isSelfBot() && versionTrackers.isEmpty()) {
             for (RegionDescriptor regionDescriptor : bot.getConfig().getDnRegions()) {
                 VersionTracker tracker = new VersionTracker(regionDescriptor, bot.getApiClient().getEventBus());
                 versionTrackers.put(regionDescriptor.getRegionCode(),
                     tracker);
+                VahrhedralBot.LOGGER.info("Registered version tracker for " + regionDescriptor.getRegionCode());
                 executorService.execute(tracker);
                 executorService.schedule(tracker, 1, TimeUnit.MINUTES);
             }
