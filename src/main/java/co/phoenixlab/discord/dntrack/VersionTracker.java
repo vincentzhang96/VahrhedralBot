@@ -31,12 +31,13 @@ public class VersionTracker implements Runnable {
         this.version = new AtomicInteger(-1);
         this.lastChangeEvent = new AtomicReference<>(null);
         this.lastCheckTime = new AtomicReference<>(null);
+        LOGGER.info("Created version tracker for " + region.getRegionCode());
     }
 
     @Override
     public void run() {
         try {
-            LOGGER.trace("Performing version check for {}", region.getRegionCode());
+            LOGGER.debug("Performing version check for {}", region.getRegionCode());
             HttpResponse<String> resp = Unirest.get(region.getVersionCheckUrl())
                 .asString();
             //  Use the same "now" for check and update (if we do update)
