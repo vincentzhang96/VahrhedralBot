@@ -751,7 +751,7 @@ public class Commands {
             String authorId = minific.getAuthorId();
             String uname = usernameCache.get(authorId);
             if (uname == null) {
-                uname = apiClient.getUserById(authorId).getUsername();
+                uname = apiClient.getUserById(authorId, false).getUsername();
                 usernameCache.put(authorId, uname);
             }
             joiner.add(loc.localize("commands.general.minific.response.manage.list.entry",
