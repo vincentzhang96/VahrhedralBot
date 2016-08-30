@@ -234,6 +234,7 @@ public class Commands {
             String avatar = (user.getAvatar() == null ? loc.localize("commands.general.info.response.no_avatar") :
                     user.getAvatarUrl().toExternalForm());
             String id = user.getId();
+            String nickname = SafeNav.of(member.getNick()).orElse(loc.localize("commands.general.info.response.none"));
             String response = loc.localize("commands.general.info.response.format",
                     user.getUsername(), id,
                     config.getBlacklist().contains(id) ?
@@ -246,7 +247,8 @@ public class Commands {
                     "[" + Optional.ofNullable(apiClient.getUserPresences().get(id)).map(Presence::getDisplayKey).
                             orElse("misc.unknown") + "]",
                     user.getDiscriminator(),
-                    user.isBot() ? loc.localize("commands.general.info.response.bot") : "");
+                    user.isBot() ? loc.localize("commands.general.info.response.bot") : "",
+                    nickname);
             apiClient.sendMessage(response, context.getChannel());
         }
     }
