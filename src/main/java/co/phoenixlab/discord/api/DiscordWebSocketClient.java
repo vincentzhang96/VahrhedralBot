@@ -5,6 +5,7 @@ import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.entities.voice.VoiceServerUpdate;
 import co.phoenixlab.discord.api.entities.voice.VoiceStateUpdate;
 import co.phoenixlab.discord.api.event.*;
+import co.phoenixlab.discord.api.event.ServerBanChangeEvent.BanChange;
 import co.phoenixlab.discord.api.event.voice.VoiceServerUpdateEvent;
 import co.phoenixlab.discord.api.event.voice.VoiceStateUpdateEvent;
 import co.phoenixlab.discord.stats.RunningAverage;
@@ -190,27 +191,19 @@ public class DiscordWebSocketClient extends WebSocketClient {
     }
 
     private void handleGuildBanDelete(JSONObject data) {
-        String server = (String) data.get("guild_id");
+        String serverId = (String) data.get("guild_id");
         JSONObject userJSON = (JSONObject) data.get("user");
         User user = jsonObjectToObject(userJSON, User.class);
-        if (server.equals("106293726271246336")) {
-            //  167264528537485312 dnnacd #activity-log
-            apiClient.sendMessage(String.format("`%s` (%s) was unbanned",
-                    user.getUsername(),
-                    user.getId()), "167264528537485312");
-        }
+        Server server = apiClient.getServerByID(serverId);
+        apiClient.getEventBus().post(new ServerBanChangeEvent(user, server, BanChange.DELETED));
     }
 
     private void handleGuildBanAdd(JSONObject data) {
-        String server = (String) data.get("guild_id");
+        String serverId = (String) data.get("guild_id");
         JSONObject userJSON = (JSONObject) data.get("user");
         User user = jsonObjectToObject(userJSON, User.class);
-        if (server.equals("106293726271246336")) {
-            //  167264528537485312 dnnacd #activity-log
-            apiClient.sendMessage(String.format("`%s` (%s) was banned",
-                    user.getUsername(),
-                    user.getId()), "167264528537485312");
-        }
+        Server server = apiClient.getServerByID(serverId);
+        apiClient.getEventBus().post(new ServerBanChangeEvent(user, server, BanChange.ADDED));
     }
 
     private void handleMessageDelete(JSONObject data) {

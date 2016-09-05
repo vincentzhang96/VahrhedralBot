@@ -146,6 +146,9 @@ public class EventListener {
 
     @Subscribe
     public void onVersionChange(VersionUpdateEvent event) {
+        if (isSelfBot()) {
+            return;
+        }
         DiscordApiClient api = bot.getApiClient();
         for (Server server : api.getServers()) {
             TempServerConfig config = bot.getCommands().getModCommands().getServerStorage().get(server.getId());
@@ -386,6 +389,30 @@ public class EventListener {
 
     public void deleteMessageListener(String name) {
         messageListeners.remove(Objects.requireNonNull(name));
+    }
+
+    @Subscribe
+    public void onBanChange(ServerBanChangeEvent event) {
+        if (isSelfBot()) {
+            return;
+        }
+        Server server = event.getServer();
+        User user = event.getUser();
+        if (server == null || user == null) {
+            return;
+        }
+        if (server.getId().equals("106293726271246336")) {
+            //  167264528537485312 dnnacd #activity-log
+            if (event.getChange() == ServerBanChangeEvent.BanChange.ADDED) {
+                bot.getApiClient().sendMessage(String.format("`%s` (%s) was banned",
+                        user.getUsername(),
+                        user.getId()), "167264528537485312");
+            } else if (event.getChange() == ServerBanChangeEvent.BanChange.DELETED) {
+                bot.getApiClient().sendMessage(String.format("`%s` (%s) was unbanned",
+                        user.getUsername(),
+                        user.getId()), "167264528537485312");
+            }
+        }
     }
 
     @Subscribe
