@@ -218,6 +218,7 @@ public class EventListener {
         User author = message.getAuthor();
         if (bot.getConfig().isAdmin(author.getId())) {
             return;
+        }
         Channel channel = bot.getApiClient().getChannelById(message.getChannelId());
         Server server;
         if (channel != DiscordApiClient.NO_CHANNEL && channel.getParent() != null) {
