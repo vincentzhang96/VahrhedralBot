@@ -179,7 +179,6 @@ public class EventListener {
         if (bot.getConfig().getBlacklist().contains(message.getAuthor().getId())) {
             return;
         }
-
         Channel channel = bot.getApiClient().getChannelById(message.getChannelId());
         if (channel != DiscordApiClient.NO_CHANNEL && channel.getParent() != null) {
             if (ignoredServers.contains(channel.getParent().getId())) {
@@ -200,6 +199,9 @@ public class EventListener {
         if (!bot.getMainCommandDispatcher().active().get()) {
             return;
         }
+        if (message.getAuthor().isBot()) {
+            return;
+        }
         String otherId = message.getAuthor().getId();
         bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.mention.response",
             message.getAuthor().getUsername()),
@@ -216,7 +218,6 @@ public class EventListener {
         User author = message.getAuthor();
         if (bot.getConfig().isAdmin(author.getId())) {
             return;
-        }
         Channel channel = bot.getApiClient().getChannelById(message.getChannelId());
         Server server;
         if (channel != DiscordApiClient.NO_CHANNEL && channel.getParent() != null) {
