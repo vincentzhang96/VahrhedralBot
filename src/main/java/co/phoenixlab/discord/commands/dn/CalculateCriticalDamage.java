@@ -68,6 +68,9 @@ public class CalculateCriticalDamage implements Command{
 						msg = commandLocalizer.localize(msgName, level, (int)critDmg, (percent + 2D) * 100D);
 					}
 					else{
+						if(value.isEmpty()){
+							
+						}
 						int critDmg = (int) StringUtilities.parseAlphanumeric(value, commandLocalizer);
 						double critDmgPercent = calcPercentFromCritDmg(critDmg, level);
 						double critDmgCap = critDmgCaps[level - 1];
@@ -80,8 +83,10 @@ public class CalculateCriticalDamage implements Command{
 			}
 		}
 		catch(IllegalArgumentException e){
-			// NOTE : If(args.isEmpty()) then the bot will return "empty string"
-			msg = e.getMessage();
+			//For NFE we just want to use normal msg
+			if(!(e instanceof NumberFormatException)){
+				msg = e.getMessage();
+			}
 		}
 		catch(Exception e){
 			logger.warn(e.getMessage(), e);
@@ -93,7 +98,8 @@ public class CalculateCriticalDamage implements Command{
 	
 	private double calcCritDmgReqiredToReachPercent(double percent, int level){
 		if(percent < 0){
-			throw new IllegalArgumentException("must specify at least 0% critical damage");
+			String errMsg = commandLocalizer.localize("commands.dn.critdmg.response.low_percent");
+			throw new IllegalArgumentException(errMsg);
 		}
 		
 		if(level < 1 || level > 100){

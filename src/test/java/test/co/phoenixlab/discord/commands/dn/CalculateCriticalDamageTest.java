@@ -54,7 +54,10 @@ public class CalculateCriticalDamageTest {
 		MockClient client = (MockClient)mockContext.getApiClient();
 		String result = client.getMsgSent();
 		
-		assertEquals("empty string", result);
+		Localizer loc = StringUtilities.getLocalizer();
+		String msgName = "commands.dn.critdmg.response.invalid";
+		String expect = loc.localize(msgName, PREFIX);
+		assertEquals(expect, result);
 	}
 	
 	@Test
@@ -158,7 +161,9 @@ public class CalculateCriticalDamageTest {
 		MockClient client = (MockClient)mockContext.getApiClient();
 		String result = client.getMsgSent();
 		
-		assertEquals("must specify at least 0% critical damage", result);
+		Localizer loc = StringUtilities.getLocalizer();
+		String expect = loc.localize("commands.dn.critdmg.response.low_percent");
+		assertEquals(expect, result);
 	}
 	
 	MessageContext getMockContext(){
