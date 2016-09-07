@@ -425,8 +425,7 @@ public class EventListener {
                 versionTrackers.put(regionDescriptor.getRegionCode(),
                     tracker);
                 VahrhedralBot.LOGGER.info("Registered version tracker for " + regionDescriptor.getRegionCode());
-                executorService.execute(tracker);
-                executorService.schedule(tracker, 1, TimeUnit.MINUTES);
+                executorService.scheduleAtFixedRate(tracker, 0, 1, TimeUnit.MINUTES);
             }
         }
         bot.getCommands().onLogIn(logInEvent);
