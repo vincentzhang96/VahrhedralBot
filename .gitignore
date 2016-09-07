@@ -34,6 +34,10 @@ $RECYCLE.BIN/
 .project
 .settings/
 
+log/
+target/
+/bin/
+
 # =========================
 # Operating System Files
 # =========================
