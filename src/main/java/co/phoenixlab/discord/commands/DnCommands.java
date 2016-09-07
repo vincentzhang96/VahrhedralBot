@@ -10,6 +10,7 @@ import co.phoenixlab.discord.EventListener;
 import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.VahrhedralBot;
 import co.phoenixlab.discord.api.DiscordApiClient;
+import co.phoenixlab.discord.commands.dn.CalculateCriticalChance;
 import co.phoenixlab.discord.commands.dn.CalculateCriticalDamage;
 import co.phoenixlab.discord.dntrack.VersionTracker;
 
@@ -52,22 +53,6 @@ public class DnCommands {
             158760.0, 165816.0, 187278.0, 209916.0, 233730.0, 258720.0,
             286135.0, 314874.0, 344935.0, 376320.0, 409027.0, 443058.0
     };
-    public static final double[] critCaps = {
-            1000.0, 1160.0, 1320.0, 1480.0, 1640.0, 1800.0, 1960.0, 2120.0,
-            2280.0, 2440.0, 2600.0, 2760.0, 2920.0, 3080.0, 3800.0, 4000.0,
-            4200.0, 4400.0, 4600.0, 4800.0, 5000.0, 5200.0, 5400.0, 5600.0,
-            5900.0, 6200.0, 6500.0, 6800.0, 7100.0, 7400.0, 7700.0, 8000.0,
-            8400.0, 8800.0, 9200.0, 9600.0, 10000.0, 10400.0, 10800.0, 11200.0,
-            12000.0, 12800.0, 13600.0, 14400.0, 15300.0, 16200.0, 17100.0,
-            18000.0, 19000.0, 20000.0, 21500.0, 23000.0, 24600.0, 26200.0,
-            27900.0, 29600.0, 31400.0, 33200.0, 35200.0, 37200.0, 40200.0,
-            43200.0, 46200.0, 49200.0, 52400.0, 55600.0, 58800.0, 62000.0,
-            65400.0, 68800.0, 74745.0, 80619.0, 86438.0, 92373.0, 98284.0,
-            104245.0, 110176.0, 116008.0, 121899.0, 127685.0, 138684.0, 149565.0,
-            160545.0, 171433.0, 182263.0, 192994.0, 203931.0, 214891.0, 225855.0,
-            236880.0, 277830.0, 321300.0, 367290.0, 415800.0, 468877.0, 524790.0,
-            583537.0, 645120.0, 709537.0, 776790.0
-    };
 
     private final CommandDispatcher dispatcher;
     private final VahrhedralBot bot;
@@ -83,7 +68,10 @@ public class DnCommands {
     	Command command = null;
         dispatcher.registerCommand("commands.dn.defense", this::defenseCalculator);
         dispatcher.registerCommand("commands.dn.finaldamage", this::finalDamageCalculator);
-        dispatcher.registerCommand("commands.dn.crit", this::critChanceCalculator);
+        
+        command = new CalculateCriticalChance();
+        dispatcher.registerCommand("commands.dn.crit", command);
+
         command = new CalculateCriticalDamage();
         dispatcher.registerCommand("commands.dn.critdmg", command);
         dispatcher.registerCommand("commands.dn.track.version", this::getVersion);
@@ -132,63 +120,6 @@ public class DnCommands {
                     context.getChannel());
             }
         }
-    }
-
-    private void critChanceCalculator(MessageContext context, String args) {
-        DiscordApiClient apiClient = context.getApiClient();
-        try {
-            //  Strip commas
-            args = args.replace(",", "");
-            String[] split = args.split(" ");
-            if (split.length >= 1) {
-                String value = split[0];
-                if (value.endsWith("%")) {
-                    double critPercent = Math.min(Double.parseDouble(value.substring(0, value.length() - 1)) / 100D,
-                        CRIT_MAX_PERCENT);
-                    if (critPercent < 0) {
-                        throw new IllegalArgumentException("must be at least 0%");
-                    }
-                    int level = 80;
-                    if (split.length >= 2) {
-                        level = ParseInt.parseOrDefault(split[1], level);
-                    }
-                    if (level < 1 || level > 100) {
-                        apiClient.sendMessage(loc.localize("commands.dn.crit.response.level_out_of_range",
-                            1, 100),
-                            context.getChannel());
-                        return;
-                    }
-                    double crit = critCaps[level - 1] * critPercent;
-                    apiClient.sendMessage(loc.localize("commands.dn.crit.response.format.required",
-                        level, (int) crit, critPercent * 100D),
-                        context.getChannel());
-                } else {
-                    int crit = (int) parseStat(split[0]);
-                    int level = 80;
-                    if (split.length >= 2) {
-                        level = ParseInt.parseOrDefault(split[1], level);
-                    }
-                    if (level < 1 || level > 100) {
-                        apiClient.sendMessage(loc.localize("commands.dn.crit.response.level_out_of_range",
-                            1, 100),
-                            context.getChannel());
-                        return;
-                    }
-                    double critPercent;
-                    double critCap = critCaps[level - 1];
-                    critPercent = crit / critCap;
-                    critPercent = Math.max(0, Math.min(CRIT_MAX_PERCENT, critPercent)) * 100D;
-                    apiClient.sendMessage(loc.localize("commands.dn.crit.response.format",
-                        level, critPercent, (int) (critCap * CRIT_MAX_PERCENT), (int) (CRIT_MAX_PERCENT * 100D)),
-                        context.getChannel());
-                }
-                return;
-            }
-        } catch (Exception ignored) {
-        }
-        apiClient.sendMessage(loc.localize("commands.dn.crit.response.invalid",
-                bot.getMainCommandDispatcher().getCommandPrefix()),
-                context.getChannel());
     }
 
     private void finalDamageCalculator(MessageContext context, String args) {
