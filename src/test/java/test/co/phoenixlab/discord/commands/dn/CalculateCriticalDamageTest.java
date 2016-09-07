@@ -41,7 +41,6 @@ public class CalculateCriticalDamageTest {
 	}
 	
 	@Test
-	//Is this behavior appropriate?
 	public void handleCommandEmptyArgTest() {
 		//Init
 		String argument = "";
