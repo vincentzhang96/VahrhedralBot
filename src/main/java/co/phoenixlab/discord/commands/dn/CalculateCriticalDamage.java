@@ -68,9 +68,6 @@ public class CalculateCriticalDamage implements Command{
 						msg = commandLocalizer.localize(msgName, level, (int)critDmg, (percent + 2D) * 100D);
 					}
 					else{
-						if(value.isEmpty()){
-							
-						}
 						int critDmg = (int) StringUtilities.parseAlphanumeric(value, commandLocalizer);
 						double critDmgPercent = calcPercentFromCritDmg(critDmg, level);
 						double critDmgCap = critDmgCaps[level - 1];
