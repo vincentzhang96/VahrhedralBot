@@ -2,15 +2,17 @@ package co.phoenixlab.discord.commands;
 
 import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.common.lang.number.ParseInt;
-import co.phoenixlab.common.lang.number.ParseLong;
 import co.phoenixlab.common.localization.Localizer;
+import co.phoenixlab.discord.Command;
 import co.phoenixlab.discord.CommandDispatcher;
 import co.phoenixlab.discord.EventListener;
 import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.VahrhedralBot;
 import co.phoenixlab.discord.api.DiscordApiClient;
-import co.phoenixlab.discord.api.entities.Message;
+import co.phoenixlab.discord.commands.dn.CalculateCriticalChance;
+import co.phoenixlab.discord.commands.dn.CalculateCriticalDamage;
 import co.phoenixlab.discord.dntrack.VersionTracker;
+import co.phoenixlab.discord.util.StringUtilities;
 
 import java.time.ZonedDateTime;
 import java.util.Map;
@@ -19,8 +21,6 @@ import java.util.StringJoiner;
 public class DnCommands {
 
     public static final double DEFENSE_MAX_PERCENT = 0.85D;
-    public static final double CRITDMG_MAX_PERCENT = 1D;
-    public static final double CRIT_MAX_PERCENT = 0.89D;
     public static final double FD_MAX_PERCENT = 1D;
     public static final double[] fdCaps = {
             75.0, 87.0, 99.0, 111.0, 123.0, 135.0, 147.0, 159.0, 171.0, 183.0,
@@ -52,38 +52,6 @@ public class DnCommands {
             158760.0, 165816.0, 187278.0, 209916.0, 233730.0, 258720.0,
             286135.0, 314874.0, 344935.0, 376320.0, 409027.0, 443058.0
     };
-    public static final double[] critCaps = {
-            1000.0, 1160.0, 1320.0, 1480.0, 1640.0, 1800.0, 1960.0, 2120.0,
-            2280.0, 2440.0, 2600.0, 2760.0, 2920.0, 3080.0, 3800.0, 4000.0,
-            4200.0, 4400.0, 4600.0, 4800.0, 5000.0, 5200.0, 5400.0, 5600.0,
-            5900.0, 6200.0, 6500.0, 6800.0, 7100.0, 7400.0, 7700.0, 8000.0,
-            8400.0, 8800.0, 9200.0, 9600.0, 10000.0, 10400.0, 10800.0, 11200.0,
-            12000.0, 12800.0, 13600.0, 14400.0, 15300.0, 16200.0, 17100.0,
-            18000.0, 19000.0, 20000.0, 21500.0, 23000.0, 24600.0, 26200.0,
-            27900.0, 29600.0, 31400.0, 33200.0, 35200.0, 37200.0, 40200.0,
-            43200.0, 46200.0, 49200.0, 52400.0, 55600.0, 58800.0, 62000.0,
-            65400.0, 68800.0, 74745.0, 80619.0, 86438.0, 92373.0, 98284.0,
-            104245.0, 110176.0, 116008.0, 121899.0, 127685.0, 138684.0, 149565.0,
-            160545.0, 171433.0, 182263.0, 192994.0, 203931.0, 214891.0, 225855.0,
-            236880.0, 277830.0, 321300.0, 367290.0, 415800.0, 468877.0, 524790.0,
-            583537.0, 645120.0, 709537.0, 776790.0
-    };
-    public static final double[] critDmgCaps = {
-            2650.0, 3074.0, 3498.0, 3922.0, 4346.0, 4770.0, 5194.0, 5618.0,
-            6042.0, 6466.0, 6890.0, 7314.0, 7738.0, 8162.0, 10070.0, 10600.0,
-            11130.0, 11660.0, 12190.0, 12720.0, 13250.0, 13780.0, 14310.0,
-            14840.0, 15635.0, 16430.0, 17225.0, 18020.0, 18815.0, 19610.0,
-            20405.0, 21200.0, 22260.0, 23320.0, 24380.0, 25440.0, 26500.0,
-            27560.0, 28620.0, 29680.0, 31641.0, 33575.0, 35510.0, 37206.0,
-            39326.0, 41419.0, 43513.0, 45553.0, 47832.0, 50350.0, 55650.0,
-            59757.0, 64580.0, 69589.0, 74756.0, 80109.0, 86310.0, 93121.0,
-            99375.0, 103350.0, 107987.0, 113950.0, 121237.0, 129850.0, 139787.0,
-            151050.0, 163637.0, 177894.0, 193794.0, 211337.0, 228555.0, 245520.0,
-            262220.0, 278587.0, 296902.0, 320100.0, 343263.0, 374976.0, 407979.0,
-            431970.0, 453390.0, 474810.0, 496230.0, 517650.0, 542640.0, 567630.0,
-            592620.0, 617610.0, 642600.0, 671160.0, 769692.0, 801108.0, 832524.0,
-            863940.0, 899283.0, 934626.0, 969969.0, 1005312.0, 1040655.0, 1075998.0
-    };
 
     private final CommandDispatcher dispatcher;
     private final VahrhedralBot bot;
@@ -96,10 +64,15 @@ public class DnCommands {
     }
 
     public void registerDnCommands() {
+    	Command command = null;
         dispatcher.registerCommand("commands.dn.defense", this::defenseCalculator);
         dispatcher.registerCommand("commands.dn.finaldamage", this::finalDamageCalculator);
-        dispatcher.registerCommand("commands.dn.crit", this::critChanceCalculator);
-        dispatcher.registerCommand("commands.dn.critdmg", this::critDamageCalculator);
+        
+        command = new CalculateCriticalChance();
+        dispatcher.registerCommand("commands.dn.crit", command);
+
+        command = new CalculateCriticalDamage();
+        dispatcher.registerCommand("commands.dn.critdmg", command);
         dispatcher.registerCommand("commands.dn.track.version", this::getVersion);
     }
 
@@ -149,121 +122,6 @@ public class DnCommands {
         }
     }
 
-    private void critChanceCalculator(MessageContext context, String args) {
-        DiscordApiClient apiClient = context.getApiClient();
-        try {
-            //  Strip commas
-            args = args.replace(",", "");
-            String[] split = args.split(" ");
-            if (split.length >= 1) {
-                String value = split[0];
-                if (value.endsWith("%")) {
-                    double critPercent = Math.min(Double.parseDouble(value.substring(0, value.length() - 1)) / 100D,
-                        CRIT_MAX_PERCENT);
-                    if (critPercent < 0) {
-                        throw new IllegalArgumentException("must be at least 0%");
-                    }
-                    int level = 80;
-                    if (split.length >= 2) {
-                        level = ParseInt.parseOrDefault(split[1], level);
-                    }
-                    if (level < 1 || level > 100) {
-                        apiClient.sendMessage(loc.localize("commands.dn.crit.response.level_out_of_range",
-                            1, 100),
-                            context.getChannel());
-                        return;
-                    }
-                    double crit = critCaps[level - 1] * critPercent;
-                    apiClient.sendMessage(loc.localize("commands.dn.crit.response.format.required",
-                        level, (int) crit, critPercent * 100D),
-                        context.getChannel());
-                } else {
-                    int crit = (int) parseStat(split[0]);
-                    int level = 80;
-                    if (split.length >= 2) {
-                        level = ParseInt.parseOrDefault(split[1], level);
-                    }
-                    if (level < 1 || level > 100) {
-                        apiClient.sendMessage(loc.localize("commands.dn.crit.response.level_out_of_range",
-                            1, 100),
-                            context.getChannel());
-                        return;
-                    }
-                    double critPercent;
-                    double critCap = critCaps[level - 1];
-                    critPercent = crit / critCap;
-                    critPercent = Math.max(0, Math.min(CRIT_MAX_PERCENT, critPercent)) * 100D;
-                    apiClient.sendMessage(loc.localize("commands.dn.crit.response.format",
-                        level, critPercent, (int) (critCap * CRIT_MAX_PERCENT), (int) (CRIT_MAX_PERCENT * 100D)),
-                        context.getChannel());
-                }
-                return;
-            }
-        } catch (Exception ignored) {
-        }
-        apiClient.sendMessage(loc.localize("commands.dn.crit.response.invalid",
-                bot.getMainCommandDispatcher().getCommandPrefix()),
-                context.getChannel());
-    }
-
-    private void critDamageCalculator(MessageContext context, String args) {
-        DiscordApiClient apiClient = context.getApiClient();
-        try {
-            //  Strip commas
-            args = args.replace(",", "");
-            String[] split = args.split(" ");
-            if (split.length >= 1) {
-                String value = split[0];
-                if (value.endsWith("%")) {
-                    double critDmgPercent = Math.min(Double.parseDouble(value.substring(0, value.length() - 1)) / 100D - 2D,
-                        CRITDMG_MAX_PERCENT);
-                    if (critDmgPercent < 0) {
-                        throw new IllegalArgumentException("must be at least 0%");
-                    }
-                    int level = 80;
-                    if (split.length >= 2) {
-                        level = ParseInt.parseOrDefault(split[1], level);
-                    }
-                    if (level < 1 || level > 100) {
-                        apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.level_out_of_range",
-                            1, 100),
-                            context.getChannel());
-                        return;
-                    }
-                    double critDmg = critDmgCaps[level - 1] * critDmgPercent;
-                    apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.format.required",
-                        level, (int) critDmg, (critDmgPercent + 2D) * 100D),
-                        context.getChannel());
-                } else {
-                    int critdmg = (int) parseStat(value);
-                    int level = 80;
-                    if (split.length >= 2) {
-                        level = ParseInt.parseOrDefault(split[1], level);
-                    }
-                    if (level < 1 || level > 100) {
-                        apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.level_out_of_range",
-                            1, 100),
-                            context.getChannel());
-                        return;
-                    }
-                    double critDmgPercent;
-                    double critDmgCap = critDmgCaps[level - 1];
-                    critDmgPercent = critdmg / critDmgCap;
-                    critDmgPercent = Math.max(0, Math.min(CRITDMG_MAX_PERCENT, critDmgPercent)) * 100D + 200D;
-                    apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.format",
-                        level, critDmgPercent, (int) (critDmgCap * CRITDMG_MAX_PERCENT),
-                        (int) (CRITDMG_MAX_PERCENT * 100D) + 200),
-                        context.getChannel());
-                }
-                return;
-            }
-        } catch (Exception ignored) {
-        }
-        apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.invalid",
-                bot.getMainCommandDispatcher().getCommandPrefix()),
-                context.getChannel());
-    }
-
     private void finalDamageCalculator(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
         //  Strip commas
@@ -300,7 +158,7 @@ public class DnCommands {
                             level, (int) fd, fdPercent * 100D),
                             context.getChannel());
                 } else {
-                    int fd = (int) parseStat(quantity);
+                    int fd = (int) StringUtilities.parseAlphanumeric(quantity, context.getBot().getLocalizer());;
                     int level = 80;
                     if (split.length >= 2) {
                         level = ParseInt.parseOrDefault(split[1], level);
@@ -335,15 +193,14 @@ public class DnCommands {
 
     private void defenseCalculator(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
-        Message message = context.getMessage();
         //  Strip commas
         args = args.replace(",", "");
         String[] split = args.split(" ");
         if (split.length >= 3) {
             try {
-                double rawHp = parseStat(split[0]);
-                double rawDef = parseStat(split[1]);
-                double rawMDef = parseStat(split[2]);
+                double rawHp = StringUtilities.parseAlphanumeric(split[0], context.getBot().getLocalizer());
+                double rawDef = StringUtilities.parseAlphanumeric(split[1], context.getBot().getLocalizer());
+                double rawMDef = StringUtilities.parseAlphanumeric(split[2], context.getBot().getLocalizer());
                 if (rawHp < 0 || rawDef < 0 || rawMDef < 0) {
                     throw new NumberFormatException();
                 }
@@ -384,65 +241,4 @@ public class DnCommands {
         defPercent = Math.max(0, Math.min(DEFENSE_MAX_PERCENT, defPercent)) * 100D;
         return defPercent;
     }
-
-    private double lerp(double a, double b, double alpha) {
-        return a + (b - a) * alpha;
-    }
-
-    private double parseStat(String s) throws NumberFormatException {
-        //  Check if it ends in thousand or million
-        String thousandSuffix = loc.localize("commands.dn.defense.suffix.thousand");
-        int start = s.indexOf(thousandSuffix);
-        double working;
-        double ret = 0;
-        if (start == 0) {
-            //  Invalid, cannot be just "k"
-            throw new NumberFormatException();
-        }
-        if (start != -1) {
-            String num = s.substring(0, start);
-            try {
-                working = Double.parseDouble(num);
-            } catch (NumberFormatException nfe) {
-                throw new NumberFormatException();
-            }
-            ret = working * 1000.0;
-        } else {
-            String millionSuffix = loc.localize("commands.dn.defense.suffix.million");
-            start = s.indexOf(millionSuffix);
-            if (start == 0) {
-                //  Invalid, cannot be just "m"
-                throw new NumberFormatException();
-            }
-            if (start != -1) {
-                String num = s.substring(0, start);
-                try {
-                    working = Double.parseDouble(num);
-                } catch (NumberFormatException nfe) {
-                    throw new NumberFormatException();
-                }
-                ret = working * 1000000.0;
-            } else {
-                String billionSuffix = loc.localize("commands.dn.defense.suffix.billion");
-                start = s.indexOf(billionSuffix);
-                if (start == 0) {
-                    //  Invalid, cannot be just "b"
-                    throw new NumberFormatException();
-                }
-                if (start != -1) {
-                    String num = s.substring(0, start);
-                    try {
-                        working = Double.parseDouble(num);
-                    } catch (NumberFormatException nfe) {
-                        throw new NumberFormatException();
-                    }
-                    ret = working * 1000000000.0;
-                } else {
-                    ret = ParseLong.parseDec(s);
-                }
-            }
-        }
-        return ret;
-    }
-
 }
