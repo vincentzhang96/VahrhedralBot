@@ -4,12 +4,13 @@ import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.common.lang.number.ParseInt;
 import co.phoenixlab.common.lang.number.ParseLong;
 import co.phoenixlab.common.localization.Localizer;
+import co.phoenixlab.discord.Command;
 import co.phoenixlab.discord.CommandDispatcher;
 import co.phoenixlab.discord.EventListener;
 import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.VahrhedralBot;
 import co.phoenixlab.discord.api.DiscordApiClient;
-import co.phoenixlab.discord.api.entities.Message;
+import co.phoenixlab.discord.commands.dn.CalculateCriticalDamage;
 import co.phoenixlab.discord.dntrack.VersionTracker;
 
 import java.time.ZonedDateTime;
@@ -68,22 +69,6 @@ public class DnCommands {
             236880.0, 277830.0, 321300.0, 367290.0, 415800.0, 468877.0, 524790.0,
             583537.0, 645120.0, 709537.0, 776790.0
     };
-    public static final double[] critDmgCaps = {
-            2650.0, 3074.0, 3498.0, 3922.0, 4346.0, 4770.0, 5194.0, 5618.0,
-            6042.0, 6466.0, 6890.0, 7314.0, 7738.0, 8162.0, 10070.0, 10600.0,
-            11130.0, 11660.0, 12190.0, 12720.0, 13250.0, 13780.0, 14310.0,
-            14840.0, 15635.0, 16430.0, 17225.0, 18020.0, 18815.0, 19610.0,
-            20405.0, 21200.0, 22260.0, 23320.0, 24380.0, 25440.0, 26500.0,
-            27560.0, 28620.0, 29680.0, 31641.0, 33575.0, 35510.0, 37206.0,
-            39326.0, 41419.0, 43513.0, 45553.0, 47832.0, 50350.0, 55650.0,
-            59757.0, 64580.0, 69589.0, 74756.0, 80109.0, 86310.0, 93121.0,
-            99375.0, 103350.0, 107987.0, 113950.0, 121237.0, 129850.0, 139787.0,
-            151050.0, 163637.0, 177894.0, 193794.0, 211337.0, 228555.0, 245520.0,
-            262220.0, 278587.0, 296902.0, 320100.0, 343263.0, 374976.0, 407979.0,
-            431970.0, 453390.0, 474810.0, 496230.0, 517650.0, 542640.0, 567630.0,
-            592620.0, 617610.0, 642600.0, 671160.0, 769692.0, 801108.0, 832524.0,
-            863940.0, 899283.0, 934626.0, 969969.0, 1005312.0, 1040655.0, 1075998.0
-    };
 
     private final CommandDispatcher dispatcher;
     private final VahrhedralBot bot;
@@ -96,10 +81,12 @@ public class DnCommands {
     }
 
     public void registerDnCommands() {
+    	Command command = null;
         dispatcher.registerCommand("commands.dn.defense", this::defenseCalculator);
         dispatcher.registerCommand("commands.dn.finaldamage", this::finalDamageCalculator);
         dispatcher.registerCommand("commands.dn.crit", this::critChanceCalculator);
-        dispatcher.registerCommand("commands.dn.critdmg", this::critDamageCalculator);
+        command = new CalculateCriticalDamage();
+        dispatcher.registerCommand("commands.dn.critdmg", command);
         dispatcher.registerCommand("commands.dn.track.version", this::getVersion);
     }
 
@@ -206,64 +193,6 @@ public class DnCommands {
                 context.getChannel());
     }
 
-    private void critDamageCalculator(MessageContext context, String args) {
-        DiscordApiClient apiClient = context.getApiClient();
-        try {
-            //  Strip commas
-            args = args.replace(",", "");
-            String[] split = args.split(" ");
-            if (split.length >= 1) {
-                String value = split[0];
-                if (value.endsWith("%")) {
-                    double critDmgPercent = Math.min(Double.parseDouble(value.substring(0, value.length() - 1)) / 100D - 2D,
-                        CRITDMG_MAX_PERCENT);
-                    if (critDmgPercent < 0) {
-                        throw new IllegalArgumentException("must be at least 0%");
-                    }
-                    int level = 80;
-                    if (split.length >= 2) {
-                        level = ParseInt.parseOrDefault(split[1], level);
-                    }
-                    if (level < 1 || level > 100) {
-                        apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.level_out_of_range",
-                            1, 100),
-                            context.getChannel());
-                        return;
-                    }
-                    double critDmg = critDmgCaps[level - 1] * critDmgPercent;
-                    apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.format.required",
-                        level, (int) critDmg, (critDmgPercent + 2D) * 100D),
-                        context.getChannel());
-                } else {
-                    int critdmg = (int) parseStat(value);
-                    int level = 80;
-                    if (split.length >= 2) {
-                        level = ParseInt.parseOrDefault(split[1], level);
-                    }
-                    if (level < 1 || level > 100) {
-                        apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.level_out_of_range",
-                            1, 100),
-                            context.getChannel());
-                        return;
-                    }
-                    double critDmgPercent;
-                    double critDmgCap = critDmgCaps[level - 1];
-                    critDmgPercent = critdmg / critDmgCap;
-                    critDmgPercent = Math.max(0, Math.min(CRITDMG_MAX_PERCENT, critDmgPercent)) * 100D + 200D;
-                    apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.format",
-                        level, critDmgPercent, (int) (critDmgCap * CRITDMG_MAX_PERCENT),
-                        (int) (CRITDMG_MAX_PERCENT * 100D) + 200),
-                        context.getChannel());
-                }
-                return;
-            }
-        } catch (Exception ignored) {
-        }
-        apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.invalid",
-                bot.getMainCommandDispatcher().getCommandPrefix()),
-                context.getChannel());
-    }
-
     private void finalDamageCalculator(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
         //  Strip commas
@@ -335,7 +264,6 @@ public class DnCommands {
 
     private void defenseCalculator(MessageContext context, String args) {
         DiscordApiClient apiClient = context.getApiClient();
-        Message message = context.getMessage();
         //  Strip commas
         args = args.replace(",", "");
         String[] split = args.split(" ");
@@ -385,9 +313,6 @@ public class DnCommands {
         return defPercent;
     }
 
-    private double lerp(double a, double b, double alpha) {
-        return a + (b - a) * alpha;
-    }
 
     private double parseStat(String s) throws NumberFormatException {
         //  Check if it ends in thousand or million
