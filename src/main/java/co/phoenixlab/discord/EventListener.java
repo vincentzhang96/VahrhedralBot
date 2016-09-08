@@ -160,7 +160,7 @@ public class EventListener {
                         loc.localize(event.getRegion().getRegionNameKey()),
                         event.getOldVersion(),
                         event.getNewVersion(),
-                        UPDATE_FORMATTER.format(event.getTimestamp())), chid);
+                        UPDATE_FORMATTER.format(ZonedDateTime.from(event.getTimestamp()))), chid);
                 }
             }
         }
