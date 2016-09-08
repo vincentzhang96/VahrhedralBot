@@ -104,7 +104,7 @@ public class CalculateCriticalChance implements Command {
 	
 	private double calcCritRequiredToReachPercent(double percent, int level){
 		if (percent < 0) {
-			String errMsg = commandLocalizer.localize("commands.dn.critdmg.response.low_percent");
+			String errMsg = commandLocalizer.localize("commands.dn.crit.response.low_percent");
 			throw new IllegalArgumentException(errMsg);
 		}
 		
