@@ -12,6 +12,7 @@ import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.entities.Message;
 import co.phoenixlab.discord.dntrack.VersionTracker;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -114,7 +115,7 @@ public class DnCommands {
             StringJoiner joiner = new StringJoiner("\n");
             for (VersionTracker tracker : trackers.values()) {
                 String lastVersionChangeTimeStr = SafeNav.of(tracker.getLastVersionChangeTime())
-                    .next(ZonedDateTime::from)
+                    .next((i) -> ZonedDateTime.ofInstant(i, ZoneId.systemDefault()))
                     .next(EventListener.UPDATE_FORMATTER::format)
                     .orElse("unknown");
                 joiner.add(loc.localize("commands.dn.track.version.all.entry",
@@ -130,6 +131,7 @@ public class DnCommands {
             VersionTracker tracker = trackers.get(regionCode);
             if (tracker != null) {
                 String lastVersionChangeTimeStr = SafeNav.of(tracker.getLastVersionChangeTime())
+                    .next((i) -> ZonedDateTime.ofInstant(i, ZoneId.systemDefault()))
                     .next(EventListener.UPDATE_FORMATTER::format)
                     .orElse("unknown");
                 api.sendMessage(loc.localize("commands.dn.track.version.current",

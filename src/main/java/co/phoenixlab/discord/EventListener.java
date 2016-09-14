@@ -12,6 +12,7 @@ import co.phoenixlab.discord.dntrack.event.VersionUpdateEvent;
 import com.google.common.eventbus.Subscribe;
 
 import java.time.Duration;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -160,7 +161,8 @@ public class EventListener {
                         loc.localize(event.getRegion().getRegionNameKey()),
                         event.getOldVersion(),
                         event.getNewVersion(),
-                        UPDATE_FORMATTER.format(ZonedDateTime.from(event.getTimestamp()))), chid);
+                        UPDATE_FORMATTER.format(ZonedDateTime.ofInstant(event.getTimestamp(), ZoneId.systemDefault()))),
+                            chid);
                 }
             }
         }
