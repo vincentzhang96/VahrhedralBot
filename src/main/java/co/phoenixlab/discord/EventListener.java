@@ -157,7 +157,7 @@ public class EventListener {
                 String chid = config.getDnTrackChannel();
                 if (chid != null) {
                     Localizer loc = bot.getLocalizer();
-                    api.sendMessage(loc.localize("dn.track.version.updated",
+                    api.sendMessage(loc.localize("commands.dn.track.version.updated",
                         loc.localize(event.getRegion().getRegionNameKey()),
                         event.getOldVersion(),
                         event.getNewVersion(),
