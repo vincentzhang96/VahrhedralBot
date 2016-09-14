@@ -85,6 +85,8 @@ public class DnCommands {
             592620.0, 617610.0, 642600.0, 671160.0, 769692.0, 801108.0, 832524.0,
             863940.0, 899283.0, 934626.0, 969969.0, 1005312.0, 1040655.0, 1075998.0
     };
+    public static final int DEFAULT_LEVEL = 90;
+
 
     private final CommandDispatcher dispatcher;
     private final VahrhedralBot bot;
@@ -165,7 +167,7 @@ public class DnCommands {
                     if (critPercent < 0) {
                         throw new IllegalArgumentException("must be at least 0%");
                     }
-                    int level = 80;
+                    int level = DEFAULT_LEVEL;
                     if (split.length >= 2) {
                         level = ParseInt.parseOrDefault(split[1], level);
                     }
@@ -222,7 +224,7 @@ public class DnCommands {
                     if (critDmgPercent < 0) {
                         throw new IllegalArgumentException("must be at least 0%");
                     }
-                    int level = 80;
+                    int level = DEFAULT_LEVEL;
                     if (split.length >= 2) {
                         level = ParseInt.parseOrDefault(split[1], level);
                     }
@@ -238,7 +240,7 @@ public class DnCommands {
                         context.getChannel());
                 } else {
                     int critdmg = (int) parseStat(value);
-                    int level = 80;
+                    int level = DEFAULT_LEVEL;
                     if (split.length >= 2) {
                         level = ParseInt.parseOrDefault(split[1], level);
                     }
@@ -280,7 +282,7 @@ public class DnCommands {
                     if (fdPercent < 0) {
                         throw new IllegalArgumentException("must be at least 0%");
                     }
-                    int level = 80;
+                    int level = DEFAULT_LEVEL;
                     if (split.length >= 2) {
                         level = ParseInt.parseOrDefault(split[1], level);
                     }
@@ -303,7 +305,7 @@ public class DnCommands {
                             context.getChannel());
                 } else {
                     int fd = (int) parseStat(quantity);
-                    int level = 80;
+                    int level = DEFAULT_LEVEL;
                     if (split.length >= 2) {
                         level = ParseInt.parseOrDefault(split[1], level);
                     }
@@ -349,7 +351,7 @@ public class DnCommands {
                 if (rawHp < 0 || rawDef < 0 || rawMDef < 0) {
                     throw new NumberFormatException();
                 }
-                int level = 80;
+                int level = DEFAULT_LEVEL;
                 if (split.length >= 4) {
                     level = ParseInt.parseOrDefault(split[3], level);
                 }
