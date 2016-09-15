@@ -9,6 +9,7 @@ import co.phoenixlab.discord.commands.tempstorage.TempServerConfig;
 import co.phoenixlab.discord.dntrack.StatusTracker;
 import co.phoenixlab.discord.dntrack.VersionTracker;
 import co.phoenixlab.discord.dntrack.event.RegionDescriptor;
+import co.phoenixlab.discord.dntrack.event.StatusChangeEvent;
 import co.phoenixlab.discord.dntrack.event.VersionUpdateEvent;
 import com.google.common.base.Strings;
 import com.google.common.eventbus.Subscribe;
@@ -22,6 +23,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import static co.phoenixlab.discord.dntrack.event.StatusChangeEvent.StatusChange.WENT_OFFLINE;
 
 public class EventListener {
 
@@ -164,6 +167,29 @@ public class EventListener {
                         loc.localize(event.getRegion().getRegionNameKey()),
                         event.getOldVersion(),
                         event.getNewVersion(),
+                        UPDATE_FORMATTER.format(ZonedDateTime.ofInstant(event.getTimestamp(), ZoneId.systemDefault()))),
+                        chid);
+                }
+            }
+        }
+    }
+
+    @Subscribe
+    public void onStatusChange(StatusChangeEvent event) {
+        if (isSelfBot()) {
+            return;
+        }
+        DiscordApiClient api = bot.getApiClient();
+        for (Server server : api.getServers()) {
+            TempServerConfig config = bot.getCommands().getModCommands().getServerStorage().get(server.getId());
+            if (config != null) {
+                String chid = config.getDnTrackChannel();
+                if (chid != null) {
+                    Localizer loc = bot.getLocalizer();
+                    api.sendMessage(loc.localize("commands.dn.track.status.updated",
+                        loc.localize(event.getRegion().getRegionNameKey()),
+                        loc.localize(event.getChange() == WENT_OFFLINE ?
+                            "commands.dn.track.status.down" : "commands.dn.track.status.up"),
                         UPDATE_FORMATTER.format(ZonedDateTime.ofInstant(event.getTimestamp(), ZoneId.systemDefault()))),
                         chid);
                 }
