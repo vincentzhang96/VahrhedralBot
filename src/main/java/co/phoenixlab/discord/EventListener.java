@@ -6,9 +6,11 @@ import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.*;
 import co.phoenixlab.discord.commands.tempstorage.TempServerConfig;
+import co.phoenixlab.discord.dntrack.StatusTracker;
 import co.phoenixlab.discord.dntrack.VersionTracker;
 import co.phoenixlab.discord.dntrack.event.RegionDescriptor;
 import co.phoenixlab.discord.dntrack.event.VersionUpdateEvent;
+import com.google.common.base.Strings;
 import com.google.common.eventbus.Subscribe;
 
 import java.time.Duration;
@@ -26,13 +28,14 @@ public class EventListener {
     public static final DateTimeFormatter UPDATE_FORMATTER = DateTimeFormatter.ofPattern("M/d HH:mm z");
     private final VahrhedralBot bot;
     private final ScheduledExecutorService executorService;
-    private Map<String, VersionTracker> versionTrackers = new HashMap<>();
     public Map<String, Consumer<MemberChangeEvent>> memberChangeEventListener;
     public Map<String, String> joinMessageRedirect;
     public Map<String, String> leaveMessageRedirect;
     public Set<String> ignoredServers;
     public int excessiveMentionThreshold;
     public Map<String, Deque<String>> newest = new HashMap<>();
+    private Map<String, VersionTracker> versionTrackers = new HashMap<>();
+    private Map<String, StatusTracker> statusTrackers = new HashMap<>();
     private Map<String, Consumer<Message>> messageListeners;
     private Map<String, Long> currentDateTimeLastUse = new HashMap<>();
 
@@ -162,7 +165,7 @@ public class EventListener {
                         event.getOldVersion(),
                         event.getNewVersion(),
                         UPDATE_FORMATTER.format(ZonedDateTime.ofInstant(event.getTimestamp(), ZoneId.systemDefault()))),
-                            chid);
+                        chid);
                 }
             }
         }
@@ -409,12 +412,12 @@ public class EventListener {
             //  167264528537485312 dnnacd #activity-log
             if (event.getChange() == ServerBanChangeEvent.BanChange.ADDED) {
                 bot.getApiClient().sendMessage(String.format("`%s` (%s) was banned",
-                        user.getUsername(),
-                        user.getId()), "167264528537485312");
+                    user.getUsername(),
+                    user.getId()), "167264528537485312");
             } else if (event.getChange() == ServerBanChangeEvent.BanChange.DELETED) {
                 bot.getApiClient().sendMessage(String.format("`%s` (%s) was unbanned",
-                        user.getUsername(),
-                        user.getId()), "167264528537485312");
+                    user.getUsername(),
+                    user.getId()), "167264528537485312");
             }
         }
     }
@@ -423,11 +426,22 @@ public class EventListener {
     public void onLogIn(LogInEvent logInEvent) {
         if (!bot.getConfig().isSelfBot() && versionTrackers.isEmpty()) {
             for (RegionDescriptor regionDescriptor : bot.getConfig().getDnRegions()) {
-                VersionTracker tracker = new VersionTracker(regionDescriptor, bot.getApiClient().getEventBus());
-                versionTrackers.put(regionDescriptor.getRegionCode(),
-                    tracker);
-                VahrhedralBot.LOGGER.info("Registered version tracker for " + regionDescriptor.getRegionCode());
-                executorService.scheduleAtFixedRate(tracker, 0, 1, TimeUnit.MINUTES);
+
+                if (!Strings.isNullOrEmpty(regionDescriptor.getVersionCheckUrl())) {
+                    VersionTracker versionTracker = new VersionTracker(regionDescriptor,
+                        bot.getApiClient().getEventBus());
+                    versionTrackers.put(regionDescriptor.getRegionCode(),
+                        versionTracker);
+                    VahrhedralBot.LOGGER.info("Registered version tracker for " + regionDescriptor.getRegionCode());
+                    executorService.scheduleAtFixedRate(versionTracker, 0, 1, TimeUnit.MINUTES);
+                }
+                if (!Strings.isNullOrEmpty(regionDescriptor.getStatusCheckUrl())) {
+                    StatusTracker statusTracker = new StatusTracker(regionDescriptor,
+                        bot.getApiClient().getEventBus());
+                    statusTrackers.put(regionDescriptor.getRegionCode(), statusTracker);
+                    VahrhedralBot.LOGGER.info("Registered status tracker for " + regionDescriptor.getRegionCode());
+                    executorService.scheduleAtFixedRate(statusTracker, 0, 1, TimeUnit.MINUTES);
+                }
             }
         }
         bot.getCommands().onLogIn(logInEvent);
