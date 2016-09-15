@@ -35,6 +35,7 @@ public class StatusTracker implements Runnable {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("DnTrack");
     public static final ExecutorService EXECUTOR_SERVICE = Executors.newCachedThreadPool();
+    private static final int TIMEOUT = 3000;
 
     private final RegionDescriptor region;
     private final EventBus bus;
@@ -74,7 +75,7 @@ public class StatusTracker implements Runnable {
                         latch.countDown();
                     }
                 })).collect(Collectors.toList());
-                if (latch.await(10, TimeUnit.SECONDS)) {
+                if (latch.await(TIMEOUT + 500, TimeUnit.MILLISECONDS)) {
                     futures.forEach((f) -> f.cancel(true));
                     currStatus = 1;
                 }
@@ -119,8 +120,8 @@ public class StatusTracker implements Runnable {
     private boolean testServer(IpAndPort ipPort) {
         try (Socket socket = new Socket()) {
             socket.setKeepAlive(false);
-            socket.setSoTimeout(3000);
-            socket.connect(new InetSocketAddress(ipPort.ip, ipPort.port));
+            socket.setSoTimeout(TIMEOUT);
+            socket.connect(new InetSocketAddress(ipPort.ip, ipPort.port), TIMEOUT);
             InputStream inputStream = socket.getInputStream();
             int r = inputStream.read();
             return true;
