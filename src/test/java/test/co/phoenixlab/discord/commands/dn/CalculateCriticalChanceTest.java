@@ -162,7 +162,7 @@ public class CalculateCriticalChanceTest {
 		String result = client.getMsgSent();
 		
 		Localizer loc = StringUtilities.getLocalizer();
-		String expect = loc.localize("commands.dn.critdmg.response.low_percent");
+		String expect = loc.localize("commands.dn.crit.response.low_percent");
 		assertEquals(expect, result);
 	}
 	
