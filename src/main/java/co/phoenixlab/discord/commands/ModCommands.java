@@ -232,28 +232,31 @@ public class ModCommands {
         if (args.isEmpty()) {
             return;
         }
-        User user = findUser(context, args);
-        String userId = user.getId();
-        if (user == NO_USER) {
-            userId = args;
-        }
-        Channel channel = context.getChannel();
-        if (userId.equals(context.getAuthor().getId())) {
-            apiClient.sendMessage("You cannot ban yourself", channel);
-            return;
-        }
-        if (userId.equals(apiClient.getClientUser().getId())) {
-            apiClient.sendMessage("You cannot ban the bot", channel);
-            return;
-        }
-        if (bot.getCommands().checkPermission(Permission.GEN_MANAGE_ROLES,
+        String[] split = args.split(" ");
+        for (String userStr : split) {
+            User user = findUser(context, userStr);
+            String userId = user.getId();
+            if (user == NO_USER) {
+                userId = userStr;
+            }
+            Channel channel = context.getChannel();
+            if (userId.equals(context.getAuthor().getId())) {
+                apiClient.sendMessage("You cannot ban yourself", channel);
+                return;
+            }
+            if (userId.equals(apiClient.getClientUser().getId())) {
+                apiClient.sendMessage("You cannot ban the bot", channel);
+                return;
+            }
+            if (bot.getCommands().checkPermission(Permission.GEN_MANAGE_ROLES,
                 apiClient.getUserMember(userId, context.getServer()),
                 context.getServer(),
                 apiClient)) {
-            apiClient.sendMessage("You cannot ban an admin", channel);
-            return;
+                apiClient.sendMessage("You cannot ban an admin", channel);
+                return;
+            }
+            banImpl(userId, user.getUsername(), context.getServer().getId(), channel.getId());
         }
-        banImpl(userId, user.getUsername(), context.getServer().getId(), channel.getId());
     }
 
     public void banImpl(String userId, String username, String serverId, String parent) {
