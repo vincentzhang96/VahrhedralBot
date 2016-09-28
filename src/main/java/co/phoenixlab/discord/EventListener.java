@@ -158,19 +158,21 @@ public class EventListener {
         if (isSelfBot()) {
             return;
         }
-        DiscordApiClient api = bot.getApiClient();
-        for (Server server : api.getServers()) {
-            TempServerConfig config = bot.getCommands().getModCommands().getServerStorage().get(server.getId());
-            if (config != null) {
-                String chid = config.getDnTrackChannel();
-                if (chid != null) {
-                    Localizer loc = bot.getLocalizer();
-                    api.sendMessage(loc.localize("commands.dn.track.version.updated",
-                        loc.localize(event.getRegion().getRegionNameKey()),
-                        event.getOldVersion(),
-                        event.getNewVersion(),
-                        UPDATE_FORMATTER.format(ZonedDateTime.ofInstant(event.getTimestamp(), ZoneId.systemDefault()))),
-                        chid);
+        if (!event.isInitial()) {
+            DiscordApiClient api = bot.getApiClient();
+            for (Server server : api.getServers()) {
+                TempServerConfig config = bot.getCommands().getModCommands().getServerStorage().get(server.getId());
+                if (config != null) {
+                    String chid = config.getDnTrackChannel();
+                    if (chid != null) {
+                        Localizer loc = bot.getLocalizer();
+                        api.sendMessage(loc.localize("commands.dn.track.version.updated",
+                            loc.localize(event.getRegion().getRegionNameKey()),
+                            event.getOldVersion(),
+                            event.getNewVersion(),
+                            UPDATE_FORMATTER.format(ZonedDateTime.ofInstant(event.getTimestamp(), ZoneId.systemDefault()))),
+                            chid);
+                    }
                 }
             }
         }
@@ -192,19 +194,21 @@ public class EventListener {
         if (isSelfBot()) {
             return;
         }
-        DiscordApiClient api = bot.getApiClient();
-        for (Server server : api.getServers()) {
-            TempServerConfig config = bot.getCommands().getModCommands().getServerStorage().get(server.getId());
-            if (config != null) {
-                String chid = config.getDnTrackChannel();
-                if (chid != null) {
-                    Localizer loc = bot.getLocalizer();
-                    api.sendMessage(loc.localize("commands.dn.track.status.updated",
-                        loc.localize(event.getRegion().getRegionNameKey()),
-                        loc.localize(event.getChange() == WENT_OFFLINE ?
-                            "commands.dn.track.status.down" : "commands.dn.track.status.up"),
-                        UPDATE_FORMATTER.format(ZonedDateTime.ofInstant(event.getTimestamp(), ZoneId.systemDefault()))),
-                        chid);
+        if (!event.isInitial()) {
+            DiscordApiClient api = bot.getApiClient();
+            for (Server server : api.getServers()) {
+                TempServerConfig config = bot.getCommands().getModCommands().getServerStorage().get(server.getId());
+                if (config != null) {
+                    String chid = config.getDnTrackChannel();
+                    if (chid != null) {
+                        Localizer loc = bot.getLocalizer();
+                        api.sendMessage(loc.localize("commands.dn.track.status.updated",
+                            loc.localize(event.getRegion().getRegionNameKey()),
+                            loc.localize(event.getChange() == WENT_OFFLINE ?
+                                "commands.dn.track.status.down" : "commands.dn.track.status.up"),
+                            UPDATE_FORMATTER.format(ZonedDateTime.ofInstant(event.getTimestamp(), ZoneId.systemDefault()))),
+                            chid);
+                    }
                 }
             }
         }
@@ -488,7 +492,7 @@ public class EventListener {
                         info.setServerStatus(-1);
                         regions.put(regionDescriptor.getRegionCode(), info);
                     }
-                    versionTracker.lastChangeEvent().set(new VersionUpdateEvent(regionDescriptor,
+                    versionTracker.lastChangeEvent().set(new VersionUpdateEvent(false, regionDescriptor,
                         -1,
                         info.getPatchVersion(),
                         Instant.ofEpochMilli(info.getLastPatchTime())));
@@ -510,7 +514,7 @@ public class EventListener {
                         info.setServerStatus(-1);
                         regions.put(regionDescriptor.getRegionCode(), info);
                     }
-                    statusTracker.lastChangeEvent().set(new StatusChangeEvent(regionDescriptor,
+                    statusTracker.lastChangeEvent().set(new StatusChangeEvent(false, regionDescriptor,
                         null,
                         Instant.ofEpochMilli(info.getLastStatusChangeTime())));
                     statusTracker.lastCheckTime().set(Instant.ofEpochMilli(info.getLastStatusChangeTime()));

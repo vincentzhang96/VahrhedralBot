@@ -83,11 +83,14 @@ public class StatusTracker implements Runnable {
                     status.compareAndSet(lastStatus, currStatus);
                     LOGGER.info("DN {} initial status for this session is {}",
                         region.getRegionCode(), currStatus);
+                    StatusChangeEvent evt = new StatusChangeEvent(true, region,
+                        currStatus == 1 ? WENT_ONLINE : WENT_OFFLINE, now);
+                    bus.post(evt);
                 } else if (lastStatus != currStatus) {
                     if (status.compareAndSet(lastStatus, currStatus)) {
                         LOGGER.info("DN {} status changed from {} to {}",
                             region.getRegionCode(), lastStatus, currStatus);
-                        StatusChangeEvent evt = new StatusChangeEvent(region,
+                        StatusChangeEvent evt = new StatusChangeEvent(false, region,
                             currStatus == 1 ? WENT_ONLINE : WENT_OFFLINE, now);
                         lastChangeEvent.set(evt);
                         bus.post(evt);

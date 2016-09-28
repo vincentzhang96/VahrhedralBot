@@ -53,14 +53,18 @@ public class VersionTracker implements Runnable {
                     if (lastVersion != -1) {
                         LOGGER.info("DN {} version updated from {} to {}",
                             region.getRegionCode(), lastVersion, remoteVersion);
-                        //  Only post an event if this isn't our first check
-                        VersionUpdateEvent event = new VersionUpdateEvent(region, lastVersion, remoteVersion, now);
+                        VersionUpdateEvent event = new VersionUpdateEvent(false,
+                            region, lastVersion, remoteVersion, now);
                         lastChangeEvent.set(event);
                         //  Post the event
                         bus.post(event);
                     } else {
                         LOGGER.info("DN {} initial version for this session is {}",
                             region.getRegionCode(), remoteVersion);
+                        VersionUpdateEvent event = new VersionUpdateEvent(true,
+                            region, lastVersion, remoteVersion, now);
+                        //  Post the event
+                        bus.post(event);
                     }
                     version.set(remoteVersion);
                 }
