@@ -67,7 +67,7 @@
             <AppenderRef ref="Console" level="info"/>
             <AppenderRef ref="VoiceFile" level="debug"/>
         </Logger>
-        <Logger name="DnTrack" level="trace" additivity="false">
+        <Logger name="DnTrack" level="info" additivity="false">
             <AppenderRef ref="Console" level="info"/>
             <AppenderRef ref="DnTrackFile" level="debug"/>
         </Logger>
