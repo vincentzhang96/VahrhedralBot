@@ -233,13 +233,15 @@ public class ModCommands {
             return;
         }
         String[] split = args.split(" ");
+        List<String> banned = new ArrayList<>();
+        List<String> failed = new ArrayList<>();
+        Channel channel = context.getChannel();
         for (String userStr : split) {
             User user = findUser(context, userStr);
             String userId = user.getId();
             if (user == NO_USER) {
                 userId = userStr;
             }
-            Channel channel = context.getChannel();
             if (userId.equals(context.getAuthor().getId())) {
                 apiClient.sendMessage("You cannot ban yourself", channel);
                 return;
@@ -255,11 +257,26 @@ public class ModCommands {
                 apiClient.sendMessage("You cannot ban an admin", channel);
                 return;
             }
-            banImpl(userId, user.getUsername(), context.getServer().getId(), channel.getId());
+            if (banImpl(userId, user.getUsername(), context.getServer().getId(), channel.getId())) {
+                banned.add(userId + " " + user.getUsername());
+            } else {
+                failed.add(userId + " " + user.getUsername());
+            }
         }
+
+        if (channel.getId() != null) {
+            StringJoiner joiner = new StringJoiner("\n");
+            for (String s : banned) {
+                String[] pair = s.split(" ", 2);
+                joiner.add(loc.localize("commands.mod.ban.response", pair[1], pair[0]));
+            }
+            apiClient.sendMessage(joiner.toString(), channel);
+        }
+
+
     }
 
-    public void banImpl(String userId, String username, String serverId, String parent) {
+    public boolean banImpl(String userId, String username, String serverId, String parent) {
         Map<String, String> headers = new HashMap<>();
         headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
         headers.put(HttpHeaders.AUTHORIZATION, apiClient.getToken());
@@ -269,12 +286,10 @@ public class ModCommands {
                     headers(headers).
                     asJson();
             //  Ignore
-            if (parent != null) {
-                apiClient.sendMessage(loc.localize("commands.mod.ban.response", username, userId),
-                        parent);
-            }
+            return true;
         } catch (Exception e) {
             LOGGER.warn("Exception when trying to ban " + userId, e);
+            return false;
         }
     }
 
