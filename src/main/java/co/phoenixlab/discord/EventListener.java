@@ -492,11 +492,12 @@ public class EventListener {
                         info.setServerStatus(-1);
                         regions.put(regionDescriptor.getRegionCode(), info);
                     }
-                    versionTracker.lastChangeEvent().set(new VersionUpdateEvent(false, regionDescriptor,
-                        -1,
-                        info.getPatchVersion(),
-                        Instant.ofEpochMilli(info.getLastPatchTime())));
-                    versionTracker.lastCheckTime().set(Instant.ofEpochMilli(info.getLastPatchTime()));
+                    if (info.getLastPatchTime() != 0) {
+                        versionTracker.lastChangeEvent().set(new VersionUpdateEvent(false, regionDescriptor,
+                            -1,
+                            info.getPatchVersion(),
+                            Instant.ofEpochMilli(info.getLastPatchTime())));
+                    }
                     versionTracker.currentVersion().set(info.getPatchVersion());
                     versionTrackers.put(regionDescriptor.getRegionCode(),
                         versionTracker);
@@ -514,10 +515,11 @@ public class EventListener {
                         info.setServerStatus(-1);
                         regions.put(regionDescriptor.getRegionCode(), info);
                     }
-                    statusTracker.lastChangeEvent().set(new StatusChangeEvent(false, regionDescriptor,
-                        null,
-                        Instant.ofEpochMilli(info.getLastStatusChangeTime())));
-                    statusTracker.lastCheckTime().set(Instant.ofEpochMilli(info.getLastStatusChangeTime()));
+                    if (info.getLastStatusChangeTime() != 0) {
+                        statusTracker.lastChangeEvent().set(new StatusChangeEvent(false, regionDescriptor,
+                            null,
+                            Instant.ofEpochMilli(info.getLastStatusChangeTime())));
+                    }
                     statusTracker.currentStatus().set(info.getServerStatus());
                     statusTrackers.put(regionDescriptor.getRegionCode(), statusTracker);
                     VahrhedralBot.LOGGER.info("Registered status tracker for " + regionDescriptor.getRegionCode());
