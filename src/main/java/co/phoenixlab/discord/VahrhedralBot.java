@@ -6,7 +6,9 @@ import co.phoenixlab.common.localization.LocalizerImpl;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.chatlogger.ChatLogger;
 import co.phoenixlab.discord.commands.Commands;
+import co.phoenixlab.discord.commands.tempstorage.DnTrackStorage;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
@@ -37,6 +39,7 @@ public class VahrhedralBot implements Runnable {
     public static final Logger LOGGER = LoggerFactory.getLogger("VahrhedralBot");
 
     public static final Path CONFIG_PATH = Paths.get("config/config.json");
+    public static final Path DNTRACK_PATH = Paths.get("config/dntrack.json");
 
     public static final String USER_AGENT = "DiscordBot (https://github.com/vincentzhang96/VahrhedralBot, 12)";
 
@@ -62,6 +65,7 @@ public class VahrhedralBot implements Runnable {
     private Localizer localizer;
 
     private ChatLogger chatLogger;
+    private DnTrackStorage dnTrackStorage;
 
     public VahrhedralBot() {
         taskQueue = new TaskQueue();
@@ -79,6 +83,16 @@ public class VahrhedralBot implements Runnable {
             LOGGER.error("Unable to load configuration", e);
             return;
         }
+        try {
+            dnTrackStorage = loadDnTrackInfo();
+        } catch (IOException e) {
+            LOGGER.warn("Unable to load dntrack info, defaulting", e);
+            dnTrackStorage = new DnTrackStorage();
+            if(!saveDnTrackInfo()) {
+                LOGGER.warn("Failed to save empty dntrack");
+            }
+        }
+
         loadLocalization();
         versionInfo = loadVersionInfo();
         commandDispatcher = new CommandDispatcher(this, config.getCommandPrefix());
@@ -167,13 +181,32 @@ public class VahrhedralBot implements Runnable {
     }
 
     public boolean saveConfig() {
-        Gson configGson = new Gson();
+        Gson configGson = new GsonBuilder().setPrettyPrinting().create();
         try (BufferedWriter writer = Files.newBufferedWriter(CONFIG_PATH, UTF_8, CREATE, WRITE, TRUNCATE_EXISTING)) {
             configGson.toJson(config, writer);
             writer.flush();
             return true;
         } catch (IOException e) {
             LOGGER.warn("Unable to save config", e);
+            return false;
+        }
+    }
+
+    private DnTrackStorage loadDnTrackInfo() throws IOException {
+        Gson configGson = new Gson();
+        try (Reader reader = Files.newBufferedReader(DNTRACK_PATH, UTF_8)) {
+            return configGson.fromJson(reader, DnTrackStorage.class);
+        }
+    }
+
+    public boolean saveDnTrackInfo() {
+        Gson configGson = new GsonBuilder().setPrettyPrinting().create();
+        try (BufferedWriter writer = Files.newBufferedWriter(DNTRACK_PATH, UTF_8, CREATE, WRITE, TRUNCATE_EXISTING)) {
+            configGson.toJson(dnTrackStorage, writer);
+            writer.flush();
+            return true;
+        } catch (IOException e) {
+            LOGGER.warn("Unable to save dntrack", e);
             return false;
         }
     }
@@ -208,6 +241,10 @@ public class VahrhedralBot implements Runnable {
 
     public ChatLogger getChatLogger() {
         return chatLogger;
+    }
+
+    public DnTrackStorage getDnTrackStorage() {
+        return dnTrackStorage;
     }
 
     public void shutdown() {

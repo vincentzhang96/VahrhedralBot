@@ -3,7 +3,6 @@ package co.phoenixlab.discord.dntrack;
 import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.discord.dntrack.event.RegionDescriptor;
 import co.phoenixlab.discord.dntrack.event.StatusChangeEvent;
-import co.phoenixlab.discord.dntrack.event.VersionUpdateEvent;
 import com.google.common.eventbus.EventBus;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
@@ -29,7 +28,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static co.phoenixlab.discord.dntrack.event.StatusChangeEvent.StatusChange.*;
+import static co.phoenixlab.discord.dntrack.event.StatusChangeEvent.StatusChange.WENT_OFFLINE;
+import static co.phoenixlab.discord.dntrack.event.StatusChangeEvent.StatusChange.WENT_ONLINE;
 
 public class StatusTracker implements Runnable {
 
@@ -40,7 +40,7 @@ public class StatusTracker implements Runnable {
     private final RegionDescriptor region;
     private final EventBus bus;
     private final AtomicInteger status;
-    private final AtomicReference<VersionUpdateEvent> lastChangeEvent;
+    private final AtomicReference<StatusChangeEvent> lastChangeEvent;
     private final AtomicReference<Instant> lastCheckTime;
 
     public StatusTracker(RegionDescriptor region, EventBus bus) {
@@ -89,6 +89,7 @@ public class StatusTracker implements Runnable {
                             region.getRegionCode(), lastStatus, currStatus);
                         StatusChangeEvent evt = new StatusChangeEvent(region,
                             currStatus == 1 ? WENT_ONLINE : WENT_OFFLINE, now);
+                        lastChangeEvent.set(evt);
                         bus.post(evt);
                     }
                 }
@@ -138,8 +139,20 @@ public class StatusTracker implements Runnable {
         return lastCheckTime.get();
     }
 
-    public Instant getLastVersionChangeTime() {
-        return SafeNav.of(lastChangeEvent.get()).get(VersionUpdateEvent::getTimestamp);
+    public Instant getLastStatusChangeTime() {
+        return SafeNav.of(lastChangeEvent.get()).get(StatusChangeEvent::getTimestamp);
+    }
+
+    public AtomicInteger currentStatus() {
+        return status;
+    }
+
+    public AtomicReference<Instant> lastCheckTime() {
+        return lastCheckTime;
+    }
+
+    public AtomicReference<StatusChangeEvent> lastChangeEvent() {
+        return lastChangeEvent;
     }
 
 

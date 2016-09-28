@@ -105,4 +105,16 @@ public class VersionTracker implements Runnable {
     public Instant getLastVersionChangeTime() {
         return SafeNav.of(lastChangeEvent.get()).get(VersionUpdateEvent::getTimestamp);
     }
+
+    public AtomicInteger currentVersion() {
+        return version;
+    }
+
+    public AtomicReference<Instant> lastCheckTime() {
+        return lastCheckTime;
+    }
+
+    public AtomicReference<VersionUpdateEvent> lastChangeEvent() {
+        return lastChangeEvent;
+    }
 }

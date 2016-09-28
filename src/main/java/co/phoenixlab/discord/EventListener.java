@@ -5,6 +5,7 @@ import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.*;
+import co.phoenixlab.discord.commands.tempstorage.DnTrackInfo;
 import co.phoenixlab.discord.commands.tempstorage.TempServerConfig;
 import co.phoenixlab.discord.dntrack.StatusTracker;
 import co.phoenixlab.discord.dntrack.VersionTracker;
@@ -15,6 +16,7 @@ import com.google.common.base.Strings;
 import com.google.common.eventbus.Subscribe;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -172,6 +174,17 @@ public class EventListener {
                 }
             }
         }
+        Map<String, DnTrackInfo> regions = bot.getDnTrackStorage().getRegions();
+        DnTrackInfo info = regions.get(event.getRegion().getRegionCode());
+        if (info == null) {
+            info = new DnTrackInfo();
+            info.setPatchVersion(-1);
+            info.setServerStatus(-1);
+            regions.put(event.getRegion().getRegionCode(), info);
+        }
+        info.setLastPatchTime(event.getTimestamp().toEpochMilli());
+        info.setPatchVersion(event.getNewVersion());
+        bot.saveDnTrackInfo();
     }
 
     @Subscribe
@@ -195,6 +208,17 @@ public class EventListener {
                 }
             }
         }
+        Map<String, DnTrackInfo> regions = bot.getDnTrackStorage().getRegions();
+        DnTrackInfo info = regions.get(event.getRegion().getRegionCode());
+        if (info == null) {
+            info = new DnTrackInfo();
+            info.setPatchVersion(-1);
+            info.setServerStatus(-1);
+            regions.put(event.getRegion().getRegionCode(), info);
+        }
+        info.setLastStatusChangeTime(event.getTimestamp().toEpochMilli());
+        info.setServerStatus(event.getChange() == WENT_OFFLINE ? 0 : 1);
+        bot.saveDnTrackInfo();
     }
 
     @Subscribe
@@ -456,6 +480,20 @@ public class EventListener {
                 if (!Strings.isNullOrEmpty(regionDescriptor.getVersionCheckUrl())) {
                     VersionTracker versionTracker = new VersionTracker(regionDescriptor,
                         bot.getApiClient().getEventBus());
+                    Map<String, DnTrackInfo> regions = bot.getDnTrackStorage().getRegions();
+                    DnTrackInfo info = regions.get(regionDescriptor.getRegionCode());
+                    if (info == null) {
+                        info = new DnTrackInfo();
+                        info.setPatchVersion(-1);
+                        info.setServerStatus(-1);
+                        regions.put(regionDescriptor.getRegionCode(), info);
+                    }
+                    versionTracker.lastChangeEvent().set(new VersionUpdateEvent(regionDescriptor,
+                        -1,
+                        info.getPatchVersion(),
+                        Instant.ofEpochMilli(info.getLastPatchTime())));
+                    versionTracker.lastCheckTime().set(Instant.ofEpochMilli(info.getLastPatchTime()));
+                    versionTracker.currentVersion().set(info.getPatchVersion());
                     versionTrackers.put(regionDescriptor.getRegionCode(),
                         versionTracker);
                     VahrhedralBot.LOGGER.info("Registered version tracker for " + regionDescriptor.getRegionCode());
@@ -464,6 +502,19 @@ public class EventListener {
                 if (!Strings.isNullOrEmpty(regionDescriptor.getStatusCheckUrl())) {
                     StatusTracker statusTracker = new StatusTracker(regionDescriptor,
                         bot.getApiClient().getEventBus());
+                    Map<String, DnTrackInfo> regions = bot.getDnTrackStorage().getRegions();
+                    DnTrackInfo info = regions.get(regionDescriptor.getRegionCode());
+                    if (info == null) {
+                        info = new DnTrackInfo();
+                        info.setPatchVersion(-1);
+                        info.setServerStatus(-1);
+                        regions.put(regionDescriptor.getRegionCode(), info);
+                    }
+                    statusTracker.lastChangeEvent().set(new StatusChangeEvent(regionDescriptor,
+                        null,
+                        Instant.ofEpochMilli(info.getLastStatusChangeTime())));
+                    statusTracker.lastCheckTime().set(Instant.ofEpochMilli(info.getLastStatusChangeTime()));
+                    statusTracker.currentStatus().set(info.getServerStatus());
                     statusTrackers.put(regionDescriptor.getRegionCode(), statusTracker);
                     VahrhedralBot.LOGGER.info("Registered status tracker for " + regionDescriptor.getRegionCode());
                     executorService.scheduleAtFixedRate(statusTracker, 0, 1, TimeUnit.MINUTES);
