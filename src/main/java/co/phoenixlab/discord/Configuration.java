@@ -16,6 +16,8 @@ public class Configuration {
     private Set<String> admins;
     private RegionDescriptor[] dnRegions;
     private boolean selfBot;
+    public int exMentionTimeoutThreshold;
+    public int exMentionBanThreshold;
 
     public Configuration() {
         email = "";
@@ -27,6 +29,8 @@ public class Configuration {
         admins = new HashSet<>();
         dnRegions = new RegionDescriptor[0];
         selfBot = false;
+        exMentionTimeoutThreshold = Integer.MAX_VALUE;
+        exMentionBanThreshold = Integer.MAX_VALUE;
     }
 
     public String getEmail() {
@@ -96,5 +100,22 @@ public class Configuration {
 
     public void setDnRegions(RegionDescriptor[] dnRegions) {
         this.dnRegions = dnRegions;
+    }
+
+
+    public int getExMentionTimeoutThreshold() {
+        return exMentionTimeoutThreshold;
+    }
+
+    public void setExMentionTimeoutThreshold(int exMentionTimeoutThreshold) {
+        this.exMentionTimeoutThreshold = exMentionTimeoutThreshold;
+    }
+
+    public int getExMentionBanThreshold() {
+        return exMentionBanThreshold;
+    }
+
+    public void setExMentionBanThreshold(int exMentionBanThreshold) {
+        this.exMentionBanThreshold = exMentionBanThreshold;
     }
 }
