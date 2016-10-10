@@ -37,7 +37,8 @@ public class EventListener {
     public Map<String, String> joinMessageRedirect;
     public Map<String, String> leaveMessageRedirect;
     public Set<String> ignoredServers;
-    public int excessiveMentionThreshold;
+    public int excessiveMentionTimeoutThreshold;
+    public int excessiveMentionBanThreshold;
     public Map<String, Deque<String>> newest = new HashMap<>();
     private Map<String, VersionTracker> versionTrackers = new HashMap<>();
     private Map<String, StatusTracker> statusTrackers = new HashMap<>();
@@ -61,7 +62,8 @@ public class EventListener {
                 }
             }
         });
-        excessiveMentionThreshold = 5;
+        excessiveMentionTimeoutThreshold = 5;
+        excessiveMentionBanThreshold = 8;
         messageListeners.put("mention-autotimeout", this::handleExcessiveMentions);
         messageListeners.put("invite-pm", this::onInviteLinkPrivateMessage);
         messageListeners.put("other-prefixes", this::onOtherTypesCommand);
@@ -299,13 +301,17 @@ public class EventListener {
 //        }
         Set<User> unique = new HashSet<>();
         Collections.addAll(unique, message.getMentions());
-        if (unique.size() > excessiveMentionThreshold) {
+        if (unique.size() >= excessiveMentionTimeoutThreshold) {
             bot.getCommands().getModCommands().applyTimeout(bot.getApiClient().getClientUser(), channel,
                 server, author, Duration.ofHours(1));
-//            bot.getCommands().getModCommands().banImpl(author.getId(), author.getUsername(),
-//                    server.getId(), channel.getId());
-            bot.getApiClient().sendMessage(String.format("`%s#%s` (%s) has been banned for mention spam",
+            bot.getApiClient().sendMessage(String.format("`%s#%s` (%s) has been timed out for mention spam. " +
+                            "If this is a mistake, please contact a moderator",
                 author.getUsername(), author.getDiscriminator(), author.getId()), channel);
+        } else if (unique.size() >= excessiveMentionBanThreshold) {
+            bot.getCommands().getModCommands().banImpl(author.getId(), author.getUsername(),
+                    server.getId(), channel.getId());
+            bot.getApiClient().sendMessage(String.format("`%s#%s` (%s) has been banned for mention spam",
+                    author.getUsername(), author.getDiscriminator(), author.getId()), channel);
         }
     }
 
