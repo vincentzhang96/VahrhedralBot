@@ -1,5 +1,6 @@
 package co.phoenixlab.discord;
 
+import co.phoenixlab.discord.cfg.JoinLeaveLimits;
 import co.phoenixlab.discord.dntrack.event.RegionDescriptor;
 
 import java.util.HashSet;
@@ -16,8 +17,9 @@ public class Configuration {
     private Set<String> admins;
     private RegionDescriptor[] dnRegions;
     private boolean selfBot;
-    public int exMentionTimeoutThreshold;
-    public int exMentionBanThreshold;
+    private int exMentionTimeoutThreshold;
+    private int exMentionBanThreshold;
+    private JoinLeaveLimits jlLimit;
 
     public Configuration() {
         email = "";
@@ -31,6 +33,7 @@ public class Configuration {
         selfBot = false;
         exMentionTimeoutThreshold = Integer.MAX_VALUE;
         exMentionBanThreshold = Integer.MAX_VALUE;
+        jlLimit = new JoinLeaveLimits();
     }
 
     public String getEmail() {
@@ -117,5 +120,9 @@ public class Configuration {
 
     public void setExMentionBanThreshold(int exMentionBanThreshold) {
         this.exMentionBanThreshold = exMentionBanThreshold;
+    }
+
+    public JoinLeaveLimits getJlLimit() {
+        return jlLimit;
     }
 }

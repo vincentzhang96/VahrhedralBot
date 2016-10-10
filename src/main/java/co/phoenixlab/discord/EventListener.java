@@ -7,12 +7,17 @@ import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.*;
 import co.phoenixlab.discord.commands.tempstorage.DnTrackInfo;
 import co.phoenixlab.discord.commands.tempstorage.TempServerConfig;
+import co.phoenixlab.discord.cfg.JoinLeaveLimits;
 import co.phoenixlab.discord.dntrack.StatusTracker;
 import co.phoenixlab.discord.dntrack.VersionTracker;
 import co.phoenixlab.discord.dntrack.event.RegionDescriptor;
 import co.phoenixlab.discord.dntrack.event.StatusChangeEvent;
 import co.phoenixlab.discord.dntrack.event.VersionUpdateEvent;
+import co.phoenixlab.discord.util.RateLimiter;
 import com.google.common.base.Strings;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.eventbus.Subscribe;
 
 import java.time.Duration;
@@ -21,6 +26,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -42,6 +48,7 @@ public class EventListener {
     private Map<String, StatusTracker> statusTrackers = new HashMap<>();
     private Map<String, Consumer<Message>> messageListeners;
     private Map<String, Long> currentDateTimeLastUse = new HashMap<>();
+    private LoadingCache<String, RateLimiter> joinLeaveLimiters;
 
 
     public EventListener(VahrhedralBot bot) {
@@ -65,6 +72,11 @@ public class EventListener {
         messageListeners.put("invite-pm", this::onInviteLinkPrivateMessage);
         messageListeners.put("other-prefixes", this::onOtherTypesCommand);
 //        messageListeners.put("date-time", this::currentDateTime);
+    }
+
+    private RateLimiter buildLimiter(String key) {
+        JoinLeaveLimits lim = bot.getConfig().getJlLimit();
+        return new RateLimiter("JL-" + key, lim.getRlPeriodMs(), lim.getRmMaxCharges());
     }
 
     public static String createJoinLeaveMessage(User user, Server server, String fmt) {
@@ -353,16 +365,46 @@ public class EventListener {
             return;
         }
         User user = event.getMember().getUser();
+
         //  167264528537485312 dnnacd #activity-log
         //  avoid duplicates
         if (event.getServer().getId().equals("106293726271246336") && !"167264528537485312".equals(cid)) {
             bot.getApiClient().sendMessage(bot.getLocalizer().localize(key,
-                user.getUsername(),
-                user.getId(),
-                user.getDiscriminator(),
-                DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())),
-                "167264528537485312");
+                    user.getUsername(),
+                    user.getId(),
+                    user.getDiscriminator(),
+                    DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())),
+                    "167264528537485312");
         }
+
+        //  Join-leave spam prevention
+        if (event.getServer().getId().equals("106293726271246336")) {
+            if (joinLeaveLimiters == null) {
+                joinLeaveLimiters = CacheBuilder.newBuilder()
+                        .expireAfterAccess(bot.getConfig().getJlLimit().getCacheEvictionTimeMs(),
+                                TimeUnit.MILLISECONDS)
+                        .build(new CacheLoader<String, RateLimiter>() {
+                            @Override
+                            public RateLimiter load(String key) throws Exception {
+                                return buildLimiter(key);
+                            }
+                        });
+            }
+            try {
+                RateLimiter limiter = joinLeaveLimiters.get(user.getId());
+                if (limiter.tryMark() != 0) {
+                    //  Join-leave spam detected
+                    bot.getCommands().getModCommands().banImpl(user.getId(), user.getUsername(),
+                            server.getId(), channel.getId());
+                    bot.getApiClient().sendMessage(String.format("`%s#%s` (%s) has been banned for join-leave spam",
+                            user.getUsername(), user.getDiscriminator(), user.getId()), channel);
+                    return;
+                }
+            } catch (ExecutionException e) {
+                VahrhedralBot.LOGGER.warn("Failed to load rate limiter for " + user.getId(), e);
+            }
+        }
+
         TempServerConfig config = bot.getCommands().getModCommands().getServerStorage().get(server.getId());
         String customWelcomeMessage = SafeNav.of(config).get(TempServerConfig::getCustomWelcomeMessage);
         String customLeaveMessage = SafeNav.of(config).get(TempServerConfig::getCustomLeaveMessage);
