@@ -22,8 +22,6 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
@@ -66,7 +64,6 @@ public class AdminCommands {
         if (!bot.getConfig().isSelfBot()) {
             d.registerAlwaysActiveCommand("commands.admin.blacklist", this::adminBlacklist);
             d.registerAlwaysActiveCommand("commands.admin.pardon", this::adminPardon);
-//            d.registerAlwaysActiveCommand("commands.admin.join", this::adminJoin);
             d.registerAlwaysActiveCommand("commands.admin.telegram", this::adminTelegram);
         }
         d.registerAlwaysActiveCommand("commands.admin.start", this::adminStart);
@@ -287,21 +284,6 @@ public class AdminCommands {
                     user.getUsername()),
                     context.getChannel());
         }
-    }
-
-    private void adminJoin(MessageContext context, String args) {
-        DiscordApiClient apiClient = context.getApiClient();
-        URL inviteUrl;
-        try {
-            inviteUrl = new URL(args);
-        } catch (MalformedURLException e) {
-            VahrhedralBot.LOGGER.warn("Invalid invite link received", e);
-            apiClient.sendMessage(loc.localize("commands.admin.join.response.invalid"),
-                    context.getChannel());
-            return;
-        }
-        String path = inviteUrl.getPath();
-        makeJoinPOSTRequest(context, apiClient, path);
     }
 
     private void makeJoinPOSTRequest(MessageContext context, DiscordApiClient apiClient, String path) {

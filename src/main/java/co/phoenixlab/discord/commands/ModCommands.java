@@ -220,7 +220,16 @@ public class ModCommands {
         }
         Channel channel = apiClient.getChannelById(cid, context.getServer());
         if (channel != NO_CHANNEL) {
-            bot.getEventListener().joinMessageRedirect.put(context.getServer().getId(), cid);
+            if (target == JoinLeave.JOIN) {
+                bot.getEventListener().joinMessageRedirect.put(context.getServer().getId(), cid);
+            }
+            if (target == JoinLeave.LEAVE) {
+                bot.getEventListener().leaveMessageRedirect.put(context.getServer().getId(), cid);
+            }
+            if (target == JoinLeave.BOTH) {
+                bot.getEventListener().joinMessageRedirect.put(context.getServer().getId(), cid);
+                bot.getEventListener().leaveMessageRedirect.put(context.getServer().getId(), cid);
+            }
             apiClient.sendMessage(loc.localize("commands.mod.jl.response", channel.getName(), channel.getId()),
                     context.getChannel());
         } else {

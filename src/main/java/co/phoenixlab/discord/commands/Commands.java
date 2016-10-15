@@ -1,7 +1,6 @@
 package co.phoenixlab.discord.commands;
 
 import co.phoenixlab.common.lang.SafeNav;
-import co.phoenixlab.common.lang.number.ParseInt;
 import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.CommandDispatcher;
 import co.phoenixlab.discord.Configuration;
@@ -20,10 +19,6 @@ import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
-import org.apache.http.HttpHeaders;
-import org.apache.http.entity.ContentType;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -42,7 +37,6 @@ import java.util.stream.Collectors;
 
 import static co.phoenixlab.discord.api.DiscordApiClient.*;
 import static co.phoenixlab.discord.api.entities.Permission.CHAT_MANAGE_MESSAGES;
-import static co.phoenixlab.discord.api.entities.Permission.GEN_MANAGE_ROLES;
 import static co.phoenixlab.discord.commands.CommandUtil.findUser;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardOpenOption.CREATE;
@@ -79,26 +73,15 @@ public class Commands {
         modCommands.registerModCommands();
         d.registerAlwaysActiveCommand("commands.general.admin", this::admin, true);
         d.registerAlwaysActiveCommand("commands.general.mod", this::mod);
-        d.registerCommand("commands.general.admins", this::listAdmins);
         d.registerCommand("commands.general.info", this::info);
         d.registerCommand("commands.general.avatar", this::avatar);
         d.registerCommand("commands.general.version", this::version, true);
         d.registerCommand("commands.general.stats", this::stats, true);
         d.registerCommand("commands.general.roles", this::roles, true);
-        d.registerCommand("commands.general.rolecolor", this::roleColor, true);
-//        d.registerCommand("commands.general.sandwich", this::makeSandwich);
         d.registerCommand("commands.general.dn", this::dnCommands);
         d.registerCommand("commands.general.insult", this::insult);
         d.registerCommand("commands.general.minific", this::minific);
         d.registerCommand("commands.general.gamepop", this::gamePop);
-    }
-
-    public AdminCommands getAdminCommands() {
-        return adminCommands;
-    }
-
-    public DnCommands getDnCommands() {
-        return dnCommands;
     }
 
     public ModCommands getModCommands() {
@@ -187,23 +170,6 @@ public class Commands {
         msg.setPrivateMessage(m.isPrivateMessage());
         modCommands.getModCommandDispatcher().
                 handleCommand(msg);
-    }
-
-    private void listAdmins(MessageContext context, String s) {
-        DiscordApiClient apiClient = context.getApiClient();
-        VahrhedralBot bot = context.getBot();
-        StringJoiner joiner = new StringJoiner(", ");
-        bot.getConfig().getAdmins().stream().
-                map(apiClient::getUserById).
-                filter(user -> user != null).
-                map(User::getUsername).
-                forEach(joiner::add);
-        String res = joiner.toString();
-        if (res.isEmpty()) {
-            res = loc.localize("commands.general.admins.response.none");
-        }
-        apiClient.sendMessage(loc.localize("commands.general.admins.response.format", res),
-                context.getChannel());
     }
 
     private void info(MessageContext context, String args) {
@@ -452,107 +418,6 @@ public class Commands {
         return joiner.toString();
     }
 
-    private void roleColor(MessageContext context, String args) {
-        DiscordApiClient apiClient = context.getApiClient();
-        Message message = context.getMessage();
-        //  Check permissions first
-        Server server = context.getServer();
-        if (server == NO_SERVER) {
-            apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.private"),
-                    context.getChannel());
-            return;
-        }
-        Member issuer = apiClient.getUserMember(message.getAuthor(), server);
-        if (!(checkPermission(GEN_MANAGE_ROLES, issuer, server, apiClient) ||
-                context.getBot().getConfig().isAdmin(message.getAuthor().getId()))) {
-            apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.no_user_perms"),
-                    context.getChannel());
-            return;
-        }
-        Member bot = apiClient.getUserMember(apiClient.getClientUser(), server);
-        if (!checkPermission(GEN_MANAGE_ROLES, bot, server, apiClient)) {
-            apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.no_bot_perms"),
-                    context.getChannel());
-            return;
-        }
-        String[] split = args.split(" ");
-        if (split.length != 2) {
-            apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.help_format"),
-                    context.getChannel());
-            return;
-        }
-        String colorStr = split[1];
-        OptionalInt colorOpt = ParseInt.parseOptional(colorStr);
-        if (!colorOpt.isPresent()) {
-            apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.help_format"),
-                    context.getChannel());
-            return;
-        }
-        int color = colorOpt.getAsInt();
-        String roleId = split[0];
-        Role role = apiClient.getRole(roleId, server);
-        if (role == NO_ROLE) {
-            apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.role_not_found"),
-                    context.getChannel());
-            return;
-        }
-
-        patchRole(apiClient, message, server, color, role);
-    }
-
-    private void patchRole(DiscordApiClient apiClient, Message message, Server server, int color, Role role) {
-        try {
-            Map<String, String> headers = new HashMap<>();
-            headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
-            headers.put(HttpHeaders.AUTHORIZATION, apiClient.getToken());
-            JSONObject requestBody = new JSONObject();
-            requestBody.put("color", color);
-            requestBody.put("hoist", role.isHoist());
-            requestBody.put("name", role.getName());
-            requestBody.put("permissions", role.getPermissions());
-            HttpResponse<JsonNode> response = Unirest.
-                    patch(ApiConst.SERVERS_ENDPOINT + server.getId() + "/roles/" + role.getId()).
-                    headers(headers).
-                    body(new JsonNode(requestBody.toString())).
-                    asJson();
-            if (response.getStatus() != 200) {
-                VahrhedralBot.LOGGER.warn("Unable to PATCH role: HTTP {}: {}",
-                        response.getStatus(), response.getStatusText());
-                apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.general_error"),
-                        message.getChannelId());
-                return;
-            }
-            JsonNode body = response.getBody();
-            JSONObject obj = body.getObject();
-            if (obj.getInt("color") != color) {
-                VahrhedralBot.LOGGER.warn("Unable to PATCH role: Returned color does not match",
-                        response.getStatus(), response.getStatusText());
-                apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.general_error"),
-                        message.getChannelId());
-                return;
-            }
-            apiClient.sendMessage(loc.localize("commands.general.rolecolor.response",
-                    role.getName(), role.getId(), color),
-                    message.getChannelId());
-        } catch (UnirestException | JSONException e) {
-            VahrhedralBot.LOGGER.warn("Unable to PATCH role", e);
-            apiClient.sendMessage(loc.localize("commands.general.rolecolor.response.general_error"),
-                    message.getChannelId());
-        }
-    }
-
-    private void makeSandwich(MessageContext context, String args) {
-        DiscordApiClient apiClient = context.getApiClient();
-        if (loc.localize("commands.general.sandwich.magic_word").equalsIgnoreCase(args) ||
-                new Random().nextBoolean()) {
-            apiClient.sendMessage(loc.localize("commands.general.sandwich.response.deny"),
-                    context.getChannel());
-        } else {
-            apiClient.sendMessage(loc.localize("commands.general.sandwich.response.magic"),
-                    context.getChannel());
-        }
-    }
-
     private void dnCommands(MessageContext context, String args) {
         Message message = context.getMessage();
         if (args.isEmpty()) {
@@ -752,9 +617,6 @@ public class Commands {
         StringJoiner joiner = new StringJoiner("\n");
         Map<String, String> usernameCache = new HashMap<>();
         for (Minific minific : minificStorage.getMinifics()) {
-            String content = minific.getContent();
-//            String excerpt = content.substring(0, Math.min(content.length(), 30)).
-//                    replace("\n", " ");
             String authorId = minific.getAuthorId();
             String uname = usernameCache.get(authorId);
             if (uname == null) {

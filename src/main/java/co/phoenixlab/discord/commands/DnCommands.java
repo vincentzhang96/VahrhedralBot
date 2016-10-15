@@ -389,10 +389,6 @@ public class DnCommands {
         return defPercent;
     }
 
-    private double lerp(double a, double b, double alpha) {
-        return a + (b - a) * alpha;
-    }
-
     private double parseStat(String s) throws NumberFormatException {
         //  Check if it ends in thousand or million
         String thousandSuffix = loc.localize("commands.dn.defense.suffix.thousand");
