@@ -5,9 +5,9 @@ import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.*;
+import co.phoenixlab.discord.cfg.JoinLeaveLimits;
 import co.phoenixlab.discord.commands.tempstorage.DnTrackInfo;
 import co.phoenixlab.discord.commands.tempstorage.TempServerConfig;
-import co.phoenixlab.discord.cfg.JoinLeaveLimits;
 import co.phoenixlab.discord.dntrack.StatusTracker;
 import co.phoenixlab.discord.dntrack.VersionTracker;
 import co.phoenixlab.discord.dntrack.event.RegionDescriptor;
@@ -75,7 +75,18 @@ public class EventListener {
         messageListeners.put("mention-autotimeout", this::handleExcessiveMentions);
         messageListeners.put("invite-pm", this::onInviteLinkPrivateMessage);
         messageListeners.put("other-prefixes", this::onOtherTypesCommand);
+//        dnnacdRecentMessages = EvictingQueue.create(10);
 //        messageListeners.put("date-time", this::currentDateTime);
+    }
+
+    public static String createJoinLeaveMessage(User user, Server server, String fmt) {
+        return fmt.
+            replace("$n", user.getUsername()).
+            replace("$d", user.getDiscriminator()).
+            replace("$i", user.getId()).
+            replace("$s", server.getName()).
+            replace("$t", DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())).
+            replace("$m", "<@" + user.getId() + ">");
     }
 
     private RateLimiter buildLimiter(String key) {
@@ -84,18 +95,8 @@ public class EventListener {
     }
 
     private RateLimiter buildMentionLimiter(String key) {
-        JoinLeaveLimits lim = bot.getConfig().getJlLimit();
-        return new RateLimiter("@M-" + key, lim.getRlPeriodMs(), lim.getRmMaxCharges());
-    }
-
-    public static String createJoinLeaveMessage(User user, Server server, String fmt) {
-        return fmt.
-                replace("$n", user.getUsername()).
-                replace("$d", user.getDiscriminator()).
-                replace("$i", user.getId()).
-                replace("$s", server.getName()).
-                replace("$t", DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())).
-                replace("$m", "<@" + user.getId() + ">");
+        Configuration config = bot.getConfig();
+        return new RateLimiter("@M-" + key, config.getExMentionPeriodMs(), config.getExMentionTemporalThreshold());
     }
 
     private void currentDateTime(Message message) {
@@ -120,7 +121,7 @@ public class EventListener {
                 return;
             }
             api.sendMessage("NOFLIPIt's " + ZonedDateTime.now().getYear() + ", `" + message.getAuthor().getUsername() + "`.",
-                    channelId);
+                channelId);
             currentDateTimeLastUse.put(channelId, time);
         }
         if (content.contains("current date")) {
@@ -128,8 +129,8 @@ public class EventListener {
                 return;
             }
             api.sendMessage("NOFLIPIt's " + DateTimeFormatter.ofPattern("MMM dd uuuu").format(ZonedDateTime.now()) + ", `" +
-                            message.getAuthor().getUsername() + "`.",
-                    channelId);
+                    message.getAuthor().getUsername() + "`.",
+                channelId);
             currentDateTimeLastUse.put(channelId, time);
         }
         if (content.contains("current day")) {
@@ -137,8 +138,8 @@ public class EventListener {
                 return;
             }
             api.sendMessage("NOFLIPIt's the " + th(ZonedDateTime.now().getDayOfMonth()) + ", `" +
-                            message.getAuthor().getUsername() + "`.",
-                    channelId);
+                    message.getAuthor().getUsername() + "`.",
+                channelId);
             currentDateTimeLastUse.put(channelId, time);
         }
         if (content.contains("current time")) {
@@ -146,8 +147,8 @@ public class EventListener {
                 return;
             }
             api.sendMessage("NOFLIPIt's " + DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now()) + ", `" +
-                            message.getAuthor().getUsername() + "`.",
-                    channelId);
+                    message.getAuthor().getUsername() + "`.",
+                channelId);
             currentDateTimeLastUse.put(channelId, time);
         }
         if (content.contains("current president")) {
@@ -155,7 +156,7 @@ public class EventListener {
                 return;
             }
             api.sendMessage("NOFLIPIt's Bernie Trump, `" + message.getAuthor().getUsername() + "`.",
-                    channelId);
+                channelId);
             currentDateTimeLastUse.put(channelId, time);
         }
     }
@@ -187,11 +188,11 @@ public class EventListener {
                     if (chid != null) {
                         Localizer loc = bot.getLocalizer();
                         api.sendMessage(loc.localize("commands.dn.track.version.updated",
-                                loc.localize(event.getRegion().getRegionNameKey()),
-                                event.getOldVersion(),
-                                event.getNewVersion(),
-                                UPDATE_FORMATTER.format(ZonedDateTime.ofInstant(event.getTimestamp(), ZoneId.systemDefault()))),
-                                chid);
+                            loc.localize(event.getRegion().getRegionNameKey()),
+                            event.getOldVersion(),
+                            event.getNewVersion(),
+                            UPDATE_FORMATTER.format(ZonedDateTime.ofInstant(event.getTimestamp(), ZoneId.systemDefault()))),
+                            chid);
                     }
                 }
             }
@@ -223,11 +224,11 @@ public class EventListener {
                     if (chid != null) {
                         Localizer loc = bot.getLocalizer();
                         api.sendMessage(loc.localize("commands.dn.track.status.updated",
-                                loc.localize(event.getRegion().getRegionNameKey()),
-                                loc.localize(event.getChange() == WENT_OFFLINE ?
-                                        "commands.dn.track.status.down" : "commands.dn.track.status.up"),
-                                UPDATE_FORMATTER.format(ZonedDateTime.ofInstant(event.getTimestamp(), ZoneId.systemDefault()))),
-                                chid);
+                            loc.localize(event.getRegion().getRegionNameKey()),
+                            loc.localize(event.getChange() == WENT_OFFLINE ?
+                                "commands.dn.track.status.down" : "commands.dn.track.status.up"),
+                            UPDATE_FORMATTER.format(ZonedDateTime.ofInstant(event.getTimestamp(), ZoneId.systemDefault()))),
+                            chid);
                     }
                 }
             }
@@ -271,6 +272,12 @@ public class EventListener {
         messageListeners.values().forEach(c -> c.accept(message));
     }
 
+    @Subscribe
+    public void onMessageDelete(MessageDeleteEvent messageDeleteEvent) {
+
+
+    }
+
     private void handleMention(Message message) {
         if (isSelfBot()) {
             return;
@@ -283,12 +290,15 @@ public class EventListener {
         }
         String otherId = message.getAuthor().getId();
         bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.mention.response",
-                message.getAuthor().getUsername()),
-                message.getChannelId(), new String[]{otherId});
+            message.getAuthor().getUsername()),
+            message.getChannelId(), new String[]{otherId});
     }
 
     private void handleExcessiveMentions(Message message) {
         if (isSelfBot()) {
+            return;
+        }
+        if (message.getMentions().length == 0) {
             return;
         }
         if (!bot.getMainCommandDispatcher().active().get()) {
@@ -314,25 +324,52 @@ public class EventListener {
         }
         Set<User> unique = new HashSet<>();
         Collections.addAll(unique, message.getMentions());
+
+        if (dnnacdMentionLimiters == null) {
+            dnnacdMentionLimiters = CacheBuilder.newBuilder()
+                .expireAfterAccess(bot.getConfig().getExMentionCacheEvictionTimeMs(),
+                    TimeUnit.MILLISECONDS)
+                .build(new CacheLoader<String, RateLimiter>() {
+                    @Override
+                    public RateLimiter load(String key) throws Exception {
+                        return buildMentionLimiter(key);
+                    }
+                });
+        }
+
         Matcher matcher = SIGNATURE_MATCHER.matcher(message.getContent());
         int numHashes = matcher.groupCount();
-        boolean overBanThreshold = unique.size() >= bot.getConfig().getExMentionBanThreshold() ||
-            (numHashes >= 3 && unique.size() >= 3);
-        boolean overTimeoutThreshold = unique.size() >= bot.getConfig().getExMentionTimeoutThreshold() ||
-            (numHashes >= 2 && unique.size() >= 2);
-        if (overBanThreshold) {
-            bot.getCommands().getModCommands().banImpl(author.getId(), author.getUsername(),
-                    server.getId(), channel.getId());
-            bot.getApiClient().sendMessage(String.format("`%s#%s` (%s) has been banned for mention spam",
-                    author.getUsername(), author.getDiscriminator(), author.getId()), channel);
-        } else {
-            if (overTimeoutThreshold) {
-                bot.getCommands().getModCommands().applyTimeout(bot.getApiClient().getClientUser(), channel,
-                        server, author, Duration.ofHours(1));
-                bot.getApiClient().sendMessage(String.format("`%s#%s` (%s) has been timed out for mention spam. " +
-                                "If this is a mistake, please contact a moderator",
-                        author.getUsername(), author.getDiscriminator(), author.getId()), channel);
+        int size = unique.size();
+        boolean overBanThreshold = size >= bot.getConfig().getExMentionBanThreshold() ||
+            (Math.abs(numHashes - size) >= 1 && numHashes >= 4);
+        boolean overTimeoutThreshold = size >= bot.getConfig().getExMentionTimeoutThreshold() ||
+            (Math.abs(numHashes - size) >= 1 && numHashes >= 2);
+        try {
+            RateLimiter limiter = dnnacdMentionLimiters.get(author.getId());
+            for (int i = 0; i < size; ++i) {
+                if (limiter.tryMark() != 0) {
+                    overTimeoutThreshold = true;
+                    break;
+                }
             }
+        } catch (ExecutionException e) {
+            VahrhedralBot.LOGGER.warn("Failed to load rate limiter for " + author.getId(), e);
+        }
+        if (overBanThreshold) {
+            if (bot.getCommands().getModCommands().banChecked(channel, bot.getApiClient().getClientUser(),
+                author, server)) {
+                bot.getApiClient().sendMessage(String.format("`%s#%s` (%s) has been banned for mention spam",
+                    author.getUsername(), author.getDiscriminator(), author.getId()), channel);
+            } else {
+                bot.getApiClient().sendMessage(String.format("**[ERROR]** Failed to ban `%s#%s` (%s) for mention spam",
+                    author.getUsername(), author.getDiscriminator(), author.getId()), channel);
+            }
+        } else if (overTimeoutThreshold) {
+            bot.getCommands().getModCommands().applyTimeout(bot.getApiClient().getClientUser(), channel,
+                server, author, Duration.ofHours(8));
+            bot.getApiClient().sendMessage(String.format("`%s#%s` (%s) has been timed out for mention spam. " +
+                    "If this is a mistake, please contact a moderator",
+                author.getUsername(), author.getDiscriminator(), author.getId()), channel);
         }
     }
 
@@ -387,34 +424,34 @@ public class EventListener {
         //  avoid duplicates
         if (event.getServer().getId().equals("106293726271246336") && !"167264528537485312".equals(cid)) {
             bot.getApiClient().sendMessage(bot.getLocalizer().localize(key,
-                    user.getUsername(),
-                    user.getId(),
-                    user.getDiscriminator(),
-                    DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())),
-                    "167264528537485312");
+                user.getUsername(),
+                user.getId(),
+                user.getDiscriminator(),
+                DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())),
+                "167264528537485312");
         }
 
         //  Join-leave spam prevention
         if (event.getServer().getId().equals("106293726271246336")) {
             if (joinLeaveLimiters == null) {
                 joinLeaveLimiters = CacheBuilder.newBuilder()
-                        .expireAfterAccess(bot.getConfig().getJlLimit().getCacheEvictionTimeMs(),
-                                TimeUnit.MILLISECONDS)
-                        .build(new CacheLoader<String, RateLimiter>() {
-                            @Override
-                            public RateLimiter load(String key) throws Exception {
-                                return buildLimiter(key);
-                            }
-                        });
+                    .expireAfterAccess(bot.getConfig().getJlLimit().getCacheEvictionTimeMs(),
+                        TimeUnit.MILLISECONDS)
+                    .build(new CacheLoader<String, RateLimiter>() {
+                        @Override
+                        public RateLimiter load(String key) throws Exception {
+                            return buildLimiter(key);
+                        }
+                    });
             }
             try {
                 RateLimiter limiter = joinLeaveLimiters.get(user.getId());
                 if (limiter.tryMark() != 0) {
                     //  Join-leave spam detected
                     bot.getCommands().getModCommands().banImpl(user.getId(), user.getUsername(),
-                            server.getId(), channel.getId());
+                        server.getId(), channel.getId());
                     bot.getApiClient().sendMessage(String.format("`%s#%s` (%s) has been banned for join-leave spam",
-                            user.getUsername(), user.getDiscriminator(), user.getId()), channel);
+                        user.getUsername(), user.getDiscriminator(), user.getId()), channel);
                     return;
                 }
             } catch (ExecutionException e) {
@@ -428,20 +465,20 @@ public class EventListener {
         if (event.getMemberChange() == MemberChangeEvent.MemberChange.ADDED && customWelcomeMessage != null) {
             if (!customWelcomeMessage.isEmpty()) {
                 bot.getApiClient().sendMessage(createJoinLeaveMessage(user, server, customWelcomeMessage),
-                        cid);
+                    cid);
             }
         } else if (event.getMemberChange() == MemberChangeEvent.MemberChange.DELETED && customLeaveMessage != null) {
             if (!customLeaveMessage.isEmpty()) {
                 bot.getApiClient().sendMessage(createJoinLeaveMessage(user, server, customLeaveMessage),
-                        cid);
+                    cid);
             }
         } else {
             bot.getApiClient().sendMessage(bot.getLocalizer().localize(key,
-                    user.getUsername(),
-                    user.getId(),
-                    user.getDiscriminator(),
-                    DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())),
-                    cid);
+                user.getUsername(),
+                user.getId(),
+                user.getDiscriminator(),
+                DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())),
+                cid);
         }
         memberChangeEventListener.values().forEach(c -> c.accept(event));
     }
@@ -463,8 +500,8 @@ public class EventListener {
         if (user.getUsername() != null && !event.getOldUsername().equals(user.getUsername())) {
             //  167264528537485312 dnnacd #activity-log
             bot.getApiClient().sendMessage(String.format("`%s` changed name to `%s` (%s)",
-                    event.getOldUsername(), user.getUsername(),
-                    user.getId()), "167264528537485312");
+                event.getOldUsername(), user.getUsername(),
+                user.getId()), "167264528537485312");
         }
     }
 
@@ -479,7 +516,7 @@ public class EventListener {
             bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.private.invite"), message.getChannelId());
             User author = message.getAuthor();
             VahrhedralBot.LOGGER.info("Received invite link from {}#{} ({}), rejecting: {}",
-                    author.getUsername(), author.getDiscriminator(), author.getId(), message.getContent());
+                author.getUsername(), author.getDiscriminator(), author.getId(), message.getContent());
         }
     }
 
@@ -493,7 +530,7 @@ public class EventListener {
         String content = message.getContent().toLowerCase();
         if (content.startsWith("~") || content.startsWith("!") || content.startsWith("-")) {
             bot.getApiClient().sendMessage(bot.getLocalizer().localize("message.private.misc",
-                    bot.getConfig().getCommandPrefix()), message.getChannelId());
+                bot.getConfig().getCommandPrefix()), message.getChannelId());
         }
     }
 
@@ -523,12 +560,12 @@ public class EventListener {
             //  167264528537485312 dnnacd #activity-log
             if (event.getChange() == ServerBanChangeEvent.BanChange.ADDED) {
                 bot.getApiClient().sendMessage(String.format("`%s` (%s) was banned",
-                        user.getUsername(),
-                        user.getId()), "167264528537485312");
+                    user.getUsername(),
+                    user.getId()), "167264528537485312");
             } else if (event.getChange() == ServerBanChangeEvent.BanChange.DELETED) {
                 bot.getApiClient().sendMessage(String.format("`%s` (%s) was unbanned",
-                        user.getUsername(),
-                        user.getId()), "167264528537485312");
+                    user.getUsername(),
+                    user.getId()), "167264528537485312");
             }
         }
     }
@@ -540,7 +577,7 @@ public class EventListener {
 
                 if (!Strings.isNullOrEmpty(regionDescriptor.getVersionCheckUrl())) {
                     VersionTracker versionTracker = new VersionTracker(regionDescriptor,
-                            bot.getApiClient().getEventBus());
+                        bot.getApiClient().getEventBus());
                     Map<String, DnTrackInfo> regions = bot.getDnTrackStorage().getRegions();
                     DnTrackInfo info = regions.get(regionDescriptor.getRegionCode());
                     if (info == null) {
@@ -551,19 +588,19 @@ public class EventListener {
                     }
                     if (info.getLastPatchTime() != 0) {
                         versionTracker.lastChangeEvent().set(new VersionUpdateEvent(false, regionDescriptor,
-                                -1,
-                                info.getPatchVersion(),
-                                Instant.ofEpochMilli(info.getLastPatchTime())));
+                            -1,
+                            info.getPatchVersion(),
+                            Instant.ofEpochMilli(info.getLastPatchTime())));
                     }
                     versionTracker.currentVersion().set(info.getPatchVersion());
                     versionTrackers.put(regionDescriptor.getRegionCode(),
-                            versionTracker);
+                        versionTracker);
                     VahrhedralBot.LOGGER.info("Registered version tracker for " + regionDescriptor.getRegionCode());
                     executorService.scheduleAtFixedRate(versionTracker, 0, 1, TimeUnit.MINUTES);
                 }
                 if (!Strings.isNullOrEmpty(regionDescriptor.getStatusCheckUrl())) {
                     StatusTracker statusTracker = new StatusTracker(regionDescriptor,
-                            bot.getApiClient().getEventBus());
+                        bot.getApiClient().getEventBus());
                     Map<String, DnTrackInfo> regions = bot.getDnTrackStorage().getRegions();
                     DnTrackInfo info = regions.get(regionDescriptor.getRegionCode());
                     if (info == null) {
@@ -574,8 +611,8 @@ public class EventListener {
                     }
                     if (info.getLastStatusChangeTime() != 0) {
                         statusTracker.lastChangeEvent().set(new StatusChangeEvent(false, regionDescriptor,
-                                null,
-                                Instant.ofEpochMilli(info.getLastStatusChangeTime())));
+                            null,
+                            Instant.ofEpochMilli(info.getLastStatusChangeTime())));
                     }
                     statusTracker.currentStatus().set(info.getServerStatus());
                     statusTrackers.put(regionDescriptor.getRegionCode(), statusTracker);

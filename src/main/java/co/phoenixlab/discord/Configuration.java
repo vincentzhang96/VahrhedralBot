@@ -19,6 +19,9 @@ public class Configuration {
     private boolean selfBot;
     private int exMentionTimeoutThreshold;
     private int exMentionBanThreshold;
+    private int exMentionTemporalThreshold;
+    private long exMentionPeriodMs;
+    private long exMentionCacheEvictionTimeMs;
     private JoinLeaveLimits jlLimit;
 
     public Configuration() {
@@ -124,5 +127,29 @@ public class Configuration {
 
     public JoinLeaveLimits getJlLimit() {
         return jlLimit;
+    }
+
+    public int getExMentionTemporalThreshold() {
+        return exMentionTemporalThreshold;
+    }
+
+    public void setExMentionTemporalThreshold(int exMentionTemporalThreshold) {
+        this.exMentionTemporalThreshold = exMentionTemporalThreshold;
+    }
+
+    public long getExMentionPeriodMs() {
+        return exMentionPeriodMs;
+    }
+
+    public void setExMentionPeriodMs(long exMentionPeriodMs) {
+        this.exMentionPeriodMs = exMentionPeriodMs;
+    }
+
+    public long getExMentionCacheEvictionTimeMs() {
+        return exMentionCacheEvictionTimeMs;
+    }
+
+    public void setExMentionCacheEvictionTimeMs(long exMentionCacheEvictionTimeMs) {
+        this.exMentionCacheEvictionTimeMs = exMentionCacheEvictionTimeMs;
     }
 }
