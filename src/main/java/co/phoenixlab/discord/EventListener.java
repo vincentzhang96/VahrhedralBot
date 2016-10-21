@@ -31,12 +31,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static co.phoenixlab.discord.dntrack.event.StatusChangeEvent.StatusChange.WENT_OFFLINE;
 
 public class EventListener {
 
     public static final DateTimeFormatter UPDATE_FORMATTER = DateTimeFormatter.ofPattern("M/d HH:mm z");
+    private static final Pattern SIGNATURE_MATCHER = Pattern.compile("[0-9a-fA-F]{29}\\b");
     private final VahrhedralBot bot;
     private final ScheduledExecutorService executorService;
     public Map<String, Consumer<MemberChangeEvent>> memberChangeEventListener;
@@ -49,6 +52,7 @@ public class EventListener {
     private Map<String, Consumer<Message>> messageListeners;
     private Map<String, Long> currentDateTimeLastUse = new HashMap<>();
     private LoadingCache<String, RateLimiter> joinLeaveLimiters;
+    private LoadingCache<String, RateLimiter> dnnacdMentionLimiters;
 
 
     public EventListener(VahrhedralBot bot) {
@@ -77,6 +81,11 @@ public class EventListener {
     private RateLimiter buildLimiter(String key) {
         JoinLeaveLimits lim = bot.getConfig().getJlLimit();
         return new RateLimiter("JL-" + key, lim.getRlPeriodMs(), lim.getRmMaxCharges());
+    }
+
+    private RateLimiter buildMentionLimiter(String key) {
+        JoinLeaveLimits lim = bot.getConfig().getJlLimit();
+        return new RateLimiter("@M-" + key, lim.getRlPeriodMs(), lim.getRmMaxCharges());
     }
 
     public static String createJoinLeaveMessage(User user, Server server, String fmt) {
@@ -305,17 +314,25 @@ public class EventListener {
         }
         Set<User> unique = new HashSet<>();
         Collections.addAll(unique, message.getMentions());
-        if (unique.size() >= bot.getConfig().getExMentionBanThreshold()) {
+        Matcher matcher = SIGNATURE_MATCHER.matcher(message.getContent());
+        int numHashes = matcher.groupCount();
+        boolean overBanThreshold = unique.size() >= bot.getConfig().getExMentionBanThreshold() ||
+            (numHashes >= 3 && unique.size() >= 3);
+        boolean overTimeoutThreshold = unique.size() >= bot.getConfig().getExMentionTimeoutThreshold() ||
+            (numHashes >= 2 && unique.size() >= 2);
+        if (overBanThreshold) {
             bot.getCommands().getModCommands().banImpl(author.getId(), author.getUsername(),
                     server.getId(), channel.getId());
             bot.getApiClient().sendMessage(String.format("`%s#%s` (%s) has been banned for mention spam",
                     author.getUsername(), author.getDiscriminator(), author.getId()), channel);
-        } else if (unique.size() >= bot.getConfig().getExMentionTimeoutThreshold()) {
-            bot.getCommands().getModCommands().applyTimeout(bot.getApiClient().getClientUser(), channel,
-                    server, author, Duration.ofHours(1));
-            bot.getApiClient().sendMessage(String.format("`%s#%s` (%s) has been timed out for mention spam. " +
-                            "If this is a mistake, please contact a moderator",
-                    author.getUsername(), author.getDiscriminator(), author.getId()), channel);
+        } else {
+            if (overTimeoutThreshold) {
+                bot.getCommands().getModCommands().applyTimeout(bot.getApiClient().getClientUser(), channel,
+                        server, author, Duration.ofHours(1));
+                bot.getApiClient().sendMessage(String.format("`%s#%s` (%s) has been timed out for mention spam. " +
+                                "If this is a mistake, please contact a moderator",
+                        author.getUsername(), author.getDiscriminator(), author.getId()), channel);
+            }
         }
     }
 
