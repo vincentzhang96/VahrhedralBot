@@ -448,8 +448,8 @@ public class EventListener {
                 RateLimiter limiter = joinLeaveLimiters.get(user.getId());
                 if (limiter.tryMark() != 0) {
                     //  Join-leave spam detected
-                    bot.getCommands().getModCommands().banImpl(user.getId(), user.getUsername(),
-                        server.getId(), channel.getId());
+                    bot.getCommands().getModCommands().banChecked(channel,
+                        bot.getApiClient().getClientUser(), user, server);
                     bot.getApiClient().sendMessage(String.format("`%s#%s` (%s) has been banned for join-leave spam",
                         user.getUsername(), user.getDiscriminator(), user.getId()), channel);
                     return;
