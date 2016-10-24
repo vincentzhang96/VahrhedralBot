@@ -4,7 +4,7 @@ Vahrhedral Discord Bot
 [![Travis](https://img.shields.io/travis/vincentzhang96/VahrhedralBot.svg?style=flat-square)](https://travis-ci.org/vincentzhang96/VahrhedralBot)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/vincentzhang96/VahrhedralBot/blob/master/LICENSE)
 
-Tinkering around with the unofficial Discord API to make a bot
+Dragon Nest focused Discord bot
 
 ##License
 
