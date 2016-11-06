@@ -76,7 +76,7 @@ public class EventListener {
         messageListeners.put("invite-pm", this::onInviteLinkPrivateMessage);
         messageListeners.put("other-prefixes", this::onOtherTypesCommand);
 //        dnnacdRecentMessages = EvictingQueue.create(10);
-//        messageListeners.put("date-time", this::currentDateTime);
+        messageListeners.put("date-time", this::currentDateTime);
     }
 
     public static String createJoinLeaveMessage(User user, Server server, String fmt) {
@@ -120,7 +120,7 @@ public class EventListener {
             if (cd) {
                 return;
             }
-            api.sendMessage("NOFLIPIt's " + ZonedDateTime.now().getYear() + ", `" + message.getAuthor().getUsername() + "`.",
+            api.sendMessage("It's " + ZonedDateTime.now().getYear() + ", `" + message.getAuthor().getUsername() + "`.",
                 channelId);
             currentDateTimeLastUse.put(channelId, time);
         }
@@ -128,7 +128,7 @@ public class EventListener {
             if (cd) {
                 return;
             }
-            api.sendMessage("NOFLIPIt's " + DateTimeFormatter.ofPattern("MMM dd uuuu").format(ZonedDateTime.now()) + ", `" +
+            api.sendMessage("It's " + DateTimeFormatter.ofPattern("MMM dd uuuu").format(ZonedDateTime.now()) + ", `" +
                     message.getAuthor().getUsername() + "`.",
                 channelId);
             currentDateTimeLastUse.put(channelId, time);
@@ -137,7 +137,7 @@ public class EventListener {
             if (cd) {
                 return;
             }
-            api.sendMessage("NOFLIPIt's the " + th(ZonedDateTime.now().getDayOfMonth()) + ", `" +
+            api.sendMessage("It's the " + th(ZonedDateTime.now().getDayOfMonth()) + ", `" +
                     message.getAuthor().getUsername() + "`.",
                 channelId);
             currentDateTimeLastUse.put(channelId, time);
@@ -146,19 +146,19 @@ public class EventListener {
             if (cd) {
                 return;
             }
-            api.sendMessage("NOFLIPIt's " + DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now()) + ", `" +
+            api.sendMessage("It's " + DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now()) + ", `" +
                     message.getAuthor().getUsername() + "`.",
                 channelId);
             currentDateTimeLastUse.put(channelId, time);
         }
-        if (content.contains("current president")) {
-            if (cd) {
-                return;
-            }
-            api.sendMessage("NOFLIPIt's Bernie Trump, `" + message.getAuthor().getUsername() + "`.",
-                channelId);
-            currentDateTimeLastUse.put(channelId, time);
-        }
+//        if (content.contains("current president")) {
+//            if (cd) {
+//                return;
+//            }
+//            api.sendMessage("It's Bernie Trump, `" + message.getAuthor().getUsername() + "`.",
+//                channelId);
+//            currentDateTimeLastUse.put(channelId, time);
+//        }
     }
 
     private String th(int i) {
