@@ -100,6 +100,9 @@ public class EventListener {
     }
 
     private void currentDateTime(Message message) {
+        if (bot.getConfig().isSelfBot()) {
+            return;
+        }
         if (!bot.getMainCommandDispatcher().active().get()) {
             return;
         }
