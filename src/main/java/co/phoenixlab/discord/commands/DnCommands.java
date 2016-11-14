@@ -183,7 +183,7 @@ public class DnCommands {
                         context.getChannel());
                 } else {
                     int crit = (int) parseStat(split[0]);
-                    int level = 80;
+                    int level = DEFAULT_LEVEL;
                     if (split.length >= 2) {
                         level = ParseInt.parseOrDefault(split[1], level);
                     }
