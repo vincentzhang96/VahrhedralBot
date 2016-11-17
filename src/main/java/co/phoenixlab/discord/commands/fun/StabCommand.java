@@ -85,6 +85,9 @@ public class StabCommand implements Command {
     }
 
     private void performStab(MessageContext context, String args) {
+        if (!globalEnabled) {
+            return;
+        }
         DiscordApiClient api = context.getApiClient();
         Server server = context.getServer();
         if (disabledServers.contains(server.getId())) {
