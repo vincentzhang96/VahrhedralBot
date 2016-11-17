@@ -7,11 +7,11 @@ import co.phoenixlab.discord.api.entities.User;
 
 public class CommandUtil {
 
-    static User findUser(MessageContext context, String username) {
+    public static User findUser(MessageContext context, String username) {
         return findUser(context, username, false);
     }
 
-    static User findUser(MessageContext context, String username, boolean global) {
+    public static User findUser(MessageContext context, String username, boolean global) {
         Message message = context.getMessage();
         User user;
         Channel channel = context.getApiClient().getChannelById(message.getChannelId());
