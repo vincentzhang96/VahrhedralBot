@@ -11,6 +11,7 @@ import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.DiscordWebSocketClient;
 import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.LogInEvent;
+import co.phoenixlab.discord.commands.fun.StabCommand;
 import co.phoenixlab.discord.commands.tempstorage.Minific;
 import co.phoenixlab.discord.commands.tempstorage.MinificStorage;
 import com.google.gson.Gson;
@@ -59,12 +60,15 @@ public class Commands {
     public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("MMM dd uuuu HH:mm:ss z");
     private static final Path MINIFIC_STORE = Paths.get("config/minific.json");
 
+    public StabCommand stabCommand;
+
     public Commands(VahrhedralBot bot) {
         adminCommands = new AdminCommands(bot);
         dnCommands = new DnCommands(bot);
         modCommands = new ModCommands(bot);
         loc = bot.getLocalizer();
         random = new Random();
+        stabCommand = new StabCommand();
     }
 
     public void register(CommandDispatcher d) {
@@ -82,6 +86,7 @@ public class Commands {
         d.registerCommand("commands.general.insult", this::insult);
         d.registerCommand("commands.general.minific", this::minific);
         d.registerCommand("commands.general.gamepop", this::gamePop);
+        d.registerCommand("commands.general.stab", stabCommand);
     }
 
     public ModCommands getModCommands() {
