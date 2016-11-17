@@ -117,7 +117,7 @@ public class StabCommand implements Command {
         float rand = random.nextFloat();
         String msg = "";
         if (rand < regularStabChance) {
-            msg = getRegularStabMessage(context, stabbedUser, stabbingUser, stabbedName);
+            msg = getRegularStabMessage(context, stabbingUser, stabbedUser, stabbingName, stabbedName);
         } else {
             msg = getAlternativeStabbingMessage(stabbingName, stabbedName);
         }
@@ -148,12 +148,11 @@ public class StabCommand implements Command {
         return msg;
     }
 
-    private String getRegularStabMessage(MessageContext context, User stabbedUser, User stabbingUser,
-                                         String stabbedName) {
+    private String getRegularStabMessage(MessageContext context, User stabbingUser, User stabbedUser,
+                                         String stabbingName, String stabbedName) {
         DiscordApiClient api = context.getApiClient();
         Server server = context.getServer();
         String msg;
-        String stabbingName;
         if (api.getClientUser().equals(stabbedUser)) {
             //  Bot stabbing itself
             msg = stabbedName + " stabs itself!";
@@ -162,8 +161,8 @@ public class StabCommand implements Command {
             //  User attempting to stab themselves or an admin
             //  They get stabbed by the bot instead
             Member selfMember = api.getUserMember(api.getClientUser(), server);
-            stabbingName = getUserDisplayName(api.getClientUser(), selfMember);
-            msg = stabbedName + " stabs " + stabbingName + "!";
+            String selfName = getUserDisplayName(api.getClientUser(), selfMember);
+            msg = selfName + " stabs " + stabbingName + "!";
         } else {
             msg = stabbedName + " gets stabbed!";
         }
