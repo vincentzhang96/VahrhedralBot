@@ -13,7 +13,9 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -25,7 +27,11 @@ public class StabCommand implements Command {
     private LoadingCache<String, RateLimiter> rateLimiters;
     private Random random;
 
+    private boolean globalEnabled = true;
+    private Set<String> disabledServers;
+
     public StabCommand() {
+        disabledServers = new HashSet<>();
         rateLimiters = CacheBuilder.newBuilder()
                 .expireAfterAccess(5, TimeUnit.MINUTES)
                 .build(new CacheLoader<String, RateLimiter>() {
@@ -58,12 +64,32 @@ public class StabCommand implements Command {
     }
 
     private void performStabAdmin(MessageContext context, String args) {
-
+        DiscordApiClient api = context.getApiClient();
+        Channel channel = context.getChannel();
+        Server server = context.getServer();
+        String serverId = server.getId();
+        args = args.substring("$admin".length()).trim();
+        if (args.startsWith("gon")) {
+            globalEnabled = true;
+            api.sendMessage("[Global] Stabbing enabled", channel);
+        } else if (args.startsWith("goff")) {
+            globalEnabled = false;
+            api.sendMessage("[Global] Stabbing disabled", channel);
+        } else if (args.startsWith("on")) {
+            disabledServers.remove(serverId);
+            api.sendMessage("[Server] Stabbing enabled", channel);
+        } else if (args.startsWith("off")) {
+            disabledServers.add(serverId);
+            api.sendMessage("[Server] Stabbing disabled", channel);
+        }
     }
 
     private void performStab(MessageContext context, String args) {
         DiscordApiClient api = context.getApiClient();
         Server server = context.getServer();
+        if (disabledServers.contains(server.getId())) {
+            return;
+        }
         User stabbedUser = CommandUtil.findUser(context, args, false);
         if (stabbedUser == DiscordApiClient.NO_USER || stabbedUser == null) {
             return;
