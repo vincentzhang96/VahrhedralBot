@@ -14,6 +14,7 @@ import co.phoenixlab.discord.api.event.LogInEvent;
 import co.phoenixlab.discord.commands.fun.StabCommand;
 import co.phoenixlab.discord.commands.tempstorage.Minific;
 import co.phoenixlab.discord.commands.tempstorage.MinificStorage;
+import co.phoenixlab.discord.util.SnowflakeUtils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.mashape.unirest.http.HttpResponse;
@@ -78,6 +79,7 @@ public class Commands {
         d.registerAlwaysActiveCommand("commands.general.admin", this::admin, true);
         d.registerAlwaysActiveCommand("commands.general.mod", this::mod);
         d.registerCommand("commands.general.info", this::info);
+        d.registerCommand("commands.general.info2", this::info2);
         d.registerCommand("commands.general.avatar", this::avatar);
         d.registerCommand("commands.general.version", this::version, true);
         d.registerCommand("commands.general.stats", this::stats, true);
@@ -175,6 +177,103 @@ public class Commands {
         msg.setPrivateMessage(m.isPrivateMessage());
         modCommands.getModCommandDispatcher().
                 handleCommand(msg);
+    }
+
+    private void info2(MessageContext context, String args) {
+        Message message = context.getMessage();
+        Configuration config = context.getBot().getConfig();
+        User user;
+        if (!args.isEmpty()) {
+            user = findUser(context, args);
+            selfCheck(context, user);
+        } else {
+            user = message.getAuthor();
+        }
+        DiscordApiClient apiClient = context.getApiClient();
+        if (user == NO_USER) {
+            apiClient.sendMessage(loc.localize("commands.general.info2.response.not_found"),
+                message.getChannelId());
+        } else {
+
+            Embed embed = new Embed();
+            embed.setType(Embed.TYPE_RICH);
+            embed.setColor(5941733);    //  GLAZE Accent 2 (temporary, replace with rolecolor)
+            EmbedAuthor author = new EmbedAuthor(
+                user.getUsername() + "#" + user.getDiscriminator(),
+                null,
+                user.getAvatarUrlStringOrNull()
+            );
+            embed.setAuthor(author);
+            if (user.getAvatar() != null) {
+                EmbedThumbnail thumbnail = new EmbedThumbnail(user.getAvatarUrl().toExternalForm());
+                embed.setThumbnail(thumbnail);
+            }
+            List<EmbedField> fields = new ArrayList<>();
+            String id = user.getId();
+            String status = "[" + Optional.ofNullable(apiClient.getUserPresences().get(id)).map(Presence::getDisplayKey)
+                .orElse("misc.unknown") + "]";
+            String playingGame = Optional.ofNullable(apiClient.getUserGames().get(id)).orElse("[misc.nothing]");
+            fields.add(new EmbedField(
+                loc.localize("commands.general.info2.response.field.status"),
+                loc.localize("commands.general.info2.response.field.status.fmt", status, playingGame),
+                true
+            ));
+            Member member = apiClient.getUserMember(user, context.getServer());
+            String memberJoinDate = member.getJoinedAt();
+            if (member != NO_MEMBER) {
+                String nickname = member.getNick();
+                if (nickname != null && !nickname.isEmpty()) {
+                    fields.add(new EmbedField(
+                        loc.localize("commands.general.info2.response.field.nickname"),
+                        nickname,
+                        false
+                    ));
+                }
+                if (memberJoinDate != null) {
+                    ZonedDateTime joinTime = ZonedDateTime.parse(memberJoinDate, DateTimeFormatter.ISO_DATE_TIME);
+                    joinTime = joinTime.withZoneSameInstant(ZoneId.systemDefault());
+                    String joined = DATE_TIME_FORMATTER.format(joinTime);
+                    fields.add(new EmbedField(
+                        loc.localize("commands.general.info2.response.field.joined"),
+                        joined,
+                        true
+                    ));
+                }
+            }
+            StringJoiner attribJoiner = new StringJoiner(" | ");
+            if (context.getServer().getOwnerId().equals(id)) {
+                attribJoiner.add(loc.localize("commands.general.info2.response.serverowner"));
+            }
+            if (config.getBlacklist().contains(id)) {
+                attribJoiner.add(loc.localize("commands.general.info2.response.blacklisted"));
+            }
+            if (config.getAdmins().contains(id)) {
+                attribJoiner.add(loc.localize("commands.general.info2.response.admin"));
+            }
+            String attribs = attribJoiner.toString();
+            if (!attribs.isEmpty()) {
+                fields.add(new EmbedField(
+                    loc.localize("commands.general.info2.response.field.attrib"),
+                    loc.localize("commands.general.info2.response.field.attrib.fmt", attribs),
+                    true
+                ));
+            }
+            if (user.getAvatar() != null) {
+                fields.add(new EmbedField(
+                    loc.localize("commands.general.info2.response.field.avatar"),
+                    loc.localize("commands.general.info2.response.field.avatar.fmt", user.getAvatarUrlStringOrNull()),
+                    true
+                ));
+            }
+            embed.setFields(fields.toArray(new EmbedField[fields.size()]));
+            String footer = loc.localize(
+                "commands.general.info2.response.footer",
+                user.getId(),
+                SnowflakeUtils.encodeSnowflake(user.getId())
+            );
+            embed.setFooter(new EmbedFooter(footer));
+            apiClient.sendMessage("", context.getChannel(), embed);
+        }
     }
 
     private void info(MessageContext context, String args) {

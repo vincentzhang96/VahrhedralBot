@@ -13,6 +13,10 @@ public class EmbedFooter {
     public EmbedFooter() {
     }
 
+    public EmbedFooter(String text) {
+        this.text = text;
+    }
+
     public EmbedFooter(String text, String iconUrl) {
         this.text = text;
         this.iconUrl = iconUrl;

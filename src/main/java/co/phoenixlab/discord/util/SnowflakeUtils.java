@@ -1,5 +1,7 @@
 package co.phoenixlab.discord.util;
 
+import co.phoenixlab.common.lang.number.ParseLong;
+
 public class SnowflakeUtils {
 
     public static final String CODEX = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -13,6 +15,11 @@ public class SnowflakeUtils {
         }
         encoded = encoded.substring(1);
         return parse(encoded);
+    }
+
+
+    public static String encodeSnowflake(String snowflake) {
+        return encodeSnowflake(ParseLong.parseOrDefault(snowflake, 0));
     }
 
     public static String encodeSnowflake(long snowflake) {

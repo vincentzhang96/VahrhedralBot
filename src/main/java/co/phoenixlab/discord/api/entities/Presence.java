@@ -9,6 +9,9 @@ public enum Presence {
     /** User is online but away */
     @SerializedName("idle")
     AWAY("status.away"),
+    /** User is do not disturb */
+    @SerializedName("dnd")
+    DO_NOT_DISTURB("status.dnd"),
     /** User is offline */
     @SerializedName("offline")
     OFFLINE("status.offline");

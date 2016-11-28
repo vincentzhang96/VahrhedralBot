@@ -88,6 +88,13 @@ public class User {
         return avatarUrl;
     }
 
+    public String getAvatarUrlStringOrNull() {
+        if (avatar == null) {
+            return null;
+        }
+        return getAvatarUrl().toExternalForm();
+    }
+
     public void setUsername(String username) {
         this.username = username;
     }
