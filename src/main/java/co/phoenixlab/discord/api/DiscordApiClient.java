@@ -351,8 +351,8 @@ public class DiscordApiClient {
         return future;
     }
 
-    Message sendMessageInternal(String body, String channelId, String[] mentions, Embed embed) {
-        Gson g = new GsonBuilder().serializeNulls().create();
+    private Message sendMessageInternal(String body, String channelId, String[] mentions, Embed embed) {
+        Gson g = new GsonBuilder().create();
         //  April fools.
 //        String[] splitBody = body.split("\n");
 //        StringJoiner joiner = new StringJoiner("\n");
