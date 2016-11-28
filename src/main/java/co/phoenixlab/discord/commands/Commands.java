@@ -254,7 +254,7 @@ public class Commands {
             if (!attribs.isEmpty()) {
                 fields.add(new EmbedField(
                     loc.localize("commands.general.info2.response.field.attrib"),
-                    loc.localize("commands.general.info2.response.field.attrib.fmt", attribs),
+                    attribs,
                     true
                 ));
             }
