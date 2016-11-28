@@ -284,12 +284,28 @@ public class DiscordApiClient {
         return sendMessage(body, channel, EMPTY_STR_ARRAY, true);
     }
 
+    public Future<Message> sendMessage(String body, String channelId, Embed embed) {
+        return sendMessage(body, channelId, EMPTY_STR_ARRAY, true, embed);
+    }
+
+    public Future<Message> sendMessage(String body, Channel channel, Embed embed) {
+        return sendMessage(body, channel, EMPTY_STR_ARRAY, true, embed);
+    }
+
     public Future<Message> sendMessage(String body, String channelId, boolean async) {
         return sendMessage(body, channelId, EMPTY_STR_ARRAY, async);
     }
 
     public Future<Message> sendMessage(String body, Channel channel, boolean async) {
         return sendMessage(body, channel, EMPTY_STR_ARRAY, async);
+    }
+
+    public Future<Message> sendMessage(String body, String channelId, boolean async, Embed embed) {
+        return sendMessage(body, channelId, EMPTY_STR_ARRAY, async, embed);
+    }
+
+    public Future<Message> sendMessage(String body, Channel channel, boolean async, Embed embed) {
+        return sendMessage(body, channel, EMPTY_STR_ARRAY, async, embed);
     }
 
     public Future<Message> sendMessage(String body, Channel channel, String[] mentions) {
@@ -300,15 +316,31 @@ public class DiscordApiClient {
         return sendMessage(body, channelId, mentions, true);
     }
 
+    public Future<Message> sendMessage(String body, Channel channel, String[] mentions, Embed embed) {
+        return sendMessage(body, channel.getId(), mentions, embed);
+    }
+
+    public Future<Message> sendMessage(String body, String channelId, String[] mentions, Embed embed) {
+        return sendMessage(body, channelId, mentions, true, embed);
+    }
+
     public Future<Message> sendMessage(String body, Channel channel, String[] mentions, boolean async) {
         return sendMessage(body, channel.getId(), mentions, async);
     }
 
+    public Future<Message> sendMessage(String body, Channel channel, String[] mentions, boolean async, Embed embed) {
+        return sendMessage(body, channel.getId(), mentions, async, embed);
+    }
+
     public Future<Message> sendMessage(String body, String channelId, String[] mentions, boolean async) {
+        return sendMessage(body, channelId, mentions, async, null);
+    }
+
+    public Future<Message> sendMessage(String body, String channelId, String[] mentions, boolean async, Embed embed) {
         if (body == null || channelId == null || mentions == null) {
             throw new IllegalArgumentException("Arguments may not be null");
         }
-        Future<Message> future = executorService.submit(() -> sendMessageInternal(body, channelId, mentions));
+        Future<Message> future = executorService.submit(() -> sendMessageInternal(body, channelId, mentions, embed));
         if (!async) {
             try {
                 future.get();
@@ -319,7 +351,7 @@ public class DiscordApiClient {
         return future;
     }
 
-    Message sendMessageInternal(String body, String channelId, String[] mentions) {
+    Message sendMessageInternal(String body, String channelId, String[] mentions, Embed embed) {
         Gson g = new GsonBuilder().serializeNulls().create();
         //  April fools.
 //        String[] splitBody = body.split("\n");
@@ -328,7 +360,7 @@ public class DiscordApiClient {
 //            joiner.add(reverseLine(s));
 //        }
 //        body = joiner.toString();
-        OutboundMessage outboundMessage = new OutboundMessage(body, false, mentions);
+        OutboundMessage outboundMessage = new OutboundMessage(body, false, mentions, embed);
         String content = g.toJson(outboundMessage);
 
         HttpResponse<String> response;
