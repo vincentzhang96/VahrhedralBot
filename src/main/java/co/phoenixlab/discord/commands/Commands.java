@@ -423,6 +423,12 @@ public class Commands {
                 embed.setAuthor(author);
                 EmbedImage image = new EmbedImage(user.getAvatarUrl().toExternalForm());
                 embed.setImage(image);
+                String footer = loc.localize(
+                    "commands.general.info2.response.footer",
+                    user.getId(),
+                    SnowflakeUtils.encodeSnowflake(user.getId())
+                );
+                embed.setFooter(new EmbedFooter(footer));
                 context.getApiClient().sendMessage("", context.getChannel(), embed);
             }
         }
