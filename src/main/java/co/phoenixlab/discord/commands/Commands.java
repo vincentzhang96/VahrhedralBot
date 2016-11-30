@@ -412,11 +412,23 @@ public class Commands {
             context.getApiClient().sendMessage(loc.localize("commands.general.avatar.response.not_found"),
                     message.getChannelId());
         } else {
-            String avatar = (user.getAvatar() == null ?
-                    loc.localize("commands.general.avatar.response.no_avatar") : user.getAvatarUrl().toExternalForm());
-            context.getApiClient().sendMessage(loc.localize("commands.general.avatar.response.format",
-                    user.getUsername(), avatar),
-                    context.getChannel());
+            if (user.getAvatar() == null) {
+                context.getApiClient().sendMessage(loc.localize("commands.general.avatar.response.no_avatar"),
+                    context.getChannel()) ;
+            } else {
+                Embed embed = new Embed();
+                embed.setType(Embed.TYPE_RICH);
+                embed.setColor(5941733);    //  GLAZE Accent 2 (temporary, replace with rolecolor)
+                EmbedAuthor author = new EmbedAuthor(
+                    user.getUsername() + "#" + user.getDiscriminator(),
+                    null,
+                    user.getAvatarUrlStringOrNull()
+                );
+                embed.setAuthor(author);
+                EmbedImage image = new EmbedImage(user.getAvatarUrl().toExternalForm());
+                embed.setImage(image);
+                context.getApiClient().sendMessage("", context.getChannel(), embed);
+            }
         }
     }
 
