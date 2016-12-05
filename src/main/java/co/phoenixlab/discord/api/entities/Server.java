@@ -145,4 +145,16 @@ public class Server {
     public void setUnavailable(boolean unavailable) {
         this.unavailable = unavailable;
     }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
+    }
+
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
+    }
 }

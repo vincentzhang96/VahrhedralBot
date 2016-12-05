@@ -133,6 +133,9 @@ public class DiscordWebSocketClient extends WebSocketClient {
                     case "GUILD_DELETE":
                         handleGuildDelete(data);
                         break;
+                    case "GUILD_UPDATE":
+                        handleGuildUpdate(data);
+                        break;
                     case "GUILD_MEMBER_ADD":
                         handleGuildMemberAdd(data);
                         break;
@@ -188,6 +191,14 @@ public class DiscordWebSocketClient extends WebSocketClient {
         } finally {
             statistics.avgMessageHandleTime.add(MILLISECONDS.convert(System.nanoTime() - start, NANOSECONDS));
         }
+    }
+
+    private void handleGuildUpdate(JSONObject data) {
+        Server server = jsonObjectToObject(data, Server.class);
+        Server localServer = apiClient.getServerByID(server.getId());
+        SafeNav.of(server.getIcon()).ifPresent(localServer::setIcon);
+        SafeNav.of(server.getOwnerId()).ifPresent(localServer::setOwnerId);
+        SafeNav.of(server.getRegion()).ifPresent(localServer::setRegion);
     }
 
     private void handleGuildBanDelete(JSONObject data) {
