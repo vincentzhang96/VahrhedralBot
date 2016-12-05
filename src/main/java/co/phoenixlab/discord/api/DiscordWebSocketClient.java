@@ -24,6 +24,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.stream.Collectors;
 
 import static co.phoenixlab.discord.api.DiscordApiClient.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -124,6 +125,9 @@ public class DiscordWebSocketClient extends WebSocketClient {
                     case "MESSAGE_DELETE":
                         handleMessageDelete(data);
                         break;
+                    case "BULK_MESSAGE_DELETE":
+                        handleBulkMessageDelete(data);
+                        break;
                     case "TYPING_START":
                         //  Don't care
                         break;
@@ -222,6 +226,18 @@ public class DiscordWebSocketClient extends WebSocketClient {
         String channelId = (String) data.get("channel_id");
         LOGGER.debug("Message {} deleted from {}", messageId, channelId);
         apiClient.getEventBus().post(new MessageDeleteEvent(messageId, channelId));
+    }
+
+    private void handleBulkMessageDelete(JSONObject data) {
+        Object[] idsObjs = (Object[]) data.get("ids");
+        List<String> collect = Arrays.stream(idsObjs)
+            .map(o -> (o instanceof String ? (String) o : o.toString()))
+            .collect(Collectors.toList());
+        String channelId = (String) data.get("channel_id");
+        LOGGER.debug("{} messages deleted from {}", collect.size(), channelId);
+        collect.stream()
+            .map(id -> new MessageDeleteEvent(id, channelId))
+            .forEach(apiClient.getEventBus()::post);
     }
 
     private void handleMessageUpdate(JSONObject data) {
