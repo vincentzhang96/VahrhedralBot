@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static co.phoenixlab.discord.dntrack.event.StatusChangeEvent.StatusChange.WENT_OFFLINE;
 
@@ -436,6 +437,24 @@ public class EventListener {
 
         //  Join-leave spam prevention
         if (event.getServer().getId().equals("106293726271246336")) {
+            //  Name collision check
+            Set<Member> members = event.getServer().getMembers();
+            Set<Member> similar = members.stream()
+                .filter(m -> isNameSimilar(m.getUser().getUsername(), user.getUsername()))
+                .collect(Collectors.toSet());
+            if (!similar.isEmpty()) {
+                StringJoiner joiner = new StringJoiner("\n");
+                similar.stream()
+                    .map(member -> String.format("%s#%s (%s)",
+                        member.getUser().getUsername(),
+                        member.getUser().getDiscriminator(),
+                        member.getUser().getId()))
+                    .forEach(joiner::add);
+                bot.getApiClient()
+                    .sendMessage(String.format("**WARNING**\n`%s#%s` (%s) has the same name as:\n```%s```",
+                        user.getUsername(), user.getDiscriminator(), user.getId(), joiner.toString()), channel);
+            }
+
             if (joinLeaveLimiters == null) {
                 joinLeaveLimiters = CacheBuilder.newBuilder()
                     .expireAfterAccess(bot.getConfig().getJlLimit().getCacheEvictionTimeMs(),
@@ -484,6 +503,17 @@ public class EventListener {
                 cid);
         }
         memberChangeEventListener.values().forEach(c -> c.accept(event));
+    }
+
+    private boolean isNameSimilar(String a, String b) {
+        if (a.equalsIgnoreCase(b)) {
+            return true;
+        }
+        //  Normalize I and l
+        if (a.replace('I', 'l').equalsIgnoreCase(b.replace('I', 'l'))) {
+            return true;
+        }
+        return false;
     }
 
     public boolean isJoin(MemberChangeEvent event) {
