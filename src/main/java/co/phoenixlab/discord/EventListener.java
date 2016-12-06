@@ -440,6 +440,7 @@ public class EventListener {
             //  Name collision check
             Set<Member> members = event.getServer().getMembers();
             Set<Member> similar = members.stream()
+                .filter(m -> !m.getUser().getId().equals(user.getId()))
                 .filter(m -> isNameSimilar(m.getUser().getUsername(), user.getUsername()))
                 .collect(Collectors.toSet());
             if (!similar.isEmpty()) {
