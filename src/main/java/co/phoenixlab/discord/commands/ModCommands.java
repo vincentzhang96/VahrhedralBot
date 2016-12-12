@@ -218,7 +218,7 @@ public class ModCommands {
         } else if ("this".equals(cid)) {
             cid = context.getChannel().getId();
         }
-        Channel channel = apiClient.getChannelById(cid, context.getServer());
+        Channel channel = apiClient.getChannelById(cid);
         if (channel != NO_CHANNEL) {
             if (target == JoinLeave.JOIN) {
                 bot.getEventListener().joinMessageRedirect.put(context.getServer().getId(), cid);
