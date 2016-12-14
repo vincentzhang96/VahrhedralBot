@@ -25,6 +25,7 @@ import com.google.gson.JsonParseException;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
+import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
 import org.json.JSONArray;
@@ -116,9 +117,72 @@ public class ModCommands {
             d.registerAlwaysActiveCommand("commands.mod.dntrack", this::setDnTrackChannel);
         }
         d.registerAlwaysActiveCommand("commands.admin.find", this::find);
+        d.registerAlwaysActiveCommand("commands.mod.setnick", this::setNick);
 
         EventBus eventBus = bot.getApiClient().getEventBus();
         eventBus.register(new WeakEventSubscriber<>(memberJoinListener, eventBus, MemberChangeEvent.class));
+    }
+
+    private void setNick(MessageContext context, String args) {
+        if (context.getServer() == null || context.getServer() == NO_SERVER) {
+            return;
+        }
+        String serverId = context.getServer().getId();
+        Channel channel = context.getChannel();
+        String[] split = args.split(" ", 2);
+        String newNickname;
+        if (split.length == 1) {
+            //  Clearing nickname, set to empty string
+            newNickname = "";
+        } else {
+            newNickname = split[1];
+        }
+        User[] mentions = context.getMessage().getMentions();
+        if (mentions.length == 0) {
+            apiClient.sendMessage(loc.localize("commands.mod.setnick.response.blank"), channel);
+        }
+        User target = mentions[0];
+        Map<String, String> headers = new HashMap<>();
+        headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+        headers.put(HttpHeaders.AUTHORIZATION, apiClient.getToken());
+        try {
+            HttpResponse<JsonNode> response = Unirest.patch("https://discordapp.com/api/guilds/" +
+                serverId + "/members/" + target.getId()).
+                headers(headers).
+                body("{\"nick\":\"" + newNickname + "\"}").
+                asJson();
+            int status = response.getStatus();
+            if (status != 204) {
+                if (status == 403) {
+                    apiClient.sendMessage(loc.localize("commands.mod.setnick.response.failed.no_perms"),
+                        channel);
+                } else if (status == 404) {
+                    apiClient.sendMessage(loc.localize("commands.mod.setnick.response.failed.not_found"),
+                        channel);
+                } else {
+                    apiClient.sendMessage(loc.localize("commands.mod.setnick.response.unknown_error",
+                        status,
+                        response.getStatusText(),
+                        response.getBody().toString()),
+                        channel);
+                }
+            } else {
+                if (newNickname.isEmpty()) {
+                    apiClient.sendMessage(loc.localize("commands.mod.setnick.response.removed", target.getUsername()),
+                        channel);
+                } else {
+                    apiClient.sendMessage(loc.localize("commands.mod.setnick.response.changed",
+                        target.getUsername(),
+                        newNickname),
+                        channel);
+                }
+            }
+        } catch (UnirestException e) {
+            LOGGER.warn("Exception while setting nickname for {} {} in {} {}",
+                target.getUsername(), target.getId(), context.getServer().getName(), serverId);
+            LOGGER.warn("Nickname set exception", e);
+        }
+
     }
 
     private void setDnTrackChannel(MessageContext context, String args) {
