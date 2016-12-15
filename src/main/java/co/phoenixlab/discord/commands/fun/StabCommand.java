@@ -13,25 +13,26 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 public class StabCommand implements Command {
 
-    public float regularStabChance = 0.95F;
+    public float regularStabChance = 0.90F;
 
     private LoadingCache<String, RateLimiter> rateLimiters;
     private Random random;
 
     private boolean globalEnabled = true;
     private Set<String> disabledServers;
+    private List<BiFunction<String, String, String>> alternateStabs;
 
     public StabCommand() {
         disabledServers = new HashSet<>();
+        alternateStabs = new ArrayList<>();
         rateLimiters = CacheBuilder.newBuilder()
                 .expireAfterAccess(5, TimeUnit.MINUTES)
                 .build(new CacheLoader<String, RateLimiter>() {
@@ -45,6 +46,38 @@ public class StabCommand implements Command {
                     }
                 });
         random = new Random();
+
+        alternateStabs.add((stabber, stabbed) -> String.format(
+            "%1$s and %2$s make love! :heart:",
+            stabber, stabbed));
+        alternateStabs.add((stabber, stabbed) -> String.format(
+            "%1$s and %2$s kiss passionately! :kissing_heart:", stabber, stabbed));
+        alternateStabs.add((stabber, stabbed) -> String.format(
+            "%1$s and %2$s glance at each other, blushing. D'aww! :blush:",
+            stabber, stabbed));
+        alternateStabs.add((stabber, stabbed) -> String.format(
+            "%1$s passionately plunges their blade into %2$s's soft flesh as %2$s screams in pain :dagger:",
+            stabber, stabbed));
+        alternateStabs.add((stabber, stabbed) -> String.format(
+            "%1$s passionately plunges their blade into %2$s's soft flesh as %2$s moans with pleasure :eggplant:",
+            stabber, stabbed));
+        alternateStabs.add((stabber, stabbed) -> String.format(
+            "%1$s goes deep into %2$s. ouo3o",
+            stabber, stabbed));
+        alternateStabs.add((stabber, stabbed) -> String.format(
+            "%1$s stabs %2$s, but %2$s seems to enjoy it a little too much... :smirk:",
+            stabber, stabbed));
+        alternateStabs.add((stabber, stabbed) -> String.format(
+            "%1$s stabs %2$s, but doesn't realize that %2$s penetrated them already. :scream:",
+            stabber, stabbed));
+        alternateStabs.add((stabber, stabbed) -> String.format(
+            "%1$s flips %2$s, but you have to question how with those wimpy arms... :thinking:",
+            stabber, stabbed));
+        alternateStabs.add((stabber, stabbed) -> "Takes out camera :smirk:");
+        alternateStabs.add((stabber, stabbed) -> "You have to pay Vahr 500g for this feature");
+
+
+
     }
 
     @Override
@@ -125,27 +158,8 @@ public class StabCommand implements Command {
     }
 
     private String getAlternativeStabbingMessage(String stabbingName, String stabbedName) {
-        int randi = random.nextInt(4);
-        String msg;
-        String stabbingAndStabbed = stabbingName + " and " + stabbedName;
-        switch (randi) {
-            case 0:
-                msg = stabbingAndStabbed + " make love! :heart:";
-                break;
-            case 1:
-                msg = stabbingAndStabbed + " kiss passionately! :kissing_heart:";
-                break;
-            case 2:
-                msg = stabbingAndStabbed + " glance at each other, blushing. D'aww! :blush:";
-                break;
-            case 3:
-                msg = "Takes out camera :smirk:";
-                break;
-            default:
-                msg = "Bot is out of order, wtf Vahr you suck at coding.";
-                break;
-        }
-        return msg;
+        int randi = random.nextInt(alternateStabs.size());
+        return alternateStabs.get(randi).apply(stabbingName, stabbedName);
     }
 
     private String getRegularStabMessage(MessageContext context, User stabbingUser, User stabbedUser,
