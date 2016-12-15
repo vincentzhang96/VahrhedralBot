@@ -101,6 +101,9 @@ public class StabCommand implements Command {
         Channel channel = context.getChannel();
         Server server = context.getServer();
         String serverId = server.getId();
+        if (!context.getBot().getConfig().isAdmin(context.getAuthor().getId())) {
+            return;
+        }
         args = args.substring("$admin".length()).trim();
         if (args.startsWith("gon")) {
             globalEnabled = true;
