@@ -114,10 +114,17 @@ public class StabCommand implements Command {
         } else if (args.startsWith("off")) {
             disabledServers.add(serverId);
             api.sendMessage("[Server] Stabbing disabled", channel);
+        } else if (args.startsWith("altinvoke ")) {
+            String name = args.substring("altinvoke ".length());
+            performStab(context, name, true);
         }
     }
 
     private void performStab(MessageContext context, String args) {
+        performStab(context, args, false);
+    }
+
+    private void performStab(MessageContext context, String args, boolean forceAlt) {
         if (!globalEnabled) {
             return;
         }
@@ -136,11 +143,11 @@ public class StabCommand implements Command {
         if (checkRateLimit(context, stabbingUser, channel)) {
             return;
         }
-        String msg = getStabMessage(context, stabbingUser, stabbedUser);
+        String msg = getStabMessage(context, stabbingUser, stabbedUser, forceAlt);
         api.sendMessage("*" + msg + "*", channel);
     }
 
-    private String getStabMessage(MessageContext context, User stabbingUser, User stabbedUser) {
+    private String getStabMessage(MessageContext context, User stabbingUser, User stabbedUser, boolean forceAlt) {
         DiscordApiClient api = context.getApiClient();
         Server server = context.getServer();
         Member stabbingMember = api.getUserMember(stabbingUser, server);
@@ -149,7 +156,7 @@ public class StabCommand implements Command {
         String stabbedName = getUserDisplayName(stabbedUser, stabbedMember);
         float rand = random.nextFloat();
         String msg = "";
-        if (rand < regularStabChance) {
+        if (rand < regularStabChance && !forceAlt) {
             msg = getRegularStabMessage(context, stabbingUser, stabbedUser, stabbingName, stabbedName);
         } else {
             msg = getAlternativeStabbingMessage(stabbingName, stabbedName);
