@@ -72,6 +72,7 @@ public class DnFdCommand implements Command {
             Embed embed = new Embed();
             embed.setType(Embed.TYPE_RICH);
             embed.setColor(5941733);    //  GLAZE Accent 2 (temporary, replace with rolecolor)
+            embed.setDescription("");
             EmbedField[] fields = new EmbedField[3];
             EmbedField lvl93 = new EmbedField("LVL 93", "", true);
             EmbedField lvl90 = new EmbedField("LVL 90", "", true);
@@ -92,6 +93,7 @@ public class DnFdCommand implements Command {
             embed.setFields(fields);
             EmbedFooter footer = new EmbedFooter();
             footer.setText("Divinitor PALADINS");
+            embed.setFooter(footer);
             apiClient.sendMessage("", context.getChannel(), embed);
         } else {
             if (fd == -1) {
