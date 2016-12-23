@@ -10,6 +10,7 @@ import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.VahrhedralBot;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.entities.Message;
+import co.phoenixlab.discord.commands.dn.DnFdCommand;
 import co.phoenixlab.discord.dntrack.VersionTracker;
 
 import java.time.ZoneId;
@@ -91,11 +92,13 @@ public class DnCommands {
     private final CommandDispatcher dispatcher;
     private final VahrhedralBot bot;
     private Localizer loc;
+    private DnFdCommand dnFdCommand;
 
     public DnCommands(VahrhedralBot bot) {
         this.bot = bot;
         dispatcher = new CommandDispatcher(bot, "");
         loc = bot.getLocalizer();
+        dnFdCommand = new DnFdCommand(loc);
     }
 
     public void registerDnCommands() {
@@ -269,6 +272,11 @@ public class DnCommands {
     }
 
     private void finalDamageCalculator(MessageContext context, String args) {
+        if (context.getBot().getConfig().isAdmin(context.getAuthor().getId())) {
+            dnFdCommand.handleCommand(context, args);
+            return;
+        }
+
         DiscordApiClient apiClient = context.getApiClient();
         //  Strip commas
         args = args.replace(",", "");
