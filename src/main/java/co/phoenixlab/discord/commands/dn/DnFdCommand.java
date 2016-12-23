@@ -72,20 +72,19 @@ public class DnFdCommand implements Command {
             Embed embed = new Embed();
             embed.setType(Embed.TYPE_RICH);
             embed.setColor(5941733);    //  GLAZE Accent 2 (temporary, replace with rolecolor)
-            embed.setDescription("");
             EmbedField[] fields = new EmbedField[3];
             EmbedField lvl93 = new EmbedField("LVL 93", "", true);
             EmbedField lvl90 = new EmbedField("LVL 90", "", true);
             EmbedField lvl80 = new EmbedField("LVL 80", "", true);
             if (fd == -1) {
-                String title = String.format("%.1f%% FD", fdPercent * 100F);
-                embed.setTitle(title);
+//                String title = String.format("%.1f%% FD", fdPercent * 100F);
+//                embed.setTitle(title);
                 lvl93.setValue(String.format("%,d", calculateFdRequiredForPercent(fdPercent, 93)));
                 lvl90.setValue(String.format("%,d", calculateFdRequiredForPercent(fdPercent, 90)));
                 lvl80.setValue(String.format("%,d", calculateFdRequiredForPercent(fdPercent, 80)));
             } else {
-                String title = String.format("%,d FD", fd);
-                embed.setTitle(title);
+//                String title = String.format("%,d FD", fd);
+//                embed.setTitle(title);
                 lvl93.setValue(String.format("%.1f%%", calculateFdPercent(fd, 93)));
                 lvl90.setValue(String.format("%.1f%%", calculateFdPercent(fd, 90)));
                 lvl80.setValue(String.format("%.1f%%", calculateFdPercent(fd, 80)));
