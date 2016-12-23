@@ -103,7 +103,7 @@ public class DnCommands {
 
     public void registerDnCommands() {
         dispatcher.registerCommand("commands.dn.defense", this::defenseCalculator);
-        dispatcher.registerCommand("commands.dn.finaldamage", this::finalDamageCalculator);
+        dispatcher.registerCommand("commands.dn.finaldamage", dnFdCommand);
         dispatcher.registerCommand("commands.dn.crit", this::critChanceCalculator);
         dispatcher.registerCommand("commands.dn.critdmg", this::critDamageCalculator);
         dispatcher.registerCommand("commands.dn.track.version", this::getVersion);
@@ -272,11 +272,6 @@ public class DnCommands {
     }
 
     private void finalDamageCalculator(MessageContext context, String args) {
-        if (context.getBot().getConfig().isAdmin(context.getAuthor().getId())) {
-            dnFdCommand.handleCommand(context, args);
-            return;
-        }
-
         DiscordApiClient apiClient = context.getApiClient();
         //  Strip commas
         args = args.replace(",", "");
