@@ -73,21 +73,20 @@ public class DnFdCommand implements Command {
             embed.setType(Embed.TYPE_RICH);
             embed.setColor(5941733);    //  GLAZE Accent 2 (temporary, replace with rolecolor)
             EmbedField[] fields = new EmbedField[3];
-            EmbedField lvl93 = new EmbedField("LVL 93", "", true);
+            EmbedField lvl93 = new EmbedField("Level 93", "", true);
             fields[0] = lvl93;
-            EmbedField lvl90 = new EmbedField("LVL 90", "", true);
+            EmbedField lvl90 = new EmbedField("Level 90", "", true);
             fields[1] = lvl90;
-            EmbedField lvl80 = new EmbedField("LVL 80", "", true);
+            EmbedField lvl80 = new EmbedField("Level 80", "", true);
             fields[2] = lvl80;
+            String title;
             if (fd == -1) {
-                String title = String.format("%.1f%% FD", fdPercent * 100F);
-                embed.setTitle(title);
+                title = String.format("**__%.1f%% FD__**", fdPercent * 100F);
                 lvl93.setValue(String.format("%,d", calculateFdRequiredForPercent(fdPercent, 93)));
                 lvl90.setValue(String.format("%,d", calculateFdRequiredForPercent(fdPercent, 90)));
                 lvl80.setValue(String.format("%,d", calculateFdRequiredForPercent(fdPercent, 80)));
             } else {
-                String title = String.format("%,d FD", fd);
-                embed.setTitle(title);
+                title = String.format("**__%,d FD__**", fd);
                 lvl93.setValue(String.format("%.1f%%", calculateFdPercent(fd, 93)));
                 lvl90.setValue(String.format("%.1f%%", calculateFdPercent(fd, 90)));
                 lvl80.setValue(String.format("%.1f%%", calculateFdPercent(fd, 80)));
@@ -96,7 +95,7 @@ public class DnFdCommand implements Command {
             EmbedFooter footer = new EmbedFooter();
             footer.setText("Divinitor PALADINS");
             embed.setFooter(footer);
-            apiClient.sendMessage("", context.getChannel(), embed);
+            apiClient.sendMessage(title, context.getChannel(), embed);
         } else {
             if (fd == -1) {
                 fd = calculateFdRequiredForPercent(fdPercent, level);
