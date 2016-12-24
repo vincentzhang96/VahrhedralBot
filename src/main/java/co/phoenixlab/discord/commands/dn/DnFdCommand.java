@@ -87,7 +87,7 @@ public class DnFdCommand implements Command {
                     for (int i = 0; i < fields.length; i++) {
                         fields[i] = new EmbedField(
                                 String.format("Level %d", FD_DEFAULT_LEVELS[i]),
-                                String.format("%,d%", calculateFdRequiredForPercent(fdPercent, FD_DEFAULT_LEVELS[i])),
+                                String.format("%,d", calculateFdRequiredForPercent(fdPercent, FD_DEFAULT_LEVELS[i])),
                                 true
                         );
                     }
@@ -96,7 +96,7 @@ public class DnFdCommand implements Command {
                     for (int i = 0; i < fields.length; i++) {
                         fields[i] = new EmbedField(
                                 String.format("Level %d", FD_DEFAULT_LEVELS[i]),
-                                String.format("%.1f%", calculateFdPercent(fd, FD_DEFAULT_LEVELS[i])),
+                                String.format("%.1f%%", calculateFdPercent(fd, FD_DEFAULT_LEVELS[i])),
                                 true
                         );
                     }
