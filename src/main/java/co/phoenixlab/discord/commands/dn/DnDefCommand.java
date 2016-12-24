@@ -107,7 +107,8 @@ public class DnDefCommand implements Command {
                             "commands.dn.def.response.format.required",
                             level,
                             def,
-                            defPercent * 100D
+                            defPercent * 100F,
+                            1F / (1F - defPercent)
                     );
                     apiClient.sendMessage(msg, context.getChannel());
                 } else {
@@ -117,7 +118,8 @@ public class DnDefCommand implements Command {
                             level,
                             defPercent,
                             (int) (defenseCaps[level - 1] * DEF_MAX_PERCENT),
-                            (int) (DEF_MAX_PERCENT * 100D)
+                            (int) (DEF_MAX_PERCENT * 100F),
+                            1F / (1F - (defPercent / 100F))
                     );
                     apiClient.sendMessage(msg, context.getChannel());
                 }
