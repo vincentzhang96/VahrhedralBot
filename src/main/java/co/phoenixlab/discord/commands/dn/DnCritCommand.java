@@ -56,7 +56,7 @@ public class DnCritCommand implements Command {
         try {
             if (critAmt.endsWith("%")) {
                 critPercent = (float) Double.parseDouble(critAmt.substring(0, critAmt.length() - 1)) / 100F;
-                critPercent = Math.max(critPercent, CRIT_MAX_PERCENT);
+                critPercent = Math.min(critPercent, CRIT_MAX_PERCENT);
             } else {
                 crit = (int) DnCommandUtils.parseStat(critAmt, loc);
             }
