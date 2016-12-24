@@ -11,6 +11,7 @@ import co.phoenixlab.discord.VahrhedralBot;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.entities.Message;
 import co.phoenixlab.discord.commands.dn.DnCritCommand;
+import co.phoenixlab.discord.commands.dn.DnDefCommand;
 import co.phoenixlab.discord.commands.dn.DnFdCommand;
 import co.phoenixlab.discord.dntrack.VersionTracker;
 
@@ -95,6 +96,7 @@ public class DnCommands {
     private Localizer loc;
     private DnFdCommand dnFdCommand;
     private DnCritCommand dnCritCommand;
+    private DnDefCommand dnDefCommand;
 
     public DnCommands(VahrhedralBot bot) {
         this.bot = bot;
@@ -102,12 +104,14 @@ public class DnCommands {
         loc = bot.getLocalizer();
         dnFdCommand = new DnFdCommand(loc);
         dnCritCommand = new DnCritCommand(loc);
+        dnDefCommand = new DnDefCommand(loc);
     }
 
     public void registerDnCommands() {
         dispatcher.registerCommand("commands.dn.defense", this::defenseCalculator);
         dispatcher.registerCommand("commands.dn.defense.alias.defense", this::defenseCalculator, true);
         dispatcher.registerCommand("commands.dn.defense.alias.defence", this::defenseCalculator, true);
+        dispatcher.registerCommand("commands.dn.def", dnDefCommand);
         dispatcher.registerCommand("commands.dn.finaldamage", dnFdCommand);
         dispatcher.registerCommand("commands.dn.crit", dnCritCommand);
         dispatcher.registerCommand("commands.dn.critdmg", this::critDamageCalculator);
