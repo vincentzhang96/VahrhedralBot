@@ -106,6 +106,8 @@ public class DnCommands {
 
     public void registerDnCommands() {
         dispatcher.registerCommand("commands.dn.defense", this::defenseCalculator);
+        dispatcher.registerCommand("commands.dn.defense.alias.defense", this::defenseCalculator, true);
+        dispatcher.registerCommand("commands.dn.defense.alias.defence", this::defenseCalculator, true);
         dispatcher.registerCommand("commands.dn.finaldamage", dnFdCommand);
         dispatcher.registerCommand("commands.dn.crit", dnCritCommand);
         dispatcher.registerCommand("commands.dn.critdmg", this::critDamageCalculator);
