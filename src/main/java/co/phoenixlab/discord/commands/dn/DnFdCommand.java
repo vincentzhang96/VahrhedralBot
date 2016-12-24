@@ -11,6 +11,8 @@ import co.phoenixlab.discord.api.entities.EmbedAuthor;
 import co.phoenixlab.discord.api.entities.EmbedField;
 import co.phoenixlab.discord.api.entities.EmbedFooter;
 
+import java.util.List;
+
 public class DnFdCommand implements Command {
 
     public static final float FD_MAX_PERCENT = 1.0F;
@@ -34,6 +36,11 @@ public class DnFdCommand implements Command {
     public static final float FD_INVERSE_POWER = 0.45454545454545454545F;
     public static final float FD_INVERSE_COEFF = 2.857142857F;
     public static final float FD_INVERSE_BREAKING_POINT = 0.146F;
+    public static final int[] FD_DEFAULT_LEVELS;
+
+    static {
+        FD_DEFAULT_LEVELS = new int[]{93, 90, 80};
+    }
 
     private final Localizer loc;
 
@@ -67,58 +74,65 @@ public class DnFdCommand implements Command {
             return;
         }
 
-        if (level == -1) {
-            //  Default level, use embed style for showing lvl 80, 90, and 93 FD
-            Embed embed = new Embed();
-            embed.setType(Embed.TYPE_RICH);
-            embed.setColor(5941733);    //  GLAZE Accent 2 (temporary, replace with rolecolor)
-            EmbedField[] fields = new EmbedField[3];
-            EmbedField lvl93 = new EmbedField("Level 93", "", true);
-            fields[0] = lvl93;
-            EmbedField lvl90 = new EmbedField("Level 90", "", true);
-            fields[1] = lvl90;
-            EmbedField lvl80 = new EmbedField("Level 80", "", true);
-            fields[2] = lvl80;
-            String title;
-            if (fd == -1) {
-                title = String.format("**__%.1f%% FD__**", fdPercent * 100F);
-                lvl93.setValue(String.format("%,d", calculateFdRequiredForPercent(fdPercent, 93)));
-                lvl90.setValue(String.format("%,d", calculateFdRequiredForPercent(fdPercent, 90)));
-                lvl80.setValue(String.format("%,d", calculateFdRequiredForPercent(fdPercent, 80)));
+        try {
+            if (level == -1) {
+                String title;
+                //  Default level, use embed style for showing lvl 80, 90, and 93 FD
+                Embed embed = new Embed();
+                embed.setType(Embed.TYPE_RICH);
+                embed.setColor(5941733);    //  GLAZE Accent 2 (temporary, replace with rolecolor)
+                EmbedField[] fields = new EmbedField[FD_DEFAULT_LEVELS.length];
+                if (fd == -1) {
+                    title = String.format("**__%.1f%% FD__**", fdPercent * 100F);
+                    for (int i = 0; i < fields.length; i++) {
+                        fields[i] = new EmbedField(
+                                String.format("Level %d", FD_DEFAULT_LEVELS[i]),
+                                String.format("%,d%", calculateFdRequiredForPercent(fdPercent, FD_DEFAULT_LEVELS[i])),
+                                true
+                        );
+                    }
+                } else {
+                    title = String.format("**__%,d FD__**", fd);
+                    for (int i = 0; i < fields.length; i++) {
+                        fields[i] = new EmbedField(
+                                String.format("Level %d", FD_DEFAULT_LEVELS[i]),
+                                String.format("%.1f%", calculateFdPercent(fd, FD_DEFAULT_LEVELS[i])),
+                                true
+                        );
+                    }
+                }
+                embed.setFields(fields);
+                EmbedFooter footer = new EmbedFooter();
+                footer.setText("Divinitor PALADINS");
+                embed.setFooter(footer);
+                apiClient.sendMessage(title, context.getChannel(), embed);
             } else {
-                title = String.format("**__%,d FD__**", fd);
-                lvl93.setValue(String.format("%.1f%%", calculateFdPercent(fd, 93)));
-                lvl90.setValue(String.format("%.1f%%", calculateFdPercent(fd, 90)));
-                lvl80.setValue(String.format("%.1f%%", calculateFdPercent(fd, 80)));
+                if (fd == -1) {
+                    fd = calculateFdRequiredForPercent(fdPercent, level);
+                    String msg = loc.localize(
+                            "commands.dn.finaldamage.response.format.required",
+                            level,
+                            fd,
+                            fdPercent * 100D
+                    );
+                    apiClient.sendMessage(msg, context.getChannel());
+                } else {
+                    fdPercent = calculateFdPercent(fd, level);
+                    String msg = loc.localize(
+                            "commands.dn.finaldamage.response.format",
+                            level,
+                            fdPercent,
+                            (int) (fdCaps[level - 1] * FD_MAX_PERCENT),
+                            (int) (FD_MAX_PERCENT * 100D)
+                    );
+                    apiClient.sendMessage(msg, context.getChannel());
+                }
             }
-            embed.setFields(fields);
-            EmbedFooter footer = new EmbedFooter();
-            footer.setText("Divinitor PALADINS");
-            embed.setFooter(footer);
-            apiClient.sendMessage(title, context.getChannel(), embed);
-        } else {
-            if (fd == -1) {
-                fd = calculateFdRequiredForPercent(fdPercent, level);
-                String msg = loc.localize(
-                        "commands.dn.finaldamage.response.format.required",
-                        level,
-                        fd,
-                        fdPercent * 100D
-                );
-                apiClient.sendMessage(msg, context.getChannel());
-            } else {
-                fdPercent = calculateFdPercent(fd, level);
-                String msg = loc.localize(
-                        "commands.dn.finaldamage.response.format",
-                        level,
-                        fdPercent,
-                        (int) (fdCaps[level - 1] * FD_MAX_PERCENT),
-                        (int) (FD_MAX_PERCENT * 100D)
-                );
-                apiClient.sendMessage(msg, context.getChannel());
-            }
+            return;
+        } catch (IllegalArgumentException ile) {
+            apiClient.sendMessage(ile.getMessage(), context.getChannel());
+            return;
         }
-
     }
 
     public float calculateFdPercent(int fd, int level) {
@@ -162,7 +176,7 @@ public class DnFdCommand implements Command {
                     0
             ));
         }
-        percent = Math.min(percent, 1.0F);
+        percent = Math.min(percent, FD_MAX_PERCENT);
         int fd;
         if (percent < FD_INVERSE_BREAKING_POINT) {
             fd = (int) (FD_INVERSE_COEFF * percent * fdCaps[levelIndex]);
