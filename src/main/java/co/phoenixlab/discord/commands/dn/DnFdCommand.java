@@ -58,7 +58,7 @@ public class DnFdCommand implements Command {
             if (fdAmt.endsWith("%")) {
                 fdPercent = (float) Double.parseDouble(fdAmt.substring(0, fdAmt.length() - 1)) / 100F;
             } else {
-                fd = (int) parseStat(fdAmt);
+                fd = (int) DnCommandUtils.parseStat(fdAmt, loc);
             }
         } catch (NumberFormatException nfe) {
             apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.invalid",
@@ -174,59 +174,4 @@ public class DnFdCommand implements Command {
         return fd;
     }
 
-    private double parseStat(String s) throws NumberFormatException {
-        //  Check if it ends in thousand or million
-        String thousandSuffix = loc.localize("commands.dn.defense.suffix.thousand");
-        int start = s.indexOf(thousandSuffix);
-        double working;
-        double ret = 0;
-        if (start == 0) {
-            //  Invalid, cannot be just "k"
-            throw new NumberFormatException();
-        }
-        if (start != -1) {
-            String num = s.substring(0, start);
-            try {
-                working = Double.parseDouble(num);
-            } catch (NumberFormatException nfe) {
-                throw new NumberFormatException();
-            }
-            ret = working * 1000.0;
-        } else {
-            String millionSuffix = loc.localize("commands.dn.defense.suffix.million");
-            start = s.indexOf(millionSuffix);
-            if (start == 0) {
-                //  Invalid, cannot be just "m"
-                throw new NumberFormatException();
-            }
-            if (start != -1) {
-                String num = s.substring(0, start);
-                try {
-                    working = Double.parseDouble(num);
-                } catch (NumberFormatException nfe) {
-                    throw new NumberFormatException();
-                }
-                ret = working * 1000000.0;
-            } else {
-                String billionSuffix = loc.localize("commands.dn.defense.suffix.billion");
-                start = s.indexOf(billionSuffix);
-                if (start == 0) {
-                    //  Invalid, cannot be just "b"
-                    throw new NumberFormatException();
-                }
-                if (start != -1) {
-                    String num = s.substring(0, start);
-                    try {
-                        working = Double.parseDouble(num);
-                    } catch (NumberFormatException nfe) {
-                        throw new NumberFormatException();
-                    }
-                    ret = working * 1000000000.0;
-                } else {
-                    ret = ParseLong.parseDec(s);
-                }
-            }
-        }
-        return ret;
-    }
 }
