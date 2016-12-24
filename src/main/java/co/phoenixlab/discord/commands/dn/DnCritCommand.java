@@ -69,13 +69,13 @@ public class DnCritCommand implements Command {
         try {
             if (level == -1) {
                 String title;
-                //  Default level, use embed style for showing lvl 80, 90, and 93 FD
+                //  Default level, use embed style for showing lvl 80, 90, and 93 crit
                 Embed embed = new Embed();
                 embed.setType(Embed.TYPE_RICH);
                 embed.setColor(5941733);    //  GLAZE Accent 2 (temporary, replace with rolecolor)
                 EmbedField[] fields = new EmbedField[CRIT_DEFAULT_LEVELS.length];
                 if (crit == -1) {
-                    title = String.format("**__%.1f%% FD__**", critPercent * 100F);
+                    title = String.format("**__%.1f%% Crit__**", critPercent * 100F);
                     for (int i = 0; i < fields.length; i++) {
                         fields[i] = new EmbedField(
                                 String.format("Level %d", CRIT_DEFAULT_LEVELS[i]),
@@ -84,7 +84,7 @@ public class DnCritCommand implements Command {
                         );
                     }
                 } else {
-                    title = String.format("**__%,d FD__**", crit);
+                    title = String.format("**__%,d Crit__**", crit);
                     for (int i = 0; i < fields.length; i++) {
                         fields[i] = new EmbedField(
                                 String.format("Level %d", CRIT_DEFAULT_LEVELS[i]),
@@ -139,7 +139,7 @@ public class DnCritCommand implements Command {
         }
         if (crit < 0) {
             throw new IllegalArgumentException(loc.localize(
-                    "commands.dn.crit.response.fd_out_of_range",
+                    "commands.dn.crit.response.crit_out_of_range",
                     0
             ));
         }
