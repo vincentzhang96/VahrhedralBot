@@ -5,6 +5,9 @@ import co.phoenixlab.common.localization.Localizer;
 
 public class DnCommandUtils {
 
+    public static final String DIVINITOR_FOOTER_TEXT = "Powered by Divinitor";
+    public static final String DIVINITOR_FOOTER_ICON_URL = "https://divinitor.com/resources/img/dv-logo.png";
+
     private DnCommandUtils() {}
 
     public static double parseStat(String s, Localizer loc) throws NumberFormatException {

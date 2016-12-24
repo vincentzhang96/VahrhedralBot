@@ -64,6 +64,7 @@ public class DnFdCommand implements Command {
         try {
             if (fdAmt.endsWith("%")) {
                 fdPercent = (float) Double.parseDouble(fdAmt.substring(0, fdAmt.length() - 1)) / 100F;
+                fdPercent = Math.min(fdPercent, FD_MAX_PERCENT);
             } else {
                 fd = (int) DnCommandUtils.parseStat(fdAmt, loc);
             }
@@ -103,7 +104,8 @@ public class DnFdCommand implements Command {
                 }
                 embed.setFields(fields);
                 EmbedFooter footer = new EmbedFooter();
-                footer.setText("Divinitor PALADINS");
+                footer.setText(DnCommandUtils.DIVINITOR_FOOTER_TEXT);
+                footer.setIconUrl(DnCommandUtils.DIVINITOR_FOOTER_ICON_URL);
                 embed.setFooter(footer);
                 apiClient.sendMessage(title, context.getChannel(), embed);
             } else {

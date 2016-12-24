@@ -76,7 +76,7 @@ public class DnCritCommand implements Command {
                 embed.setColor(5941733);    //  GLAZE Accent 2 (temporary, replace with rolecolor)
                 EmbedField[] fields = new EmbedField[CRIT_DEFAULT_LEVELS.length];
                 if (crit == -1) {
-                    title = String.format("**__%.1f%% Crit__**", critPercent * 100F);
+                    title = String.format("**__%.1f%% Critical Chance__**", critPercent * 100F);
                     for (int i = 0; i < fields.length; i++) {
                         fields[i] = new EmbedField(
                                 String.format("Level %d", CRIT_DEFAULT_LEVELS[i]),
@@ -85,7 +85,7 @@ public class DnCritCommand implements Command {
                         );
                     }
                 } else {
-                    title = String.format("**__%,d Crit__**", crit);
+                    title = String.format("**__%,d Critical__**", crit);
                     for (int i = 0; i < fields.length; i++) {
                         fields[i] = new EmbedField(
                                 String.format("Level %d", CRIT_DEFAULT_LEVELS[i]),
@@ -96,7 +96,8 @@ public class DnCritCommand implements Command {
                 }
                 embed.setFields(fields);
                 EmbedFooter footer = new EmbedFooter();
-                footer.setText("Divinitor PALADINS");
+                footer.setText(DnCommandUtils.DIVINITOR_FOOTER_TEXT);
+                footer.setIconUrl(DnCommandUtils.DIVINITOR_FOOTER_ICON_URL);
                 embed.setFooter(footer);
                 apiClient.sendMessage(title, context.getChannel(), embed);
             } else {
