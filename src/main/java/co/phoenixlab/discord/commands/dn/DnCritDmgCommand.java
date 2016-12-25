@@ -164,7 +164,7 @@ public class DnCritDmgCommand implements Command {
         if (percent < 0) {
             throw new IllegalArgumentException(loc.localize(
                     "commands.dn.critdmg.response.critdmg_out_of_range",
-                    0, (int) (CRITDMG_MAX_PERCENT * 100D + 200F)
+                    0, 200
             ));
         }
         percent = Math.min(percent, CRITDMG_MAX_PERCENT);
