@@ -59,15 +59,13 @@ public class DnDefCommand implements Command {
                 defPercent = Math.min(defPercent, DEF_MAX_PERCENT);
             } else {
                 def = (int) DnCommandUtils.parseStat(defAmt, loc);
+                if (def < 0) {
+                    throw new IllegalArgumentException(loc.localize(
+                            "commands.dn.def.response.def_out_of_range",
+                            0
+                    ));
+                }
             }
-        } catch (NumberFormatException nfe) {
-            apiClient.sendMessage(loc.localize("commands.dn.def.response.invalid",
-                    context.getBot().getMainCommandDispatcher().getCommandPrefix()),
-                    context.getChannel());
-            return;
-        }
-
-        try {
             if (level == -1) {
                 String title;
                 //  Default level, use embed style for showing lvl 80, 90, and 93 def
@@ -125,6 +123,11 @@ public class DnDefCommand implements Command {
                 }
             }
             return;
+        } catch (NumberFormatException nfe) {
+            apiClient.sendMessage(loc.localize("commands.dn.def.response.invalid",
+                    context.getBot().getMainCommandDispatcher().getCommandPrefix()),
+                    context.getChannel());
+            return;
         } catch (IllegalArgumentException ile) {
             apiClient.sendMessage(ile.getMessage(), context.getChannel());
             return;
@@ -158,7 +161,7 @@ public class DnDefCommand implements Command {
             throw new IllegalArgumentException(loc.localize(
                     "commands.dn.def.response.level_out_of_range",
                     1,
-                    DEF_DEFAULT_LEVELS.length
+                    defenseCaps.length
             ));
         }
         if (percent < 0) {
