@@ -60,15 +60,13 @@ public class DnCritDmgCommand implements Command {
                 critDmgPercent = Math.min(critDmgPercent, CRITDMG_MAX_PERCENT);
             } else {
                 critDmg = (int) DnCommandUtils.parseStat(critDmgAmt, loc);
+                if (critDmg < 0) {
+                    throw new IllegalArgumentException(loc.localize(
+                            "commands.dn.critdmg.response.critdmg_out_of_range",
+                            0, 200
+                    ));
+                }
             }
-        } catch (NumberFormatException nfe) {
-            apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.invalid",
-                    context.getBot().getMainCommandDispatcher().getCommandPrefix()),
-                    context.getChannel());
-            return;
-        }
-
-        try {
             if (level == -1) {
                 String title;
                 //  Default level, use embed style for showing lvl 80, 90, and 93 critdmg
@@ -125,6 +123,11 @@ public class DnCritDmgCommand implements Command {
                     apiClient.sendMessage(msg, context.getChannel());
                 }
             }
+            return;
+        } catch (NumberFormatException nfe) {
+            apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.invalid",
+                    context.getBot().getMainCommandDispatcher().getCommandPrefix()),
+                    context.getChannel());
             return;
         } catch (IllegalArgumentException ile) {
             apiClient.sendMessage(ile.getMessage(), context.getChannel());
