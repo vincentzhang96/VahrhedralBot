@@ -55,7 +55,8 @@ public class DnCritDmgCommand implements Command {
         String critDmgAmt = split[0];
         try {
             if (critDmgAmt.endsWith("%")) {
-                critDmgPercent = (float) Double.parseDouble(critDmgAmt.substring(0, critDmgAmt.length() - 1)) / 100F;
+                String noPercent = critDmgAmt.substring(0, critDmgAmt.length() - 1);
+                critDmgPercent = ((float) Double.parseDouble(noPercent) - 200F) / 100F;
                 critDmgPercent = Math.min(critDmgPercent, CRITDMG_MAX_PERCENT);
             } else {
                 critDmg = (int) DnCommandUtils.parseStat(critDmgAmt, loc);
