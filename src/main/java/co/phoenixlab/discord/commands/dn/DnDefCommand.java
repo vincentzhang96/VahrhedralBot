@@ -168,7 +168,7 @@ public class DnDefCommand implements Command {
             ));
         }
         percent = Math.min(percent, DEF_MAX_PERCENT);
-        float derCap = DEF_DEFAULT_LEVELS[levelIndex];
+        float derCap = defenseCaps[levelIndex];
         float def = derCap * percent;
         return (int) def;
     }
