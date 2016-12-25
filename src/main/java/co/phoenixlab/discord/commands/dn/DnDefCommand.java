@@ -154,7 +154,7 @@ public class DnDefCommand implements Command {
 
     public int calculateDefRequiredForPercent(float percent, int level) {
         int levelIndex = level - 1;
-        if (levelIndex < 0 || levelIndex > DEF_DEFAULT_LEVELS.length) {
+        if (levelIndex < 0 || levelIndex > defenseCaps.length) {
             throw new IllegalArgumentException(loc.localize(
                     "commands.dn.def.response.level_out_of_range",
                     1,
