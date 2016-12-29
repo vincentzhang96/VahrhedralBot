@@ -7,10 +7,7 @@ import co.phoenixlab.discord.api.event.UserUpdateEvent;
 import co.phoenixlab.discord.api.event.WebSocketCloseEvent;
 import co.phoenixlab.discord.cfg.DiscordApiClientConfig;
 import co.phoenixlab.discord.cfg.InfluxDbConfig;
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.ScheduledReporter;
+import com.codahale.metrics.*;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.gson.Gson;
@@ -21,6 +18,7 @@ import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import metrics_influxdb.HttpInfluxdbProtocol;
 import metrics_influxdb.InfluxdbReporter;
+import metrics_influxdb.api.measurements.CategoriesMetricMeasurementTransformer;
 import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
 import org.java_websocket.client.DefaultSSLWebSocketClientFactory;
@@ -59,6 +57,7 @@ public class DiscordApiClient {
     public static final String[] EMPTY_STR_ARRAY = new String[0];
     public static final Pattern USER_ID_REGEX = Pattern.compile("[0-9]+");
     private static final Logger LOGGER = LoggerFactory.getLogger("DiscordApiClient");
+    private final Map<String, EndpointStats> endpointStats = new HashMap<>();
 
     static {
         NO_CHANNEL.setParent(NO_SERVER);
@@ -82,8 +81,8 @@ public class DiscordApiClient {
     private String token;
     private DiscordWebSocketClient webSocketClient;
 
-    private MetricRegistry metricRegistry;
-    private ScheduledReporter metricReporter;
+    private MetricRegistry endpointMetricRegistry;
+    private ScheduledReporter endpointMetricReporter;
 
     public DiscordApiClient(DiscordApiClientConfig config) {
         statistics = new Statistics();
@@ -106,21 +105,22 @@ public class DiscordApiClient {
         gson = new GsonBuilder().serializeNulls().create();
         eventBus.register(this);
 
-        metricRegistry = new MetricRegistry();
-        metricRegistry.register("meta", (Gauge<Integer>) () -> 12);
+        endpointMetricRegistry = new MetricRegistry();
+        endpointMetricRegistry.register("meta", (Gauge<Integer>) () -> 12);
         if (config.isEnableMetrics() && config.getReportingIntervalMsec() > 0) {
             InfluxDbConfig idbc = config.getApiClientInfluxConfig();
             HttpInfluxdbProtocol protocol = idbc.toInfluxDbProtocolConfig();
             LOGGER.info("Will be connecting to InfluxDB at {}", gson.toJson(protocol));
-            metricReporter = InfluxdbReporter.forRegistry(metricRegistry)
+            endpointMetricReporter = InfluxdbReporter.forRegistry(endpointMetricRegistry)
                 .protocol(protocol)
                 .convertDurationsTo(MILLISECONDS)
                 .convertRatesTo(SECONDS)
                 .filter(MetricFilter.ALL)
                 .skipIdleMetrics(true)
+                .transformer(new CategoriesMetricMeasurementTransformer("endpoint", "stat"))
                 .withScheduler(getExecutorService())
                 .build();
-            metricReporter.start(config.getReportingIntervalMsec(), MILLISECONDS);
+            endpointMetricReporter.start(config.getReportingIntervalMsec(), MILLISECONDS);
         }
     }
 
@@ -203,24 +203,30 @@ public class DiscordApiClient {
     }
 
     private String getWebSocketGateway() throws IOException {
-        HttpResponse<JsonNode> response;
+        boolean ok = false;
         try {
-            response = Unirest.get(ApiConst.WEBSOCKET_GATEWAY).
+            HttpResponse<JsonNode> response;
+            try {
+                response = Unirest.get(ApiConst.WEBSOCKET_GATEWAY).
                     header("authorization", token).
                     asJson();
-        } catch (UnirestException e) {
-            statistics.restErrorCount.increment();
-            throw new IOException("Unable to retrieve websocket gateway", e);
+            } catch (UnirestException e) {
+                statistics.restErrorCount.increment();
+                throw new IOException("Unable to retrieve websocket gateway", e);
+            }
+            int status = response.getStatus();
+            if (status != HttpURLConnection.HTTP_OK) {
+                statistics.restErrorCount.increment();
+                LOGGER.warn("Unable to retrieve websocket gateway: HTTP {}: {}", status, response.getStatusText());
+                throw new IOException("Unable to retrieve websocket : HTTP " + status + ": " + response.getStatusText());
+            }
+            String gateway = response.getBody().getObject().getString("url");
+            LOGGER.info("Found WebSocket gateway at {}", gateway);
+            ok = true;
+            return gateway;
+        } finally {
+            update("get_gateway").forBool(ok);
         }
-        int status = response.getStatus();
-        if (status != HttpURLConnection.HTTP_OK) {
-            statistics.restErrorCount.increment();
-            LOGGER.warn("Unable to retrieve websocket gateway: HTTP {}: {}", status, response.getStatusText());
-            throw new IOException("Unable to retrieve websocket : HTTP " + status + ": " + response.getStatusText());
-        }
-        String gateway = response.getBody().getObject().getString("url");
-        LOGGER.info("Found WebSocket gateway at {}", gateway);
-        return gateway;
     }
 
     void onLogInEvent(LogInEvent event) {
@@ -388,30 +394,37 @@ public class DiscordApiClient {
 //            joiner.add(reverseLine(s));
 //        }
 //        body = joiner.toString();
-        OutboundMessage outboundMessage = new OutboundMessage(body, false, mentions, embed);
-        String content = g.toJson(outboundMessage);
-
-        HttpResponse<String> response;
-        Map<String, String> headers = new HashMap<>();
-        headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
-        headers.put(HttpHeaders.AUTHORIZATION, token);
+        boolean ok = false;
         try {
-            response = Unirest.post(ApiConst.CHANNELS_ENDPOINT + channelId + "/messages").
+            OutboundMessage outboundMessage = new OutboundMessage(body, false, mentions, embed);
+            String content = g.toJson(outboundMessage);
+
+            HttpResponse<String> response;
+            Map<String, String> headers = new HashMap<>();
+            headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+            headers.put(HttpHeaders.AUTHORIZATION, token);
+            try {
+                response = Unirest.post(ApiConst.CHANNELS_ENDPOINT + channelId + "/messages").
                     headers(headers).
                     body(content).
                     asString();
-        } catch (UnirestException e) {
-            statistics.restErrorCount.increment();
-            LOGGER.warn("Unable to send message", e);
-            return null;
+            } catch (UnirestException e) {
+                statistics.restErrorCount.increment();
+                LOGGER.warn("Unable to send message", e);
+                return null;
+            }
+            int status = response.getStatus();
+            if (status != 200) {
+                statistics.restErrorCount.increment();
+                LOGGER.warn("Unable to send message: HTTP {}: {}", status, response.getStatusText());
+                return null;
+            }
+            Message message = g.fromJson(response.getBody(), Message.class);
+            ok = true;
+            return message;
+        } finally {
+            update("send_message").forBool(ok);
         }
-        int status = response.getStatus();
-        if (status != 200) {
-            statistics.restErrorCount.increment();
-            LOGGER.warn("Unable to send message: HTTP {}: {}", status, response.getStatusText());
-            return null;
-        }
-        return g.fromJson(response.getBody(), Message.class);
     }
 
     private String reverseLine(String s) {
@@ -478,24 +491,29 @@ public class DiscordApiClient {
             executorService.submit(() -> deleteMessage(channelId, messageId, false));
             return;
         }
-
-        HttpResponse<String> response;
-        Map<String, String> headers = new HashMap<>();
-        headers.put(HttpHeaders.AUTHORIZATION, token);
+        boolean ok = false;
         try {
-            response = Unirest.delete(ApiConst.CHANNELS_ENDPOINT + channelId + "/messages/" + messageId).
+            HttpResponse<String> response;
+            Map<String, String> headers = new HashMap<>();
+            headers.put(HttpHeaders.AUTHORIZATION, token);
+            try {
+                response = Unirest.delete(ApiConst.CHANNELS_ENDPOINT + channelId + "/messages/" + messageId).
                     headers(headers).
                     asString();
-        } catch (UnirestException e) {
-            statistics.restErrorCount.increment();
-            LOGGER.warn("Unable to delete message", e);
-            return;
-        }
-        int status = response.getStatus();
-        if (status != 204) {
-            statistics.restErrorCount.increment();
-            LOGGER.warn("Unable to delete message: HTTP {}: {}", status, response.getStatusText());
-            return;
+            } catch (UnirestException e) {
+                statistics.restErrorCount.increment();
+                LOGGER.warn("Unable to delete message", e);
+                return;
+            }
+            int status = response.getStatus();
+            if (status != 204) {
+                statistics.restErrorCount.increment();
+                LOGGER.warn("Unable to delete message: HTTP {}: {}", status, response.getStatusText());
+                return;
+            }
+            ok = true;
+        } finally {
+            update("delete_message").forBool(ok);
         }
     }
 
@@ -512,31 +530,36 @@ public class DiscordApiClient {
             executorService.submit(() -> bulkDeleteMessages(channelId, messageIds, false));
             return;
         }
-
-        HttpResponse<String> response;
-        Map<String, String> headers = new HashMap<>();
-        headers.put(HttpHeaders.AUTHORIZATION, token);
-        headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
-        org.json.JSONObject body = new org.json.JSONObject();
-        body.put("messages", new JSONArray(messageIds));
+        boolean ok = false;
         try {
-            String url = ApiConst.CHANNELS_ENDPOINT + channelId + "/messages/bulk_delete";
-            System.out.println(url);
-            response = Unirest.post(url).
+            HttpResponse<String> response;
+            Map<String, String> headers = new HashMap<>();
+            headers.put(HttpHeaders.AUTHORIZATION, token);
+            headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+            org.json.JSONObject body = new org.json.JSONObject();
+            body.put("messages", new JSONArray(messageIds));
+            try {
+                String url = ApiConst.CHANNELS_ENDPOINT + channelId + "/messages/bulk_delete";
+                System.out.println(url);
+                response = Unirest.post(url).
                     headers(headers).
                     body(body.toString()).
                     asString();
-        } catch (UnirestException e) {
-            statistics.restErrorCount.increment();
-            LOGGER.warn("Unable to delete messages", e);
-            return;
-        }
-        int status = response.getStatus();
-        if (status != 204) {
-            statistics.restErrorCount.increment();
-            LOGGER.warn("Unable to delete messages: HTTP {}: {}: {}", status, response.getStatusText(), response.getBody());
-        } else {
-            LOGGER.info("Bulk deleted {} messages", messageIds.length);
+            } catch (UnirestException e) {
+                statistics.restErrorCount.increment();
+                LOGGER.warn("Unable to delete messages", e);
+                return;
+            }
+            int status = response.getStatus();
+            if (status != 204) {
+                statistics.restErrorCount.increment();
+                LOGGER.warn("Unable to delete messages: HTTP {}: {}: {}", status, response.getStatusText(), response.getBody());
+            } else {
+                LOGGER.info("Bulk deleted {} messages", messageIds.length);
+                ok = true;
+            }
+        } finally {
+            update("bulk_delete").forBool(ok);
         }
     }
 
@@ -560,29 +583,35 @@ public class DiscordApiClient {
             executorService.submit(() -> editMessage(channelId, messageId, content, mentions, false));
             return;
         }
-        //  TODO Add support for mention changes
-        Map<String, Object> ret = new HashMap<>();
-        ret.put("content", content);
-        JSONObject object = new JSONObject(ret);
-        HttpResponse<JsonNode> response;
-        Map<String, String> headers = new HashMap<>();
-        headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
-        headers.put(HttpHeaders.AUTHORIZATION, token);
+        boolean ok = false;
         try {
-            response = Unirest.patch(ApiConst.CHANNELS_ENDPOINT + channelId + "/messages/" + messageId).
+            //  TODO Add support for mention changes
+            Map<String, Object> ret = new HashMap<>();
+            ret.put("content", content);
+            JSONObject object = new JSONObject(ret);
+            HttpResponse<JsonNode> response;
+            Map<String, String> headers = new HashMap<>();
+            headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+            headers.put(HttpHeaders.AUTHORIZATION, token);
+            try {
+                response = Unirest.patch(ApiConst.CHANNELS_ENDPOINT + channelId + "/messages/" + messageId).
                     headers(headers).
                     body(object.toJSONString()).
                     asJson();
-        } catch (UnirestException e) {
-            statistics.restErrorCount.increment();
-            LOGGER.warn("Unable to edit message", e);
-            return;
-        }
-        int status = response.getStatus();
-        if (status != 200) {
-            statistics.restErrorCount.increment();
-            LOGGER.warn("Unable to edit message: HTTP {}: {}", status, response.getStatusText());
-            return;
+            } catch (UnirestException e) {
+                statistics.restErrorCount.increment();
+                LOGGER.warn("Unable to edit message", e);
+                return;
+            }
+            int status = response.getStatus();
+            if (status != 200) {
+                statistics.restErrorCount.increment();
+                LOGGER.warn("Unable to edit message: HTTP {}: {}", status, response.getStatusText());
+                return;
+            }
+            ok = true;
+        } finally {
+            update("edit_message").forBool(ok);
         }
     }
 
@@ -643,6 +672,7 @@ public class DiscordApiClient {
             executorService.submit(() -> updateRoles(user, server, roles, false));
             return;
         }
+        boolean ok = false;
         try {
             Map<String, String> headers = new HashMap<>();
             headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
@@ -663,6 +693,7 @@ public class DiscordApiClient {
                         status, r.getStatusText());
                 return;
             }
+            ok = true;
         } catch (UnirestException e) {
             statistics.restErrorCount.increment();
             LOGGER.warn("Unable to update member {} ({}) roles in {} ({})",
@@ -670,6 +701,8 @@ public class DiscordApiClient {
                     server.getName(), server.getId());
             LOGGER.warn("Unable to update member roles", e);
             return;
+        } finally {
+            update("update_roles").forBool(ok);
         }
     }
 
@@ -970,6 +1003,7 @@ public class DiscordApiClient {
     }
 
     public Member getMemberHttp(String serverId, String userId) throws UnirestException {
+        boolean ok = false;
         try {
             Map<String, String> headers = new HashMap<>();
             headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
@@ -984,17 +1018,19 @@ public class DiscordApiClient {
                 return NO_MEMBER;
             }
             if (status != 200) {
-                statistics.restErrorCount.increment();
                 throw new UnirestException("HTTP " + response.getStatus() + ": " + response.getStatusText());
             }
             Member member = gson.fromJson(response.getBody(), Member.class);
             if (member == null) {
                 throw new UnirestException("Invalid entity: null");
             }
+            ok = true;
             return member;
         } catch (UnirestException e) {
             statistics.restErrorCount.increment();
             return NO_MEMBER;
+        } finally {
+            update("get_member").forBool(ok);
         }
     }
 
@@ -1048,10 +1084,55 @@ public class DiscordApiClient {
         webSocketClient.close();
     }
 
+    private EndpointStats update(String endpoint) {
+        EndpointStats stats = endpointStats.get(endpoint);
+        if (stats == null) {
+            stats = new EndpointStats(endpoint);
+            stats.register(endpointMetricRegistry);
+        }
+        return stats;
+    }
+
     public static class Statistics {
         public final LongAdder eventCount = new LongAdder();
         public final LongAdder eventDispatchErrorCount = new LongAdder();
         public final LongAdder connectAttemptCount = new LongAdder();
         public final LongAdder restErrorCount = new LongAdder();
+
+    }
+
+    private static class EndpointStats {
+        final String endpointName;
+        final Meter apiRequestMeter = new Meter();
+        final Meter apiRequestErrorMeter = new Meter();
+        final Meter apiRequestSuccessMeter = new Meter();
+
+        EndpointStats(String endpointName) {
+            this.endpointName = endpointName;
+        }
+
+        void register(MetricRegistry registry) {
+            registry.register(endpointName + ".req.httpapi", apiRequestMeter);
+            registry.register(endpointName + ".req_err.httpapi", apiRequestErrorMeter);
+            registry.register(endpointName + ".req_ok.httpapi", apiRequestSuccessMeter);
+        }
+
+        void success() {
+            apiRequestMeter.mark();
+            apiRequestSuccessMeter.mark();
+        }
+
+        void error() {
+            apiRequestMeter.mark();
+            apiRequestErrorMeter.mark();
+        }
+
+        void forBool(boolean ok) {
+            if (ok) {
+                success();
+            } else {
+                error();
+            }
+        }
     }
 }
