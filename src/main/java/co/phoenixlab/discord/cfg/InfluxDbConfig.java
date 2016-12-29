@@ -26,6 +26,13 @@ public class InfluxDbConfig {
     }
 
     public HttpInfluxdbProtocol toInfluxDbProtocolConfig() {
+        if (serverUrl == null) {
+            try {
+                this.serverUrl = new URL(server);
+            } catch (MalformedURLException e) {
+                throw new RuntimeException("Bad config", e);
+            }
+        }
         return new HttpInfluxdbProtocol(
             getProtocol(),
             getServer(),
