@@ -19,6 +19,7 @@ import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
+import metrics_influxdb.HttpInfluxdbProtocol;
 import metrics_influxdb.InfluxdbReporter;
 import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
@@ -109,8 +110,10 @@ public class DiscordApiClient {
         metricRegistry.register("meta", (Gauge<Integer>) () -> 12);
         if (config.isEnableMetrics() && config.getReportingIntervalMsec() > 0) {
             InfluxDbConfig idbc = config.getApiClientInfluxConfig();
+            HttpInfluxdbProtocol protocol = idbc.toInfluxDbProtocolConfig();
+            LOGGER.info("Will be connecting to InfluxDB at {}", gson.toJson(protocol));
             metricReporter = InfluxdbReporter.forRegistry(metricRegistry)
-                .protocol(idbc.toInfluxDbProtocolConfig())
+                .protocol(protocol)
                 .convertDurationsTo(MILLISECONDS)
                 .convertRatesTo(SECONDS)
                 .filter(MetricFilter.ALL)
