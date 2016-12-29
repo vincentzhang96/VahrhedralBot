@@ -1,5 +1,6 @@
 package co.phoenixlab.discord;
 
+import co.phoenixlab.discord.cfg.DiscordApiClientConfig;
 import co.phoenixlab.discord.cfg.JoinLeaveLimits;
 import co.phoenixlab.discord.dntrack.event.RegionDescriptor;
 
@@ -23,6 +24,7 @@ public class Configuration {
     private long exMentionPeriodMs;
     private long exMentionCacheEvictionTimeMs;
     private JoinLeaveLimits jlLimit;
+    private DiscordApiClientConfig apiClientConfig;
 
     public Configuration() {
         email = "";
@@ -37,6 +39,7 @@ public class Configuration {
         exMentionTimeoutThreshold = Integer.MAX_VALUE;
         exMentionBanThreshold = Integer.MAX_VALUE;
         jlLimit = new JoinLeaveLimits();
+        apiClientConfig = new DiscordApiClientConfig();
     }
 
     public String getEmail() {
@@ -151,5 +154,13 @@ public class Configuration {
 
     public void setExMentionCacheEvictionTimeMs(long exMentionCacheEvictionTimeMs) {
         this.exMentionCacheEvictionTimeMs = exMentionCacheEvictionTimeMs;
+    }
+
+    public DiscordApiClientConfig getApiClientConfig() {
+        return apiClientConfig;
+    }
+
+    public void setApiClientConfig(DiscordApiClientConfig apiClientConfig) {
+        this.apiClientConfig = apiClientConfig;
     }
 }

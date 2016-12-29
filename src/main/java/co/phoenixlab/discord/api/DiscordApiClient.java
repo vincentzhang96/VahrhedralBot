@@ -5,6 +5,12 @@ import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.LogInEvent;
 import co.phoenixlab.discord.api.event.UserUpdateEvent;
 import co.phoenixlab.discord.api.event.WebSocketCloseEvent;
+import co.phoenixlab.discord.cfg.DiscordApiClientConfig;
+import co.phoenixlab.discord.cfg.InfluxDbConfig;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.gson.Gson;
@@ -13,6 +19,7 @@ import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
+import metrics_influxdb.InfluxdbReporter;
 import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
 import org.java_websocket.client.DefaultSSLWebSocketClientFactory;
@@ -74,7 +81,10 @@ public class DiscordApiClient {
     private String token;
     private DiscordWebSocketClient webSocketClient;
 
-    public DiscordApiClient() {
+    private MetricRegistry metricRegistry;
+    private ScheduledReporter metricReporter;
+
+    public DiscordApiClient(DiscordApiClientConfig config) {
         statistics = new Statistics();
         sessionId = new AtomicReference<>();
         clientUser = new AtomicReference<>();
@@ -94,6 +104,21 @@ public class DiscordApiClient {
         });
         gson = new GsonBuilder().serializeNulls().create();
         eventBus.register(this);
+
+        metricRegistry = new MetricRegistry();
+        metricRegistry.register("meta", (Gauge<Integer>) () -> 12);
+        if (config.isEnableMetrics() && config.getReportingIntervalMsec() > 0) {
+            InfluxDbConfig idbc = config.getApiClientInfluxConfig();
+            metricReporter = InfluxdbReporter.forRegistry(metricRegistry)
+                .protocol(idbc.toInfluxDbProtocolConfig())
+                .convertDurationsTo(MILLISECONDS)
+                .convertRatesTo(SECONDS)
+                .filter(MetricFilter.ALL)
+                .skipIdleMetrics(true)
+                .withScheduler(getExecutorService())
+                .build();
+            metricReporter.start(config.getReportingIntervalMsec(), MILLISECONDS);
+        }
     }
 
     @Subscribe

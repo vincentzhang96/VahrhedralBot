@@ -99,7 +99,7 @@ public class VahrhedralBot implements Runnable {
         //  Required User-Agent
         Unirest.setDefaultHeader("User-Agent", USER_AGENT);
 
-        apiClient = new DiscordApiClient();
+        apiClient = new DiscordApiClient(config.getApiClientConfig());
         apiClient.getEventBus().register(eventListener);
 
         chatLogger = new ChatLogger(apiClient);
