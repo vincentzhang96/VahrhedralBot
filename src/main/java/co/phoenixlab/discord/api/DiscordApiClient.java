@@ -1089,6 +1089,7 @@ public class DiscordApiClient {
         if (stats == null) {
             stats = new EndpointStats(endpoint);
             stats.register(endpointMetricRegistry);
+            endpointStats.put(endpoint, stats);
         }
         return stats;
     }
