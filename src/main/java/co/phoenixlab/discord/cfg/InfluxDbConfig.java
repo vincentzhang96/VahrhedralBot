@@ -33,7 +33,7 @@ public HttpInfluxdbProtocol toInfluxDbProtocolConfig() {
         }
         return new HttpInfluxdbProtocol(
             getProtocol(),
-            getServer(),
+            getHost(),
             getPort(),
             getUsername(),
             getPassword(),
