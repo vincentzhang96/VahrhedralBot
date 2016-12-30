@@ -81,10 +81,12 @@ public class DiscordApiClient {
     private String token;
     private DiscordWebSocketClient webSocketClient;
 
+    private DiscordApiClientConfig apiClientConfig;
     private MetricRegistry endpointMetricRegistry;
     private ScheduledReporter endpointMetricReporter;
 
     public DiscordApiClient(DiscordApiClientConfig config) {
+        apiClientConfig = config;
         statistics = new Statistics();
         sessionId = new AtomicReference<>();
         clientUser = new AtomicReference<>();
@@ -106,7 +108,6 @@ public class DiscordApiClient {
         eventBus.register(this);
 
         endpointMetricRegistry = new MetricRegistry();
-        endpointMetricRegistry.register("meta", (Gauge<Integer>) () -> 12);
         if (config.isEnableMetrics() && config.getReportingIntervalMsec() > 0) {
             InfluxDbConfig idbc = config.getApiClientInfluxConfig();
             HttpInfluxdbProtocol protocol = idbc.toInfluxDbProtocolConfig();
@@ -178,7 +179,7 @@ public class DiscordApiClient {
                 try {
                     final String gateway = getWebSocketGateway();
                     final URI gatewayUri = new URI(gateway);
-                    webSocketClient = new DiscordWebSocketClient(this, gatewayUri);
+                    webSocketClient = new DiscordWebSocketClient(this, gatewayUri, apiClientConfig);
                     SSLContext context = SSLContext.getInstance("TLS");
                     context.init(null, null, null);
                     webSocketClient.setWebSocketFactory(new DefaultSSLWebSocketClientFactory(context));

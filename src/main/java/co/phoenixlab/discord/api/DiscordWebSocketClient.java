@@ -8,8 +8,17 @@ import co.phoenixlab.discord.api.event.*;
 import co.phoenixlab.discord.api.event.ServerBanChangeEvent.BanChange;
 import co.phoenixlab.discord.api.event.voice.VoiceServerUpdateEvent;
 import co.phoenixlab.discord.api.event.voice.VoiceStateUpdateEvent;
+import co.phoenixlab.discord.cfg.DiscordApiClientConfig;
+import co.phoenixlab.discord.cfg.InfluxDbConfig;
 import co.phoenixlab.discord.stats.RunningAverage;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
 import com.google.gson.Gson;
+import metrics_influxdb.HttpInfluxdbProtocol;
+import metrics_influxdb.InfluxdbReporter;
+import metrics_influxdb.api.measurements.KeyValueMetricMeasurementTransformer;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_10;
 import org.java_websocket.handshake.ServerHandshake;
@@ -27,8 +36,7 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
 import static co.phoenixlab.discord.api.DiscordApiClient.*;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static java.util.concurrent.TimeUnit.*;
 
 public class DiscordWebSocketClient extends WebSocketClient {
 
@@ -46,12 +54,33 @@ public class DiscordWebSocketClient extends WebSocketClient {
     private final Statistics statistics;
     private ScheduledFuture keepAliveFuture;
 
-    public DiscordWebSocketClient(DiscordApiClient apiClient, URI serverUri) {
+    private MetricRegistry metricRegistry;
+    private ScheduledReporter metricReporter;
+
+    public DiscordWebSocketClient(DiscordApiClient apiClient, URI serverUri, DiscordApiClientConfig config) {
         super(serverUri, new Draft_10(), header, 0);
         this.apiClient = apiClient;
         this.parser = new JSONParser();
         this.gson = new Gson();
         statistics = new Statistics();
+
+        metricRegistry = new MetricRegistry();
+        metricRegistry.register("events.count.ws_event", (Gauge<Long>) statistics.messageReceiveCount::longValue);
+        if (config.isEnableMetrics() && config.getReportingIntervalMsec() > 0) {
+            InfluxDbConfig idbc = config.getApiClientInfluxConfig();
+            HttpInfluxdbProtocol protocol = idbc.toInfluxDbProtocolConfig();
+            LOGGER.info("Will be connecting to InfluxDB at {}", gson.toJson(protocol));
+            metricReporter = InfluxdbReporter.forRegistry(metricRegistry)
+                .protocol(protocol)
+                .convertDurationsTo(MILLISECONDS)
+                .convertRatesTo(SECONDS)
+                .filter(MetricFilter.ALL)
+                .skipIdleMetrics(true)
+                .transformer(new KeyValueMetricMeasurementTransformer())
+                .withScheduler(apiClient.getExecutorService())
+                .build();
+            metricReporter.start(config.getReportingIntervalMsec(), MILLISECONDS);
+        }
     }
 
     @Override
