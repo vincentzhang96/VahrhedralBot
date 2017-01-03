@@ -14,6 +14,7 @@ import co.phoenixlab.discord.api.event.MemberChangeEvent.MemberChange;
 import co.phoenixlab.discord.commands.tempstorage.ServerTimeout;
 import co.phoenixlab.discord.commands.tempstorage.ServerTimeoutStorage;
 import co.phoenixlab.discord.commands.tempstorage.TempServerConfig;
+import co.phoenixlab.discord.util.TryingScheduledExecutor;
 import co.phoenixlab.discord.util.WeakEventSubscriber;
 import co.phoenixlab.discord.util.adapters.DurationGsonTypeAdapter;
 import co.phoenixlab.discord.util.adapters.InstantGsonTypeAdapter;
@@ -96,7 +97,7 @@ public class ModCommands {
                 registerTypeAdapter(Instant.class, new InstantGsonTypeAdapter()).
                 registerTypeAdapter(Duration.class, new DurationGsonTypeAdapter()).
                 create();
-        timeoutService = Executors.newScheduledThreadPool(10);
+        timeoutService = new TryingScheduledExecutor(Executors.newScheduledThreadPool(10), VahrhedralBot.LOGGER);
     }
 
     public CommandDispatcher getModCommandDispatcher() {

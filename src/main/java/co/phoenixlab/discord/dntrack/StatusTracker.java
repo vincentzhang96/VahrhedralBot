@@ -3,6 +3,7 @@ package co.phoenixlab.discord.dntrack;
 import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.discord.dntrack.event.RegionDescriptor;
 import co.phoenixlab.discord.dntrack.event.StatusChangeEvent;
+import co.phoenixlab.discord.util.TryingScheduledExecutor;
 import com.google.common.eventbus.EventBus;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
@@ -34,7 +35,10 @@ import static co.phoenixlab.discord.dntrack.event.StatusChangeEvent.StatusChange
 public class StatusTracker implements Runnable {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("DnTrack");
-    public static final ExecutorService EXECUTOR_SERVICE = Executors.newCachedThreadPool();
+    public static final ScheduledExecutorService EXECUTOR_SERVICE = new TryingScheduledExecutor(
+        Executors.newScheduledThreadPool(4),
+        LOGGER
+    );
     private static final int TIMEOUT = 3000;
 
     private final RegionDescriptor region;

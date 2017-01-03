@@ -11,6 +11,7 @@ import co.phoenixlab.discord.api.event.voice.VoiceStateUpdateEvent;
 import co.phoenixlab.discord.cfg.DiscordApiClientConfig;
 import co.phoenixlab.discord.cfg.InfluxDbConfig;
 import co.phoenixlab.discord.stats.RunningAverage;
+import co.phoenixlab.discord.util.TryingScheduledExecutor;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
@@ -31,6 +32,8 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
@@ -56,6 +59,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
 
     private MetricRegistry metricRegistry;
     private ScheduledReporter metricReporter;
+    private ScheduledExecutorService metricExecutorService;
 
     public DiscordWebSocketClient(DiscordApiClient apiClient, URI serverUri, DiscordApiClientConfig config) {
         super(serverUri, new Draft_10(), header, 0);
@@ -66,6 +70,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
 
         metricRegistry = new MetricRegistry();
         metricRegistry.register("events.count.ws_event", (Gauge<Long>) statistics.messageReceiveCount::longValue);
+        metricExecutorService = new TryingScheduledExecutor(Executors.newScheduledThreadPool(1), LOGGER);
         if (config.isEnableMetrics() && config.getReportingIntervalMsec() > 0) {
             InfluxDbConfig idbc = config.getApiClientInfluxConfig();
             HttpInfluxdbProtocol protocol = idbc.toInfluxDbProtocolConfig();
@@ -77,7 +82,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
                 .filter(MetricFilter.ALL)
                 .skipIdleMetrics(true)
                 .transformer(new KeyValueMetricMeasurementTransformer())
-                .withScheduler(apiClient.getExecutorService())
+                .withScheduler(metricExecutorService)
                 .build();
             metricReporter.start(config.getReportingIntervalMsec(), MILLISECONDS);
         }

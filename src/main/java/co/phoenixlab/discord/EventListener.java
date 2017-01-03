@@ -14,6 +14,7 @@ import co.phoenixlab.discord.dntrack.event.RegionDescriptor;
 import co.phoenixlab.discord.dntrack.event.StatusChangeEvent;
 import co.phoenixlab.discord.dntrack.event.VersionUpdateEvent;
 import co.phoenixlab.discord.util.RateLimiter;
+import co.phoenixlab.discord.util.TryingScheduledExecutor;
 import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -58,7 +59,10 @@ public class EventListener {
 
     public EventListener(VahrhedralBot bot) {
         this.bot = bot;
-        executorService = Executors.newSingleThreadScheduledExecutor();
+        executorService = new TryingScheduledExecutor(
+            Executors.newSingleThreadScheduledExecutor(),
+            VahrhedralBot.LOGGER
+        );
         messageListeners = new HashMap<>();
         memberChangeEventListener = new HashMap<>();
         joinMessageRedirect = new HashMap<>();
