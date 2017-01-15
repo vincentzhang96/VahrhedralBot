@@ -47,7 +47,7 @@ public class ClassRoleManager {
         if (!config.getServerId().equals(event.getServer().getId())) {
             return;
         }
-        if (event.isJoin()) {
+        if (event.isJoin() && taskFuture == null) {
             //  Start workers and listeners
             VahrhedralBot.LOGGER.info("Starting class discussion server watcher");
             run.set(true);
