@@ -4,7 +4,9 @@ import co.phoenixlab.common.localization.LocaleStringProvider;
 import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.common.localization.LocalizerImpl;
 import co.phoenixlab.discord.api.DiscordApiClient;
+import co.phoenixlab.discord.cfg.ClassDiscussionConfig;
 import co.phoenixlab.discord.chatlogger.ChatLogger;
+import co.phoenixlab.discord.classdiscussion.ClassRoleManager;
 import co.phoenixlab.discord.commands.Commands;
 import co.phoenixlab.discord.commands.tempstorage.DnTrackStorage;
 import com.google.gson.Gson;
@@ -40,8 +42,10 @@ public class VahrhedralBot implements Runnable {
 
     public static final Path CONFIG_PATH = Paths.get("config/config.json");
     public static final Path DNTRACK_PATH = Paths.get("config/dntrack.json");
+    public static final Path CLASSDISCUSS_PATH = Paths.get("config/classdiscussion.json");
 
     public static final String USER_AGENT = "DiscordBot (https://github.com/vincentzhang96/VahrhedralBot, 12)";
+
 
     private DiscordApiClient apiClient;
     public static void main(String[] args) {
@@ -66,10 +70,12 @@ public class VahrhedralBot implements Runnable {
 
     private ChatLogger chatLogger;
     private DnTrackStorage dnTrackStorage;
+    private ClassRoleManager classRoleManager;
 
     public VahrhedralBot() {
         taskQueue = new TaskQueue();
         eventListener = new EventListener(this);
+        classRoleManager = null;
     }
 
     @Override
@@ -93,6 +99,13 @@ public class VahrhedralBot implements Runnable {
             }
         }
 
+        try {
+            ClassDiscussionConfig classDiscussionConfig = loadClassDiscussionConfig();
+            classRoleManager = new ClassRoleManager(classDiscussionConfig);
+        } catch (IOException e) {
+            LOGGER.warn("Unable to load class discussion config, ignoring", e);
+        }
+
         loadLocalization();
         versionInfo = loadVersionInfo();
         commandDispatcher = new CommandDispatcher(this, config.getCommandPrefix());
@@ -101,6 +114,9 @@ public class VahrhedralBot implements Runnable {
 
         apiClient = new DiscordApiClient(config.getApiClientConfig());
         apiClient.getEventBus().register(eventListener);
+        if (classRoleManager != null) {
+            apiClient.getEventBus().register(classRoleManager);
+        }
 
         chatLogger = new ChatLogger(apiClient);
 
@@ -208,6 +224,13 @@ public class VahrhedralBot implements Runnable {
         } catch (IOException e) {
             LOGGER.warn("Unable to save dntrack", e);
             return false;
+        }
+    }
+
+    private ClassDiscussionConfig loadClassDiscussionConfig() throws IOException {
+        Gson configGson = new Gson();
+        try (Reader reader = Files.newBufferedReader(CLASSDISCUSS_PATH, UTF_8)) {
+            return configGson.fromJson(reader, ClassDiscussionConfig.class);
         }
     }
 

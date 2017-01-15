@@ -34,6 +34,8 @@ public class Message {
     @SerializedName("edited_timestamp")
     private final String editedTimestamp;
 
+    private Reaction[] reactions;
+
     private transient boolean isPrivateMessage;
 
     public Message(User author, String channelId, String nonce, Attachment[] attachments, Object[] embeds,

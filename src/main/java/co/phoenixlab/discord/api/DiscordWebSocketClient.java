@@ -5,6 +5,7 @@ import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.entities.voice.VoiceServerUpdate;
 import co.phoenixlab.discord.api.entities.voice.VoiceStateUpdate;
 import co.phoenixlab.discord.api.event.*;
+import co.phoenixlab.discord.api.event.MessageReactionChangeEvent.ReactionChange;
 import co.phoenixlab.discord.api.event.ServerBanChangeEvent.BanChange;
 import co.phoenixlab.discord.api.event.voice.VoiceServerUpdateEvent;
 import co.phoenixlab.discord.api.event.voice.VoiceStateUpdateEvent;
@@ -201,6 +202,12 @@ public class DiscordWebSocketClient extends WebSocketClient {
                     case "CHANNEL_UPDATE":
                         handleChannelUpdate(data);
                         break;
+                    case "MESSAGE_REACTION_ADD":
+                        handleMessageReactionAdd(data);
+                        break;
+                    case "MESSAGE_REACTION_REMOVE":
+                        handleMessageReactionRemove(data);
+                        break;
                     case "PRESENCE_UPDATE":
                         handlePresenceUpdate(data, message);
                         break;
@@ -229,6 +236,28 @@ public class DiscordWebSocketClient extends WebSocketClient {
         } finally {
             statistics.avgMessageHandleTime.add(MILLISECONDS.convert(System.nanoTime() - start, NANOSECONDS));
         }
+    }
+
+    private void handleMessageReactionAdd(JSONObject data) {
+        MessageReactionUpdate update = jsonObjectToObject(data, MessageReactionUpdate.class);
+        Channel channel = apiClient.getChannelById(update.getChannelId());
+        Server server = NO_SERVER;
+        if (channel != NO_CHANNEL) {
+            server = Optional.ofNullable(channel.getParent()).orElse(NO_SERVER);
+        }
+        apiClient.getEventBus().post(new MessageReactionChangeEvent(update, ReactionChange.ADDED,
+            server, channel, apiClient));
+    }
+
+    private void handleMessageReactionRemove(JSONObject data) {
+        MessageReactionUpdate update = jsonObjectToObject(data, MessageReactionUpdate.class);
+        Channel channel = apiClient.getChannelById(update.getChannelId());
+        Server server = NO_SERVER;
+        if (channel != NO_CHANNEL) {
+            server = Optional.ofNullable(channel.getParent()).orElse(NO_SERVER);
+        }
+        apiClient.getEventBus().post(new MessageReactionChangeEvent(update, ReactionChange.DELETED,
+            server, channel, apiClient));
     }
 
     private void handleGuildUpdate(JSONObject data) {
@@ -620,7 +649,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         apiClient.requestLargerServerUsers(server);
         LOGGER.info("[{}] '{}': Joined server",
                 server.getId(), server.getName());
-        apiClient.getEventBus().post(new ServerJoinLeaveEvent(server, true));
+        apiClient.getEventBus().post(new ServerJoinLeaveEvent(server, true, apiClient));
     }
 
     private void handleGuildDelete(JSONObject data) {
@@ -629,7 +658,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         Server removed = apiClient.getServerMap().remove(server.getId());
         LOGGER.info("[{}] '{}': Left server",
                 removed.getId(), removed.getName());
-        apiClient.getEventBus().post(new ServerJoinLeaveEvent(server, false));
+        apiClient.getEventBus().post(new ServerJoinLeaveEvent(server, false, apiClient));
     }
 
     @SuppressWarnings("unchecked")

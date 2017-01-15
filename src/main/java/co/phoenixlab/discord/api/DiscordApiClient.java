@@ -1086,6 +1086,7 @@ public class DiscordApiClient {
         executorService.shutdown();
         eventBus.unregister(this);
         webSocketClient.close();
+        endpointMetricReporter.stop();
     }
 
     private EndpointStats update(String endpoint) {
