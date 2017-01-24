@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -189,6 +190,11 @@ public class DiscordApiClient {
                 } catch (URISyntaxException e) {
                     LOGGER.warn("Bad gateway", e);
                     throw new IOException(e);
+                } catch (UnknownHostException ukhe) {
+                    LOGGER.warn("Unable to reach DNS server, retrying in {}s...", retryTimeSec);
+                    Thread.sleep(MILLISECONDS.convert(retryTimeSec, SECONDS));
+                    retryTimeSec = Math.min(retryTimeSec + 2, 30);  //  Cap at 30 interval
+                    continue;
                 } catch (Exception e) {
                     LOGGER.warn("Unexpected error", e);
                     throw new IOException(e);
@@ -216,6 +222,9 @@ public class DiscordApiClient {
                     asJson();
             } catch (UnirestException e) {
                 statistics.restErrorCount.increment();
+                if (e.getCause() instanceof UnknownHostException) {
+                    throw (UnknownHostException) e.getCause();
+                }
                 throw new IOException("Unable to retrieve websocket gateway", e);
             }
             int status = response.getStatus();
