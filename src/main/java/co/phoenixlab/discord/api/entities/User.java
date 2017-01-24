@@ -112,7 +112,7 @@ public class User {
     }
 
     public String getAnimatedAvatarUrlStringOrNull() {
-        if (animatedAvatarUrl == null) {
+        if (avatar == null || !hasAnimatedAvatar()) {
             return null;
         }
         return getAnimatedAvatarUrl().toExternalForm();
