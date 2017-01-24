@@ -33,6 +33,11 @@ public class User {
      */
     private URL avatarUrl;
 
+    /**
+     * The URL where the animated avatar can be downloaded from
+     */
+    private URL animatedAvatarUrl;
+
     private boolean bot;
 
     public User(String username, String id, String discriminator, String avatar) {
@@ -88,11 +93,41 @@ public class User {
         return avatarUrl;
     }
 
+    public URL getAnimatedAvatarUrl() {
+        if (animatedAvatarUrl == null) {
+            if (avatar != null) {
+                animatedAvatarUrl = ApiUtils.url(String.format(ApiConst.ANIMATED_AVATAR_URL_PATTERN, id, avatar));
+            } else {
+                animatedAvatarUrl = ApiUtils.url(String.format(ApiConst.AVATAR_URL_PATTERN, id, "NO_AVATAR.JPG"));
+            }
+        }
+        return animatedAvatarUrl;
+    }
+
     public String getAvatarUrlStringOrNull() {
         if (avatar == null) {
             return null;
         }
         return getAvatarUrl().toExternalForm();
+    }
+
+    public String getAnimatedAvatarUrlStringOrNull() {
+        if (animatedAvatarUrl == null) {
+            return null;
+        }
+        return getAnimatedAvatarUrl().toExternalForm();
+    }
+
+    public boolean hasAnimatedAvatar() {
+        return avatar != null && avatar.startsWith("a_");
+    }
+
+    public String getAvatarPossiblyAnimatedUrlStringOrNull() {
+        if (hasAnimatedAvatar()) {
+            return getAnimatedAvatarUrlStringOrNull();
+        } else {
+            return getAvatarUrlStringOrNull();
+        }
     }
 
     public void setUsername(String username) {

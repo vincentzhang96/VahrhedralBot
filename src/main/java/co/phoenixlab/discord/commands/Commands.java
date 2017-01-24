@@ -255,9 +255,15 @@ public class Commands {
                 ));
             }
             if (user.getAvatar() != null) {
+                String val = loc.localize("commands.general.info2.response.field.avatar.fmt",
+                    user.getAvatarUrlStringOrNull());
+                if (user.hasAnimatedAvatar()) {
+                    val = val + " | " + loc.localize("commands.general.info2.response.field.aniavatar.fmt",
+                        user.getAnimatedAvatarUrlStringOrNull());
+                }
                 fields.add(new EmbedField(
                     loc.localize("commands.general.info2.response.field.avatar"),
-                    loc.localize("commands.general.info2.response.field.avatar.fmt", user.getAvatarUrlStringOrNull()),
+                    val,
                     true
                 ));
             }
@@ -421,7 +427,7 @@ public class Commands {
                     user.getAvatarUrlStringOrNull()
                 );
                 embed.setAuthor(author);
-                EmbedImage image = new EmbedImage(user.getAvatarUrl().toExternalForm());
+                EmbedImage image = new EmbedImage(user.getAvatarPossiblyAnimatedUrlStringOrNull());
                 embed.setImage(image);
                 String footer = loc.localize(
                     "commands.general.info2.response.footer",
