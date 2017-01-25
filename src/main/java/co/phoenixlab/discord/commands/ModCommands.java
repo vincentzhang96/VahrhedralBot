@@ -265,6 +265,12 @@ public class ModCommands {
         if (args.isEmpty()) {
             return;
         }
+        String serverId = context.getServer().getId();
+        TempServerConfig config = serverStorage.get(serverId);
+        if (config == null) {
+            config = new TempServerConfig(serverId);
+            serverStorage.put(serverId, config);
+        }
         args = args.toLowerCase();
         String[] split = args.split(" ");
         String cid = split[0];
@@ -283,17 +289,26 @@ public class ModCommands {
         } else if ("this".equals(cid)) {
             cid = context.getChannel().getId();
         }
+        boolean isDefaulting = context.getServer().getId().equals(cid);
         Channel channel = apiClient.getChannelById(cid);
         if (channel != NO_CHANNEL) {
-            if (target == JoinLeave.JOIN) {
-                bot.getEventListener().joinMessageRedirect.put(context.getServer().getId(), cid);
+            if (target == JoinLeave.JOIN || target == JoinLeave.BOTH) {
+                if (isDefaulting) {
+                    bot.getEventListener().joinMessageRedirect.remove(context.getServer().getId());
+                    config.setCustomWelcomeChannel(null);
+                } else {
+                    bot.getEventListener().joinMessageRedirect.put(context.getServer().getId(), cid);
+                    config.setCustomWelcomeChannel(cid);
+                }
             }
-            if (target == JoinLeave.LEAVE) {
-                bot.getEventListener().leaveMessageRedirect.put(context.getServer().getId(), cid);
-            }
-            if (target == JoinLeave.BOTH) {
-                bot.getEventListener().joinMessageRedirect.put(context.getServer().getId(), cid);
-                bot.getEventListener().leaveMessageRedirect.put(context.getServer().getId(), cid);
+            if (target == JoinLeave.LEAVE || target == JoinLeave.BOTH) {
+                if (isDefaulting) {
+                    bot.getEventListener().leaveMessageRedirect.remove(context.getServer().getId());
+                    config.setCustomLeaveChannel(null);
+                } else {
+                    bot.getEventListener().leaveMessageRedirect.put(context.getServer().getId(), cid);
+                    config.setCustomLeaveChannel(cid);
+                }
             }
             apiClient.sendMessage(loc.localize("commands.mod.jl.response", channel.getName(), channel.getId()),
                     context.getChannel());
@@ -967,6 +982,15 @@ public class ModCommands {
                     LOGGER.warn("Rejecting {} server storage file: server not found", config.getServerId());
                     return;
                 }
+                String welcomeChannel = config.getCustomWelcomeChannel();
+                if (welcomeChannel != null) {
+                    bot.getEventListener().joinMessageRedirect.put(config.getServerId(), welcomeChannel);
+                }
+                String leaveChannel = config.getCustomLeaveChannel();
+                if (leaveChannel != null) {
+                    bot.getEventListener().leaveMessageRedirect.put(config.getServerId(), leaveChannel);
+                }
+
                 LOGGER.info("Loaded {} ({}) server storage file",
                         server.getName(), server.getId(), storage.getTimeoutRoleId());
                 //  Prune expired entries

@@ -14,6 +14,10 @@ public class TempServerConfig {
 
     private String dnTrackChannel;
 
+    private String customWelcomeChannel;
+
+    private String customLeaveChannel;
+
     public TempServerConfig() {
     }
 
@@ -73,5 +77,21 @@ public class TempServerConfig {
 
     public void setDnTrackChannel(String dnTrackChannel) {
         this.dnTrackChannel = dnTrackChannel;
+    }
+
+    public String getCustomWelcomeChannel() {
+        return customWelcomeChannel;
+    }
+
+    public void setCustomWelcomeChannel(String customWelcomeChannel) {
+        this.customWelcomeChannel = customWelcomeChannel;
+    }
+
+    public String getCustomLeaveChannel() {
+        return customLeaveChannel;
+    }
+
+    public void setCustomLeaveChannel(String customLeaveChannel) {
+        this.customLeaveChannel = customLeaveChannel;
     }
 }
