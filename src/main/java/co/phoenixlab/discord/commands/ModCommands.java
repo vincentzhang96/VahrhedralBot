@@ -312,6 +312,7 @@ public class ModCommands {
             }
             apiClient.sendMessage(loc.localize("commands.mod.jl.response", channel.getName(), channel.getId()),
                     context.getChannel());
+            saveServerConfig(config);
         } else {
             apiClient.sendMessage(loc.localize("commands.mod.jl.response.invalid"), context.getChannel());
         }
