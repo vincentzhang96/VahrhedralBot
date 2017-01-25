@@ -606,7 +606,9 @@ public class ModCommands {
         }
         String uid = args;
         if (uid.length() > 4) {
-            if (uid.startsWith("<@")) {
+            if (uid.startsWith("<@!")) {
+                uid = uid.substring(3, uid.length() - 1);
+            } else if (uid.startsWith("<@")) {
                 uid = uid.substring(2, uid.length() - 1);
             }
             Server server = context.getServer();
