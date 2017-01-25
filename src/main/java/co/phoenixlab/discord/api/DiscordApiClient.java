@@ -872,7 +872,7 @@ public class DiscordApiClient {
     }
 
     public User getUserById(String userId, boolean useApi) {
-        if (userId == null) {
+        if (userId == null || "NO_USER".equals(userId)) {
             return NO_USER;
         }
         for (Server server : servers) {
@@ -889,7 +889,7 @@ public class DiscordApiClient {
     }
 
     public User getUserById(String userId, Server server, boolean useApi) {
-        if (userId == null) {
+        if (userId == null || "NO_USER".equals(userId)) {
             return NO_USER;
         }
         if (server == null || server == NO_SERVER) {
@@ -923,14 +923,14 @@ public class DiscordApiClient {
     }
 
     public Member getUserMember(User user, Server server) {
-        if (user == null) {
+        if (user == null || user == NO_USER) {
             return NO_MEMBER;
         }
         return getUserMember(user.getId(), server);
     }
 
     public Member getUserMember(String userId, Server server) {
-        if (userId == null || server == null || server == NO_SERVER) {
+        if (userId == null || server == null || server == NO_SERVER || "NO_USER".equals(userId)) {
             return NO_MEMBER;
         }
         for (Member member : server.getMembers()) {
@@ -1016,6 +1016,9 @@ public class DiscordApiClient {
     }
 
     public Member getMemberHttp(String serverId, String userId) throws UnirestException {
+        if ("NO_USER".equals(userId)) {
+            return NO_MEMBER;
+        }
         boolean ok = false;
         try {
             Map<String, String> headers = new HashMap<>();
