@@ -75,8 +75,20 @@ public class StabCommand implements Command {
             stabber, stabbed));
         alternateStabs.add((stabber, stabbed) -> "Takes out camera :smirk:");
         alternateStabs.add((stabber, stabbed) -> "You have to pay Vahr 500g for this feature");
-
-
+        alternateStabs.add((stabber, stabbed) -> String.format(
+            "%1$s trips and lands on top of %2$s, crushing them. S> SlimFast 500g/ea on MP",
+            stabber, stabbed));
+        alternateStabs.add((stabber, stabbed) -> String.format(
+            "%1$s manages to convince %2$s that they're a potato. Dinner tonight will served.",
+            stabber, stabbed));
+        alternateStabs.add((stabber, stabbed) -> String.format(
+            "%2$sさんは%1$sが分かりませんでした。何か？",
+            stabber, stabbed));
+        alternateStabs.add((stabber, stabbed) -> "404 Knife not found");
+        alternateStabs.add((stabber, stabbed) -> String.format(
+            "%1$s and %2$s sitting in a tree, Kay eye ess ess eye en gee...",
+            stabber, stabbed));
+        alternateStabs.add((stabber, stabbed) -> "OH BABY");
 
     }
 
