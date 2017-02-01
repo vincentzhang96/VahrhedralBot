@@ -552,7 +552,7 @@ public class DiscordApiClient {
             org.json.JSONObject body = new org.json.JSONObject();
             body.put("messages", new JSONArray(messageIds));
             try {
-                String url = ApiConst.CHANNELS_ENDPOINT + channelId + "/messages/bulk_delete";
+                String url = ApiConst.CHANNELS_ENDPOINT + channelId + "/messages/bulk-delete";
                 System.out.println(url);
                 response = Unirest.post(url).
                     headers(headers).
