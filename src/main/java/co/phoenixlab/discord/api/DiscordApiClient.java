@@ -8,7 +8,10 @@ import co.phoenixlab.discord.api.event.WebSocketCloseEvent;
 import co.phoenixlab.discord.cfg.DiscordApiClientConfig;
 import co.phoenixlab.discord.cfg.InfluxDbConfig;
 import co.phoenixlab.discord.util.TryingScheduledExecutor;
-import com.codahale.metrics.*;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.ScheduledReporter;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.gson.Gson;
@@ -46,6 +49,7 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static co.phoenixlab.discord.VahrhedralBot.getFeatureToggleConfig;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -59,6 +63,7 @@ public class DiscordApiClient {
     public static final String[] EMPTY_STR_ARRAY = new String[0];
     public static final Pattern USER_ID_REGEX = Pattern.compile("[0-9]+");
     private static final Logger LOGGER = LoggerFactory.getLogger("DiscordApiClient");
+    public static final String TOGGLE_API_FUZZY_NICK = "api.fuzzy.nick";
     private final Map<String, EndpointStats> endpointStats = new HashMap<>();
 
     static {
@@ -839,25 +844,38 @@ public class DiscordApiClient {
             if (username.equalsIgnoreCase(user.getUsername())) {
                 return user;
             }
+            if (getFeatureToggleConfig().getToggle(TOGGLE_API_FUZZY_NICK).use(server.getId())) {
+                if (username.equalsIgnoreCase(member.getNick())) {
+                    return user;
+                }
+            }
         }
-        User temp = null;
+        Member temp = null;
         //  No match? Try matching start
         for (Member member : server.getMembers()) {
             User user = member.getUser();
             if (user.getUsername().toLowerCase().startsWith(username)) {
-                if (temp == null || user.getUsername().length() <= temp.getUsername().length()) {
-                    temp = user;
+                if (temp == null || user.getUsername().length() <= temp.getUser().getUsername().length()) {
+                    temp = member;
+                }
+            }
+            if (getFeatureToggleConfig().getToggle(TOGGLE_API_FUZZY_NICK).use(server.getId())) {
+                String nick = member.getNick();
+                if (nick != null && nick.toLowerCase().startsWith(username)) {
+                    if (temp == null || user.getUsername().length() <= temp.getUser().getUsername().length()) {
+                        temp = member;
+                    }
                 }
             }
         }
         if (temp != null) {
-            return temp;
+            return temp.getUser();
         }
         //  ID match
         if (USER_ID_REGEX.matcher(username).matches()) {
-            temp = getUserById(username, server);
-            if (temp != null) {
-                return temp;
+            User tempU = getUserById(username, server);
+            if (tempU != null) {
+                return tempU;
             }
         }
 
