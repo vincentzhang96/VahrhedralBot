@@ -37,6 +37,20 @@ public class FeatureToggleCommand implements Command {
                     //  TODO error missing toggle name
                 }
                 break;
+            case "global-enable":
+                if (params.length == 2) {
+                    setGlobalToggle(params[1], false, context);
+                } else {
+                    //  TODO error missing toggle name
+                }
+                break;
+            case "global-disable":
+                if (params.length == 2) {
+                    setGlobalToggle(params[1], true, context);
+                } else {
+                    //  TODO error missing toggle name
+                }
+                break;
             case "status":
             case "get":
                 if (params.length == 2) {
@@ -110,7 +124,17 @@ public class FeatureToggleCommand implements Command {
         config.getToggle(toggle).setEnabled(enabled);
         DiscordApiClient api = ctx.getApiClient();
         api.sendMessage(String.format("Toggle `%s` has been %s for non overriden channels and servers.",
-            toggle, enabled ? "ENABLED" : "DISABLED"),
+            toggle, enabled ? ":white_check_mark: ENABLED" : ":x: DISABLED"),
+            ctx.getChannel());
+        getToggleStatus(toggle, null, null, ctx);
+        bot.saveFeatureToggleConfig();
+    }
+
+    private void setGlobalToggle(String toggle, boolean disabled, MessageContext ctx) {
+        config.getToggle(toggle).setGloballyDisabled(disabled);
+        DiscordApiClient api = ctx.getApiClient();
+        api.sendMessage(String.format("Toggle `%s` has been %s globally (overrides all settings).",
+            toggle, disabled ? ":x: DISABLED" : ":white_check_mark: ENABLED"),
             ctx.getChannel());
         getToggleStatus(toggle, null, null, ctx);
         bot.saveFeatureToggleConfig();
