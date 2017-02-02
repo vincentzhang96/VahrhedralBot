@@ -99,6 +99,10 @@ public class FeatureToggleCommand implements Command {
                     //  TODO error missing toggle name
                 }
                 break;
+            case "flush-config":
+                bot.saveFeatureToggleConfig();
+                context.getApiClient().sendMessage("Config flushed", context.getChannel());
+                break;
         }
     }
 
@@ -109,6 +113,7 @@ public class FeatureToggleCommand implements Command {
             toggle, enabled ? "ENABLED" : "DISABLED"),
             ctx.getChannel());
         getToggleStatus(toggle, null, null, ctx);
+        bot.saveFeatureToggleConfig();
     }
 
     private void getToggleStatus(String toggle, String serverId, String channelId, MessageContext ctx) {
@@ -149,6 +154,7 @@ public class FeatureToggleCommand implements Command {
                 ctx.getChannel());
         }
         getToggleStatus(toggle, serverId, null, ctx);
+        bot.saveFeatureToggleConfig();
     }
 
     private void setChannelToggle(String toggle, String channelId, Override override, MessageContext ctx) {
@@ -164,5 +170,6 @@ public class FeatureToggleCommand implements Command {
                 ctx.getChannel());
         }
         getToggleStatus(toggle, null, channelId, ctx);
+        bot.saveFeatureToggleConfig();
     }
 }
