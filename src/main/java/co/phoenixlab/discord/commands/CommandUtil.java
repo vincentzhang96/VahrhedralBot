@@ -1,7 +1,6 @@
 package co.phoenixlab.discord.commands;
 
 import co.phoenixlab.discord.MessageContext;
-import co.phoenixlab.discord.api.entities.Channel;
 import co.phoenixlab.discord.api.entities.Message;
 import co.phoenixlab.discord.api.entities.User;
 
@@ -14,7 +13,6 @@ public class CommandUtil {
     public static User findUser(MessageContext context, String username, boolean global) {
         Message message = context.getMessage();
         User user;
-        Channel channel = context.getApiClient().getChannelById(message.getChannelId());
         //  Attempt to find the given user
         //  If the user is @mentioned, try that first
         if (message.getMentions() != null && message.getMentions().length > 0) {
@@ -24,7 +22,7 @@ public class CommandUtil {
             if (global) {
                 user = context.getApiClient().findUser(username);
             } else {
-                user = context.getApiClient().findUser(username, channel.getParent());
+                user = context.getApiClient().findUser(username, context.getServer());
             }
         }
         return user;
