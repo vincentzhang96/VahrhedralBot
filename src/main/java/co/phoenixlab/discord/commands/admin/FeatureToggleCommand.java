@@ -25,6 +25,9 @@ public class FeatureToggleCommand implements Command {
         String cmd = params[0].toLowerCase();
         switch (cmd) {
             case "enable":
+            case "enable-toggle":
+            case "toggle-enable":
+            case "toggle-on":
                 if (params.length == 2) {
                     setToggle(params[1], true, context);
                 } else {
@@ -32,6 +35,9 @@ public class FeatureToggleCommand implements Command {
                 }
                 break;
             case "disable":
+            case "disable-toggle":
+            case "toggle-disable":
+            case "toggle-off":
                 if (params.length == 2) {
                     setToggle(params[1], false, context);
                 } else {
@@ -39,6 +45,7 @@ public class FeatureToggleCommand implements Command {
                 }
                 break;
             case "global-enable":
+            case "enable-global":
                 if (params.length == 2) {
                     setGlobalToggle(params[1], false, context);
                 } else {
@@ -46,6 +53,7 @@ public class FeatureToggleCommand implements Command {
                 }
                 break;
             case "global-disable":
+            case "disable-global":
                 if (params.length == 2) {
                     setGlobalToggle(params[1], true, context);
                 } else {
@@ -54,6 +62,10 @@ public class FeatureToggleCommand implements Command {
                 break;
             case "status":
             case "get":
+            case "get-status":
+            case "show-status":
+            case "show":
+            case "show-toggle":
                 if (params.length == 2) {
                     getToggleStatus(params[1], context.getServer().getId(), context.getChannel().getId(), context);
                 } else {
@@ -61,6 +73,7 @@ public class FeatureToggleCommand implements Command {
                 }
                 break;
             case "enable-server":
+            case "server-enable":
                 if (params.length == 2) {
                     setServerToggle(params[1], context.getServer().getId(), Override.ENABLED, context);
                 } else if (params.length == 3) {
@@ -70,6 +83,7 @@ public class FeatureToggleCommand implements Command {
                 }
                 break;
             case "disable-server":
+            case "server-disable":
                 if (params.length == 2) {
                     setServerToggle(params[1], context.getServer().getId(), Override.DISABLED, context);
                 } else if (params.length == 3) {
@@ -79,6 +93,9 @@ public class FeatureToggleCommand implements Command {
                 }
                 break;
             case "remove-server":
+            case "delete-server":
+            case "server-remove":
+            case "server-delete":
                 if (params.length == 2) {
                     setServerToggle(params[1], context.getServer().getId(), Override.NOT_SET, context);
                 } else if (params.length == 3) {
@@ -88,6 +105,7 @@ public class FeatureToggleCommand implements Command {
                 }
                 break;
             case "enable-channel":
+            case "channel-enable":
                 if (params.length == 2) {
                     setChannelToggle(params[1], context.getChannel().getId(), Override.ENABLED, context);
                 } else if (params.length == 3) {
@@ -97,6 +115,7 @@ public class FeatureToggleCommand implements Command {
                 }
                 break;
             case "disable-channel":
+            case "channel-disable":
                 if (params.length == 2) {
                     setChannelToggle(params[1], context.getChannel().getId(), Override.DISABLED, context);
                 } else if (params.length == 3) {
@@ -106,6 +125,9 @@ public class FeatureToggleCommand implements Command {
                 }
                 break;
             case "remove-channel":
+            case "delete-channel":
+            case "channel-remove":
+            case "channel-delete":
                 if (params.length == 2) {
                     setChannelToggle(params[1], context.getChannel().getId(), Override.NOT_SET, context);
                 } else if (params.length == 3) {
@@ -115,9 +137,30 @@ public class FeatureToggleCommand implements Command {
                 }
                 break;
             case "flush-config":
+            case "save-config":
+            case "config-flush":
+            case "config-save":
+            case "save":
                 bot.saveFeatureToggleConfig();
                 context.getApiClient().sendMessage("Config flushed", context.getChannel());
                 break;
+            case "delete-toggle":
+            case "toggle-delete":
+            case "remove-toggle":
+            case "toggle-remove":
+                if (params.length == 2) {
+                    boolean removed = config.getToggles().remove(params[1]) != null;
+                    bot.saveFeatureToggleConfig();
+                    if (removed) {
+                        context.getApiClient().sendMessage(String.format("Toggle `%s` removed", params[1]),
+                            context.getChannel());
+                    } else {
+                        context.getApiClient().sendMessage(String.format("Toggle `%s` does not exist", params[1]),
+                            context.getChannel());
+                    }
+                } else {
+                    //  TODO error missing toggle name
+                }
         }
     }
 
