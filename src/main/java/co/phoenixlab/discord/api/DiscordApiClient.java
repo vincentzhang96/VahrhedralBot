@@ -839,38 +839,46 @@ public class DiscordApiClient {
             return findUser(username);
         }
         username = username.toLowerCase();
-        for (Member member : server.getMembers()) {
-            User user = member.getUser();
-            if (username.equalsIgnoreCase(user.getUsername())) {
-                return user;
+        if (getFeatureToggleConfig().getToggle(TOGGLE_API_FUZZY_NICK).use(server.getId())) {
+            for (Member member : server.getMembers()) {
+                if (username.equalsIgnoreCase(member.getNickOrUsername())) {
+                    return member.getUser();
+                }
             }
-            if (getFeatureToggleConfig().getToggle(TOGGLE_API_FUZZY_NICK).use(server.getId())) {
-                if (username.equalsIgnoreCase(member.getNick())) {
+            Member temp = null;
+            //  No match? Try matching start
+            for (Member member : server.getMembers()) {
+                if (member.getNickOrUsername().startsWith(username)) {
+                    if (temp == null || member.getNickOrUsername().length() <= temp.getNickOrUsername().length()) {
+                        temp = member;
+                    }
+                }
+            }
+            if (temp != null) {
+                return temp.getUser();
+            }
+        } else {
+            for (Member member : server.getMembers()) {
+                User user = member.getUser();
+                if (username.equalsIgnoreCase(user.getUsername())) {
                     return user;
                 }
             }
-        }
-        Member temp = null;
-        //  No match? Try matching start
-        for (Member member : server.getMembers()) {
-            User user = member.getUser();
-            if (user.getUsername().toLowerCase().startsWith(username)) {
-                if (temp == null || user.getUsername().length() <= temp.getUser().getUsername().length()) {
-                    temp = member;
-                }
-            }
-            if (getFeatureToggleConfig().getToggle(TOGGLE_API_FUZZY_NICK).use(server.getId())) {
-                String nick = member.getNick();
-                if (nick != null && nick.toLowerCase().startsWith(username)) {
+            Member temp = null;
+            //  No match? Try matching start
+            for (Member member : server.getMembers()) {
+                User user = member.getUser();
+                if (user.getUsername().toLowerCase().startsWith(username)) {
                     if (temp == null || user.getUsername().length() <= temp.getUser().getUsername().length()) {
                         temp = member;
                     }
                 }
             }
+            if (temp != null) {
+                return temp.getUser();
+            }
         }
-        if (temp != null) {
-            return temp.getUser();
-        }
+
         //  ID match
         if (USER_ID_REGEX.matcher(username).matches()) {
             User tempU = getUserById(username, server);

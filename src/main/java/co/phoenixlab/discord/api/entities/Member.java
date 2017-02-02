@@ -66,6 +66,13 @@ public class Member {
         this.nick = nick;
     }
 
+    public String getNickOrUsername() {
+        if (nick == null || nick.isEmpty()) {
+            return getUser().getUsername();
+        }
+        return nick;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
