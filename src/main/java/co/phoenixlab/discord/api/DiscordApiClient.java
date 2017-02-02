@@ -839,7 +839,7 @@ public class DiscordApiClient {
             return findUser(username);
         }
         username = username.toLowerCase();
-        if (getFeatureToggleConfig().getToggle(TOGGLE_API_FUZZY_NICK).use()) {
+        if (getFeatureToggleConfig().getToggle(TOGGLE_API_FUZZY_NICK).use(server.getId())) {
             for (Member member : server.getMembers()) {
                 if (username.equalsIgnoreCase(member.getNickOrUsername())) {
                     return member.getUser();
@@ -848,7 +848,7 @@ public class DiscordApiClient {
             Member temp = null;
             //  No match? Try matching start
             for (Member member : server.getMembers()) {
-                if (member.getNickOrUsername().startsWith(username)) {
+                if (member.getNickOrUsername().toLowerCase().startsWith(username)) {
                     if (temp == null || member.getNickOrUsername().length() <= temp.getNickOrUsername().length()) {
                         temp = member;
                     }
