@@ -61,54 +61,54 @@ public class FeatureToggleCommand implements Command {
                 break;
             case "enable-server":
                 if (params.length == 2) {
-                    setServerToggle(params[2], context.getServer().getId(), Override.ENABLED, context);
+                    setServerToggle(params[1], context.getServer().getId(), Override.ENABLED, context);
                 } else if (params.length == 3) {
-                    setServerToggle(params[2], params[3], Override.ENABLED, context);
+                    setServerToggle(params[1], params[2], Override.ENABLED, context);
                 } else {
                     //  TODO error missing toggle name
                 }
                 break;
             case "disable-server":
                 if (params.length == 2) {
-                    setServerToggle(params[2], context.getServer().getId(), Override.DISABLED, context);
+                    setServerToggle(params[1], context.getServer().getId(), Override.DISABLED, context);
                 } else if (params.length == 3) {
-                    setServerToggle(params[2], params[3], Override.DISABLED, context);
+                    setServerToggle(params[1], params[2], Override.DISABLED, context);
                 } else {
                     //  TODO error missing toggle name
                 }
                 break;
             case "remove-server":
                 if (params.length == 2) {
-                    setServerToggle(params[2], context.getServer().getId(), Override.NOT_SET, context);
+                    setServerToggle(params[1], context.getServer().getId(), Override.NOT_SET, context);
                 } else if (params.length == 3) {
-                    setServerToggle(params[2], params[3], Override.NOT_SET, context);
+                    setServerToggle(params[1], params[2], Override.NOT_SET, context);
                 } else {
                     //  TODO error missing toggle name
                 }
                 break;
             case "enable-channel":
                 if (params.length == 2) {
-                    setChannelToggle(params[2], context.getChannel().getId(), Override.ENABLED, context);
+                    setChannelToggle(params[1], context.getChannel().getId(), Override.ENABLED, context);
                 } else if (params.length == 3) {
-                    setChannelToggle(params[2], params[3], Override.ENABLED, context);
+                    setChannelToggle(params[1], params[2], Override.ENABLED, context);
                 } else {
                     //  TODO error missing toggle name
                 }
                 break;
             case "disable-channel":
                 if (params.length == 2) {
-                    setChannelToggle(params[2], context.getChannel().getId(), Override.DISABLED, context);
+                    setChannelToggle(params[1], context.getChannel().getId(), Override.DISABLED, context);
                 } else if (params.length == 3) {
-                    setChannelToggle(params[2], params[3], Override.DISABLED, context);
+                    setChannelToggle(params[1], params[2], Override.DISABLED, context);
                 } else {
                     //  TODO error missing toggle name
                 }
                 break;
             case "remove-channel":
                 if (params.length == 2) {
-                    setChannelToggle(params[2], context.getChannel().getId(), Override.NOT_SET, context);
+                    setChannelToggle(params[1], context.getChannel().getId(), Override.NOT_SET, context);
                 } else if (params.length == 3) {
-                    setChannelToggle(params[2], params[3], Override.NOT_SET, context);
+                    setChannelToggle(params[1], params[2], Override.NOT_SET, context);
                 } else {
                     //  TODO error missing toggle name
                 }
