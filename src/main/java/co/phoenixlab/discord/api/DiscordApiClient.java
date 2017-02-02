@@ -839,7 +839,7 @@ public class DiscordApiClient {
             return findUser(username);
         }
         username = username.toLowerCase();
-        if (getFeatureToggleConfig().getToggle(TOGGLE_API_FUZZY_NICK).use(server.getId())) {
+        if (getFeatureToggleConfig().getToggle(TOGGLE_API_FUZZY_NICK).use()) {
             for (Member member : server.getMembers()) {
                 if (username.equalsIgnoreCase(member.getNickOrUsername())) {
                     return member.getUser();
