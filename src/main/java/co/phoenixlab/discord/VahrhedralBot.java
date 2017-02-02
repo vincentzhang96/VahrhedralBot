@@ -53,6 +53,7 @@ public class VahrhedralBot implements Runnable {
     public static void main(String[] args) {
         LOGGER.info("Starting Vahrhedral bot");
         VahrhedralBot bot = new VahrhedralBot();
+        instance = bot;
         try {
             bot.run();
         } catch (Exception e) {
@@ -74,6 +75,8 @@ public class VahrhedralBot implements Runnable {
     private DnTrackStorage dnTrackStorage;
     private ClassRoleManager classRoleManager;
     private FeatureToggleConfig toggleConfig;
+
+    private static VahrhedralBot instance;
 
     public VahrhedralBot() {
         taskQueue = new TaskQueue();
@@ -321,5 +324,8 @@ public class VahrhedralBot implements Runnable {
         System.exit(code);
     }
 
+    public static FeatureToggleConfig getFeatureToggleConfig() {
+        return instance.getToggleConfig();
+    }
 
 }
