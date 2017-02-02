@@ -5,6 +5,7 @@ import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.common.localization.LocalizerImpl;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.cfg.ClassDiscussionConfig;
+import co.phoenixlab.discord.cfg.FeatureToggleConfig;
 import co.phoenixlab.discord.chatlogger.ChatLogger;
 import co.phoenixlab.discord.classdiscussion.ClassRoleManager;
 import co.phoenixlab.discord.commands.Commands;
@@ -42,6 +43,7 @@ public class VahrhedralBot implements Runnable {
 
     public static final Path CONFIG_PATH = Paths.get("config/config.json");
     public static final Path DNTRACK_PATH = Paths.get("config/dntrack.json");
+    public static final Path FEATURETOGGLE_PATH = Paths.get("config/toggle.json");
     public static final Path CLASSDISCUSS_PATH = Paths.get("config/classdiscussion.json");
 
     public static final String USER_AGENT = "DiscordBot (https://github.com/vincentzhang96/VahrhedralBot, 12)";
@@ -71,11 +73,13 @@ public class VahrhedralBot implements Runnable {
     private ChatLogger chatLogger;
     private DnTrackStorage dnTrackStorage;
     private ClassRoleManager classRoleManager;
+    private FeatureToggleConfig toggleConfig;
 
     public VahrhedralBot() {
         taskQueue = new TaskQueue();
         eventListener = new EventListener(this);
         classRoleManager = null;
+        toggleConfig = null;
     }
 
     @Override
@@ -104,6 +108,13 @@ public class VahrhedralBot implements Runnable {
             classRoleManager = new ClassRoleManager(classDiscussionConfig);
         } catch (IOException e) {
             LOGGER.warn("Unable to load class discussion config, ignoring", e);
+        }
+
+        try {
+            toggleConfig = loadFeatureToggleConfig();
+        } catch (IOException e) {
+            LOGGER.warn("Unable to load toggle config, ignoring", e);
+            toggleConfig = new FeatureToggleConfig();
         }
 
         loadLocalization();
@@ -234,6 +245,26 @@ public class VahrhedralBot implements Runnable {
         }
     }
 
+    private FeatureToggleConfig loadFeatureToggleConfig() throws IOException {
+        Gson configGson = new Gson();
+        try (Reader reader = Files.newBufferedReader(FEATURETOGGLE_PATH, UTF_8)) {
+            return configGson.fromJson(reader, FeatureToggleConfig.class);
+        }
+    }
+
+    public boolean saveFeatureToggleConfig() {
+        Gson configGson = new GsonBuilder().setPrettyPrinting().create();
+        try (BufferedWriter writer = Files.newBufferedWriter(FEATURETOGGLE_PATH, UTF_8, CREATE, WRITE,
+            TRUNCATE_EXISTING)) {
+            configGson.toJson(toggleConfig, writer);
+            writer.flush();
+            return true;
+        } catch (IOException e) {
+            LOGGER.warn("Unable to save toggle config", e);
+            return false;
+        }
+    }
+
     public CommandDispatcher getMainCommandDispatcher() {
         return commandDispatcher;
     }
@@ -268,6 +299,10 @@ public class VahrhedralBot implements Runnable {
 
     public DnTrackStorage getDnTrackStorage() {
         return dnTrackStorage;
+    }
+
+    public FeatureToggleConfig getToggleConfig() {
+        return toggleConfig;
     }
 
     public void shutdown() {
