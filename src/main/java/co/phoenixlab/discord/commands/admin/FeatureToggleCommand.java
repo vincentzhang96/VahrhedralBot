@@ -1,5 +1,6 @@
 package co.phoenixlab.discord.commands.admin;
 
+import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.discord.Command;
 import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.VahrhedralBot;
@@ -141,22 +142,20 @@ public class FeatureToggleCommand implements Command {
     }
 
     private void getToggleStatus(String toggle, String serverId, String channelId, MessageContext ctx) {
+        serverId = SafeNav.of(serverId).orElse(ctx.getServer().getId());
+        channelId = SafeNav.of(channelId).orElse(ctx.getChannel().getId());
         FeatureToggle featureToggle = config.getToggle(toggle);
         StringBuilder builder = new StringBuilder(String.format("**__%s Toggle Status__**\n", toggle));
         builder.append(String.format("Status: %s\n",
-            featureToggle.isGloballyDisabled() ? ":no_entry: GLOBAL DISABLED" :
-                (featureToggle.isEnabled() ? ":white_check_mark: ENABLED" : ":x: DISABLED")));
-        if (serverId != null) {
-            Override override = featureToggle.getServerOverride(serverId);
-            if (override != Override.NOT_SET) {
-                builder.append(String.format("Server override: %s\n", override.name()));
-            }
+        featureToggle.isGloballyDisabled() ? ":no_entry: GLOBAL DISABLED" :
+            (featureToggle.isEnabled() ? ":white_check_mark: ENABLED" : ":x: DISABLED")));
+        Override override = featureToggle.getServerOverride(serverId);
+        if (override != Override.NOT_SET) {
+            builder.append(String.format("Server override: %s\n", override.name()));
         }
-        if (channelId != null) {
-            Override override = featureToggle.getChannelOverride(channelId);
-            if (override != Override.NOT_SET) {
-                builder.append(String.format("Channel override: %s\n", override.name()));
-            }
+        override = featureToggle.getChannelOverride(channelId);
+        if (override != Override.NOT_SET) {
+            builder.append(String.format("Channel override: %s\n", override.name()));
         }
         builder.append("\n**EVALUATED STATUS: ");
         builder.append(featureToggle.use(serverId, channelId) ? ":white_check_mark: ENABLED" : ":x: DISABLED");
