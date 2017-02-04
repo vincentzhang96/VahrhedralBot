@@ -840,6 +840,7 @@ public class DiscordApiClient {
         }
         username = username.toLowerCase();
         if (getFeatureToggleConfig().getToggle(TOGGLE_API_FUZZY_NICK).use(server.getId())) {
+            //  Search by nickname first, then we can try usernames
             for (Member member : server.getMembers()) {
                 if (username.equalsIgnoreCase(member.getNickOrUsername())) {
                     return member.getUser();
@@ -857,26 +858,25 @@ public class DiscordApiClient {
             if (temp != null) {
                 return temp.getUser();
             }
-        } else {
-            for (Member member : server.getMembers()) {
-                User user = member.getUser();
-                if (username.equalsIgnoreCase(user.getUsername())) {
-                    return user;
+        }
+        for (Member member : server.getMembers()) {
+            User user = member.getUser();
+            if (username.equalsIgnoreCase(user.getUsername())) {
+                return user;
+            }
+        }
+        Member temp = null;
+        //  No match? Try matching start
+        for (Member member : server.getMembers()) {
+            User user = member.getUser();
+            if (user.getUsername().toLowerCase().startsWith(username)) {
+                if (temp == null || user.getUsername().length() <= temp.getUser().getUsername().length()) {
+                    temp = member;
                 }
             }
-            Member temp = null;
-            //  No match? Try matching start
-            for (Member member : server.getMembers()) {
-                User user = member.getUser();
-                if (user.getUsername().toLowerCase().startsWith(username)) {
-                    if (temp == null || user.getUsername().length() <= temp.getUser().getUsername().length()) {
-                        temp = member;
-                    }
-                }
-            }
-            if (temp != null) {
-                return temp.getUser();
-            }
+        }
+        if (temp != null) {
+            return temp.getUser();
         }
 
         //  ID match
