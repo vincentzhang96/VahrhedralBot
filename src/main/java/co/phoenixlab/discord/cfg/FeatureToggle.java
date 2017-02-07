@@ -20,7 +20,7 @@ public class FeatureToggle {
         serverOverrides = new HashMap<>();
         channelOverrides = new HashMap<>();
         globalDisable = false;
-        enabled = false;
+        enabled = true;
     }
 
     public boolean isGloballyDisabled() {
