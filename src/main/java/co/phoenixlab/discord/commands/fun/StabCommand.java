@@ -7,6 +7,7 @@ import co.phoenixlab.discord.api.entities.Channel;
 import co.phoenixlab.discord.api.entities.Member;
 import co.phoenixlab.discord.api.entities.Server;
 import co.phoenixlab.discord.api.entities.User;
+import co.phoenixlab.discord.cfg.FeatureToggle;
 import co.phoenixlab.discord.commands.CommandUtil;
 import co.phoenixlab.discord.util.RateLimiter;
 import com.google.common.cache.CacheBuilder;
@@ -25,13 +26,9 @@ public class StabCommand implements Command {
 
     private LoadingCache<String, RateLimiter> rateLimiters;
     private Random random;
-
-    private boolean globalEnabled = true;
-    private Set<String> disabledServers;
     private List<BiFunction<String, String, String>> alternateStabs;
 
     public StabCommand() {
-        disabledServers = new HashSet<>();
         alternateStabs = new ArrayList<>();
         rateLimiters = CacheBuilder.newBuilder()
                 .expireAfterAccess(5, TimeUnit.MINUTES)
@@ -109,27 +106,11 @@ public class StabCommand implements Command {
     }
 
     private void performStabAdmin(MessageContext context, String args) {
-        DiscordApiClient api = context.getApiClient();
-        Channel channel = context.getChannel();
-        Server server = context.getServer();
-        String serverId = server.getId();
         if (!context.getBot().getConfig().isAdmin(context.getAuthor().getId())) {
             return;
         }
         args = args.substring("$admin".length()).trim();
-        if (args.startsWith("gon")) {
-            globalEnabled = true;
-            api.sendMessage("[Global] Stabbing enabled", channel);
-        } else if (args.startsWith("goff")) {
-            globalEnabled = false;
-            api.sendMessage("[Global] Stabbing disabled", channel);
-        } else if (args.startsWith("on")) {
-            disabledServers.remove(serverId);
-            api.sendMessage("[Server] Stabbing enabled", channel);
-        } else if (args.startsWith("off")) {
-            disabledServers.add(serverId);
-            api.sendMessage("[Server] Stabbing disabled", channel);
-        } else if (args.startsWith("altinvoke ")) {
+        if (args.startsWith("altinvoke ")) {
             String name = args.substring("altinvoke ".length());
             performStab(context, name, true);
         }
@@ -140,12 +121,11 @@ public class StabCommand implements Command {
     }
 
     private void performStab(MessageContext context, String args, boolean forceAlt) {
-        if (!globalEnabled) {
-            return;
-        }
         DiscordApiClient api = context.getApiClient();
         Server server = context.getServer();
-        if (disabledServers.contains(server.getId())) {
+        FeatureToggle toggle = context.getBot().getToggleConfig().getToggle("commands.general.stab");
+        if (!toggle.use(server.getId(), context.getChannel().getId())
+            && !context.getBot().getConfig().isAdmin(context.getAuthor().getId())) {
             return;
         }
         User stabbedUser = CommandUtil.findUser(context, args, false);
