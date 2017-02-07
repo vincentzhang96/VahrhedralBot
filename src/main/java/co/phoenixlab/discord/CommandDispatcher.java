@@ -4,6 +4,7 @@ import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.api.entities.Message;
 import co.phoenixlab.discord.api.entities.Server;
+import co.phoenixlab.discord.cfg.FeatureToggle;
 import co.phoenixlab.discord.stats.RunningAverage;
 import org.slf4j.Logger;
 
@@ -112,7 +113,7 @@ public class CommandDispatcher {
             examplesStr = localizer.localize(commandNameBaseKey + ".examples");
         }
         commands.put(commandStr, new CommandWrapper(command,
-            helpStr, detailedHelpStr, argumentsStr, examplesStr, false, hidden));
+            commandNameBaseKey, helpStr, detailedHelpStr, argumentsStr, examplesStr, false, hidden));
         LOGGER.debug("Registered command \"{}\"", commandNameBaseKey);
     }
 
@@ -131,7 +132,7 @@ public class CommandDispatcher {
             examplesStr = localizer.localize(commandNameBaseKey + ".examples");
         }
         commands.put(commandStr, new CommandWrapper(command,
-            helpStr, detailedHelpStr, argumentsStr, examplesStr, true, hidden));
+            commandNameBaseKey, helpStr, detailedHelpStr, argumentsStr, examplesStr, true, hidden));
         LOGGER.debug("Registered command \"{}\"", commandNameBaseKey);
     }
 
@@ -219,8 +220,15 @@ public class CommandDispatcher {
     }
 
     public boolean shouldCommandBeDispatched(CommandWrapper command, MessageContext context) {
-        return (command.alwaysActive || active().get()) &&
+        if (command.alwaysActive) {
+            return true;
+        }
+        boolean generalAllow = active().get() &&
             customCommandDispatchChecker.test(command, context);
+        VahrhedralBot bot = context.getBot();
+        FeatureToggle toggle = bot.getToggleConfig().getToggle(command.commandKey);
+        return !(!toggle.use(context.getServer().getId(), context.getChannel().getId())
+            && !bot.getConfig().isAdmin(context.getAuthor().getId())) && generalAllow;
     }
 
     public static class Statistics {
@@ -241,6 +249,7 @@ public class CommandDispatcher {
 
     public static class CommandWrapper {
         final Command command;
+        final String commandKey;
         final String helpDesc;
         final String detailedHelp;
         final String argumentsHelp;
@@ -249,14 +258,16 @@ public class CommandDispatcher {
         final boolean hidden;
 
         public CommandWrapper(Command command, String helpDesc, String detailedHelp, String argumentsHelp,
-                              String examples) {
-            this(command, helpDesc, detailedHelp, argumentsHelp, examples, false, false);
+                              String examples, String commandKey) {
+            this(command, commandKey, helpDesc, detailedHelp, argumentsHelp, examples, false, false);
         }
 
-        public CommandWrapper(Command command, String helpDesc, String detailedHelp, String argumentsHelp,
+        public CommandWrapper(Command command, String commandKey, String helpDesc, String detailedHelp,
+                              String argumentsHelp,
                               String examples,
                               boolean alwaysActive, boolean hidden) {
             this.command = command;
+            this.commandKey = commandKey;
             this.helpDesc = helpDesc;
             this.detailedHelp = detailedHelp;
             this.argumentsHelp = argumentsHelp;

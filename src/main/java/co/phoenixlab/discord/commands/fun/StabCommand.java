@@ -7,14 +7,15 @@ import co.phoenixlab.discord.api.entities.Channel;
 import co.phoenixlab.discord.api.entities.Member;
 import co.phoenixlab.discord.api.entities.Server;
 import co.phoenixlab.discord.api.entities.User;
-import co.phoenixlab.discord.cfg.FeatureToggle;
 import co.phoenixlab.discord.commands.CommandUtil;
 import co.phoenixlab.discord.util.RateLimiter;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
@@ -122,12 +123,6 @@ public class StabCommand implements Command {
 
     private void performStab(MessageContext context, String args, boolean forceAlt) {
         DiscordApiClient api = context.getApiClient();
-        Server server = context.getServer();
-        FeatureToggle toggle = context.getBot().getToggleConfig().getToggle("commands.general.stab");
-        if (!toggle.use(server.getId(), context.getChannel().getId())
-            && !context.getBot().getConfig().isAdmin(context.getAuthor().getId())) {
-            return;
-        }
         User stabbedUser = CommandUtil.findUser(context, args, false);
         if (stabbedUser == DiscordApiClient.NO_USER || stabbedUser == null) {
             return;
