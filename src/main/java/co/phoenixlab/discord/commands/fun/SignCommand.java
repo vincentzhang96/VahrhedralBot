@@ -3,7 +3,9 @@ package co.phoenixlab.discord.commands.fun;
 import co.phoenixlab.discord.Command;
 import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.api.DiscordApiClient;
+import co.phoenixlab.discord.api.entities.Member;
 import co.phoenixlab.discord.api.entities.Server;
+import co.phoenixlab.discord.api.entities.User;
 import co.phoenixlab.discord.util.RateLimiter;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -12,6 +14,8 @@ import com.google.common.cache.LoadingCache;
 import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+
 public class SignCommand implements Command {
     public static final int COOLDOWN_PERIOD = 30;
     public static final int COOLDOWN_CHARGES = 3;
@@ -19,9 +23,9 @@ public class SignCommand implements Command {
             "%s\n" +
             "|＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿|\n" +
             "              (__/)   ||\n" +
-            "              (•ㅅ•) ||\n" +
+            "              (•ㅅ•) ||   ~%s\n" +
             "             / 　 づ";
-    public static final int MESSAGE_AREA_WIDTH = 32;
+    public static final int MESSAGE_AREA_WIDTH = 64;
     private LoadingCache<String, RateLimiter> rateLimiters;
 
     public SignCommand() {
@@ -69,7 +73,15 @@ public class SignCommand implements Command {
         for (String line : lines) {
             joiner.add(line);
         }
-        String output = String.format(SIGN, joiner.toString());
+        User author = context.getAuthor();
+        Member authorMember = context.getApiClient().getUserMember(author, server);
+        String output = String.format(SIGN, joiner.toString(), getUserDisplayName(author, authorMember));
         context.getApiClient().sendMessage(output, context.getChannel());
+        context.getApiClient().deleteMessage(context.getChannel().getId(), context.getMessage().getId());
+    }
+
+    private String getUserDisplayName(User user, Member member) {
+        return isNullOrEmpty(member.getNick()) ?
+            user.getUsername() : member.getNick();
     }
 }
