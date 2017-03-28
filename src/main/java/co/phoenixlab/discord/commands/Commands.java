@@ -11,6 +11,7 @@ import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.DiscordWebSocketClient;
 import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.LogInEvent;
+import co.phoenixlab.discord.commands.fun.SignCommand;
 import co.phoenixlab.discord.commands.fun.StabCommand;
 import co.phoenixlab.discord.commands.tempstorage.Minific;
 import co.phoenixlab.discord.commands.tempstorage.MinificStorage;
@@ -55,6 +56,7 @@ public class Commands {
     private final Localizer loc;
     private final Random random;
     public StabCommand stabCommand;
+    public SignCommand signCommand;
     //  Temporary until command throttling is implemented
     private Instant lastInsultTime;
     private MinificStorage minificStorage;
@@ -66,6 +68,7 @@ public class Commands {
         loc = bot.getLocalizer();
         random = new Random();
         stabCommand = new StabCommand();
+        signCommand = new SignCommand();
     }
 
     public void register(CommandDispatcher d) {
@@ -85,6 +88,7 @@ public class Commands {
         d.registerCommand("commands.general.minific", this::minific);
         d.registerCommand("commands.general.gamepop", this::gamePop);
         d.registerCommand("commands.general.stab", stabCommand);
+        d.registerCommand("commands.general.sign", signCommand);
     }
 
     public ModCommands getModCommands() {
