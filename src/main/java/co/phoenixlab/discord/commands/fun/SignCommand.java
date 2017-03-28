@@ -21,7 +21,7 @@ public class SignCommand implements Command {
             "              (__/)   ||\n" +
             "              (•ㅅ•) ||\n" +
             "             / 　 づ";
-    public static final int MESSAGE_AREA_WIDTH = 16;
+    public static final int MESSAGE_AREA_WIDTH = 32;
     private LoadingCache<String, RateLimiter> rateLimiters;
 
     public SignCommand() {
