@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 public class SignCommand implements Command {
-    public static final int COOLDOWN_PERIOD = 30;
+    public static final int COOLDOWN_PERIOD = 20;
     public static final int COOLDOWN_CHARGES = 3;
     public static final String SIGN = "|￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣|\n" +
             "%s\n" +
