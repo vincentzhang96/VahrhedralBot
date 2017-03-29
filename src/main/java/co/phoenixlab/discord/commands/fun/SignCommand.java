@@ -3,6 +3,7 @@ package co.phoenixlab.discord.commands.fun;
 import co.phoenixlab.discord.Command;
 import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.api.DiscordApiClient;
+import co.phoenixlab.discord.api.entities.Channel;
 import co.phoenixlab.discord.api.entities.Member;
 import co.phoenixlab.discord.api.entities.Server;
 import co.phoenixlab.discord.api.entities.User;
@@ -52,6 +53,9 @@ public class SignCommand implements Command {
         if (server == null || server == DiscordApiClient.NO_SERVER) {
             return;
         }
+        if (checkRateLimit(context, context.getAuthor(), context.getChannel())) {
+            return;
+        }
         String[] lines = new String[args.length() / MESSAGE_AREA_WIDTH + 1];
         for (int i = 0; i < lines.length; i++) {
             lines[i] = args.substring(i * MESSAGE_AREA_WIDTH,
@@ -83,5 +87,15 @@ public class SignCommand implements Command {
     private String getUserDisplayName(User user, Member member) {
         return isNullOrEmpty(member.getNick()) ?
             user.getUsername() : member.getNick();
+    }
+
+    private boolean checkRateLimit(MessageContext context, User user, Channel channel) {
+        if (!context.getBot().getConfig().isAdmin(user.getId())) {
+            RateLimiter limiter = rateLimiters.getUnchecked(channel.getId());
+            if (limiter.tryMark() > 0) {
+                return true;
+            }
+        }
+        return false;
     }
 }
