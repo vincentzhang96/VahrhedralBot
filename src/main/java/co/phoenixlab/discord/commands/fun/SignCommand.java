@@ -65,7 +65,7 @@ public class SignCommand implements Command {
         String lastLine = lines[lines.length - 1];
         int numPad = MESSAGE_AREA_WIDTH - lastLine.length();
         if (numPad > 1) {
-            numPad /= 2;
+            numPad /= 3;
             StringBuilder builder = new StringBuilder();
             for (int i = 0; i < numPad; i++) {
                 builder.append(' ');
