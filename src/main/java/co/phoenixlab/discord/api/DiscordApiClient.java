@@ -412,6 +412,18 @@ public class DiscordApiClient {
             joiner.add(reverseLine(s));
         }
         body = joiner.toString();
+        if (embed != null) {
+            SafeNav.of(embed.getDescription()).next(this::reverse).ifPresent(embed::setDescription);
+            SafeNav.of(embed.getFooter()).next(EmbedFooter::getText).next(this::reverse).ifPresent(embed::setDescription);
+            SafeNav.of(embed.getTitle()).next(this::reverse).ifPresent(embed::setTitle);
+            if (embed.getFields() != null) {
+                for (EmbedField field : embed.getFields()) {
+                    SafeNav.of(field).next(EmbedField::getName).next(this::reverse).ifPresent(field::setName);
+                    SafeNav.of(field).next(EmbedField::getValue).next(this::reverse).ifPresent(field::setValue);
+                }
+            }
+        }
+
         boolean ok = false;
         try {
             OutboundMessage outboundMessage = new OutboundMessage(body, false, mentions, embed);
