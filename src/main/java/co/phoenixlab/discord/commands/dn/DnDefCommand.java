@@ -33,7 +33,7 @@ public class DnDefCommand implements Command {
     public static final int[] DEF_DEFAULT_LEVELS;
 
     static {
-        DEF_DEFAULT_LEVELS = new int[]{93, 90, 80};
+        DEF_DEFAULT_LEVELS = new int[]{95, 93, 90};
     }
 
     public DnDefCommand(Localizer loc) {
