@@ -1,6 +1,7 @@
 package co.phoenixlab.discord;
 
 import co.phoenixlab.common.lang.SafeNav;
+import co.phoenixlab.common.lang.number.ParseInt;
 import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.entities.*;
@@ -55,10 +56,12 @@ public class EventListener {
     private Map<String, Long> currentDateTimeLastUse = new HashMap<>();
     private LoadingCache<String, RateLimiter> joinLeaveLimiters;
     private LoadingCache<String, RateLimiter> dnnacdMentionLimiters;
+    private Random random;
 
 
     public EventListener(VahrhedralBot bot) {
         this.bot = bot;
+        random = new Random();
         executorService = new TryingScheduledExecutor(
             Executors.newSingleThreadScheduledExecutor(),
             VahrhedralBot.LOGGER
@@ -82,6 +85,7 @@ public class EventListener {
         messageListeners.put("other-prefixes", this::onOtherTypesCommand);
 //        dnnacdRecentMessages = EvictingQueue.create(10);
         messageListeners.put("date-time", this::currentDateTime);
+        messageListeners.put("dice-roll", this::diceRoll);
     }
 
     public static String createJoinLeaveMessage(User user, Server server, String fmt) {
@@ -284,6 +288,47 @@ public class EventListener {
     public void onMessageDelete(MessageDeleteEvent messageDeleteEvent) {
 
 
+    }
+
+    private void diceRoll(Message message) {
+        String msg = message.getContent().trim();
+        if (msg.matches("\\.([0-9]+)?d[0-9]+")) {
+            msg = msg.substring(1);
+            String[] split = msg.split("d");
+            if (split.length > 0) {
+                int diceSize = ParseInt.parseOrDefault(split[split.length - 1], 20);
+                diceSize = Math.min(100, Math.max(2, diceSize));
+                int numDice = 1;
+                if (split.length > 1) {
+                    numDice = ParseInt.parseOrDefault(split[0], 1);
+                }
+                numDice = Math.min(10, Math.max(1, numDice));
+                int[] results = new int[numDice];
+                int sum = 0;
+                for (int i = 0; i < numDice; i++) {
+                    int roll = random.nextInt(diceSize) + 1;
+                    results[i] = roll;
+                    sum += roll;
+                }
+                Embed embed = new Embed();
+                embed.setTitle(String.format("Roll %dd%d", numDice, diceSize));
+                if (numDice == 1) {
+                    embed.setFields(new EmbedField[]{new EmbedField("Result", Integer.toString(sum), false)});
+                } else {
+                    StringJoiner joiner = new StringJoiner(", ");
+                    for (int i : results) {
+                        joiner.add(Integer.toString(i));
+                    }
+                    EmbedField[] fields = new EmbedField[2];
+                    fields[0] = new EmbedField("Total", Integer.toString(sum), false);
+                    fields[1] = new EmbedField("Rolls", joiner.toString(), false);
+                    embed.setFields(fields);
+                }
+                bot.getApiClient().sendMessage("",
+                    message.getChannelId(), embed);
+            }
+
+        }
     }
 
     private void handleMention(Message message) {
