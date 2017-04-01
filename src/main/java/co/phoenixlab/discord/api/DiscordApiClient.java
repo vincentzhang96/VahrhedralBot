@@ -414,7 +414,7 @@ public class DiscordApiClient {
         body = joiner.toString();
         if (embed != null) {
             SafeNav.of(embed.getDescription()).next(this::reverse).ifPresent(embed::setDescription);
-            SafeNav.of(embed.getFooter()).next(EmbedFooter::getText).next(this::reverse).ifPresent(embed::setDescription);
+            SafeNav.of(embed.getFooter()).next(EmbedFooter::getText).next(this::reverse).ifPresent(embed.getFooter()::setText);
             SafeNav.of(embed.getTitle()).next(this::reverse).ifPresent(embed::setTitle);
             if (embed.getFields() != null) {
                 for (EmbedField field : embed.getFields()) {
