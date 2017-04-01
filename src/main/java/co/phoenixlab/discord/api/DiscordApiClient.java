@@ -491,6 +491,10 @@ public class DiscordApiClient {
                 return '}';
             case '}':
                 return '{';
+            case '<':
+                return '>';
+            case '>':
+                return '<';
             default:
                 return c;
         }
