@@ -406,12 +406,12 @@ public class DiscordApiClient {
     private Message sendMessageInternal(String body, String channelId, String[] mentions, Embed embed) {
         Gson g = new GsonBuilder().create();
         //  April fools.
-//        String[] splitBody = body.split("\n");
-//        StringJoiner joiner = new StringJoiner("\n");
-//        for (String s : splitBody) {
-//            joiner.add(reverseLine(s));
-//        }
-//        body = joiner.toString();
+        String[] splitBody = body.split("\n");
+        StringJoiner joiner = new StringJoiner("\n");
+        for (String s : splitBody) {
+            joiner.add(reverseLine(s));
+        }
+        body = joiner.toString();
         boolean ok = false;
         try {
             OutboundMessage outboundMessage = new OutboundMessage(body, false, mentions, embed);
