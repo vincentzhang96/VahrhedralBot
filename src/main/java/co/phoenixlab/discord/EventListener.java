@@ -311,6 +311,8 @@ public class EventListener {
                     sum += roll;
                 }
                 Embed embed = new Embed();
+                embed.setType(Embed.TYPE_RICH);
+                embed.setColor(5941733);
                 embed.setTitle(String.format("Roll %dd%d", numDice, diceSize));
                 if (numDice == 1) {
                     embed.setFields(new EmbedField[]{new EmbedField("Result", Integer.toString(sum), false)});
