@@ -23,8 +23,6 @@ import static java.util.function.Function.identity;
 
 public class ClassRoleManager {
 
-    private static final UpdateInfo POISON = new UpdateInfo("", "", false, null);
-
     private ClassDiscussionConfig config;
 
     private Map<String, EmojiRoleBinding> emojiIdToBindings;
@@ -56,15 +54,15 @@ public class ClassRoleManager {
             VahrhedralBot.LOGGER.info("Stopping class discussion server watcher");
             //  Poison the queue and wait for the task to finish
             run.set(false);
-            pendingUpdates.addFirst(POISON);
             try {
-                taskFuture.get(2, TimeUnit.SECONDS);
+                taskFuture.get(1, TimeUnit.SECONDS);
             } catch (TimeoutException tme) {
                 VahrhedralBot.LOGGER
                     .info("Class discussion server watcher didn't stop within 2 seconds of poisoning, interrupting...");
                 taskFuture.cancel(true);
             } catch (InterruptedException | ExecutionException e) {
                 VahrhedralBot.LOGGER.warn("Exception while waiting for ClassRoleManager event loop to finish", e);
+                taskFuture.cancel(true);
             }
             taskFuture = null;
         }
@@ -132,7 +130,7 @@ public class ClassRoleManager {
     private Void doUpdateLoop() {
         UpdateInfo info = null;
         VahrhedralBot.LOGGER.info("Started main loop for class discussion server watcher");
-        while(true) {
+        while(run.get()) {
             do {
                 try {
                     info = pendingUpdates.take();
@@ -143,8 +141,8 @@ public class ClassRoleManager {
                     }
                 }
             } while(info == null);
-            if (info == POISON) {
-                break;
+            if (!run.get()) {
+                return null;
             }
             try {
                 if (info.isAdd()) {
