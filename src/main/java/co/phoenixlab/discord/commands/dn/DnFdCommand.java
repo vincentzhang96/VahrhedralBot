@@ -1,13 +1,17 @@
 package co.phoenixlab.discord.commands.dn;
 
 import co.phoenixlab.common.lang.number.ParseInt;
+import co.phoenixlab.common.lang.number.ParseLong;
 import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.Command;
 import co.phoenixlab.discord.MessageContext;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.entities.Embed;
+import co.phoenixlab.discord.api.entities.EmbedAuthor;
 import co.phoenixlab.discord.api.entities.EmbedField;
 import co.phoenixlab.discord.api.entities.EmbedFooter;
+
+import java.util.List;
 
 public class DnFdCommand implements Command {
 
@@ -35,7 +39,7 @@ public class DnFdCommand implements Command {
     public static final int[] FD_DEFAULT_LEVELS;
 
     static {
-        FD_DEFAULT_LEVELS = new int[]{95, 93, 90};
+        FD_DEFAULT_LEVELS = new int[]{93, 90, 80};
     }
 
     private final Localizer loc;

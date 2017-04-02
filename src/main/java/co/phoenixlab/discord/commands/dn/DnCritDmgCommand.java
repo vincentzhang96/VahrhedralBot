@@ -33,7 +33,7 @@ public class DnCritDmgCommand implements Command {
     public static final int[] CRITDMG_DEFAULT_LEVELS;
 
     static {
-        CRITDMG_DEFAULT_LEVELS = new int[]{95, 93, 90};
+        CRITDMG_DEFAULT_LEVELS = new int[]{93, 90, 80};
     }
 
     public DnCritDmgCommand(Localizer loc) {
