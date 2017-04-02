@@ -22,6 +22,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.eventbus.Subscribe;
 
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -61,7 +62,7 @@ public class EventListener {
 
     public EventListener(VahrhedralBot bot) {
         this.bot = bot;
-        random = new Random();
+        random = new SecureRandom();
         executorService = new TryingScheduledExecutor(
             Executors.newSingleThreadScheduledExecutor(),
             VahrhedralBot.LOGGER
