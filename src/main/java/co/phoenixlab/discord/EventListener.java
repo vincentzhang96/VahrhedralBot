@@ -277,11 +277,11 @@ public class EventListener {
                 return;
             }
         }
+        messageListeners.values().forEach(c -> c.accept(message));
         if (isCommand && !message.getAuthor().isBot()) {
             bot.getMainCommandDispatcher().handleCommand(message);
             return;
         }
-        messageListeners.values().forEach(c -> c.accept(message));
     }
 
     @Subscribe
@@ -291,7 +291,7 @@ public class EventListener {
     }
 
     private void diceRoll(Message message) {
-        String msg = message.getContent().trim();
+        String msg = message.getContent().trim().toLowerCase();
         if (msg.matches("\\.([0-9]+)?d[0-9]+")) {
             msg = msg.substring(1);
             String[] split = msg.split("d");
