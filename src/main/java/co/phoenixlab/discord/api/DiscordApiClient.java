@@ -406,23 +406,23 @@ public class DiscordApiClient {
     private Message sendMessageInternal(String body, String channelId, String[] mentions, Embed embed) {
         Gson g = new GsonBuilder().create();
         //  April fools.
-        String[] splitBody = body.split("\n");
-        StringJoiner joiner = new StringJoiner("\n");
-        for (String s : splitBody) {
-            joiner.add(reverseLine(s));
-        }
-        body = joiner.toString();
-        if (embed != null) {
-            SafeNav.of(embed.getDescription()).next(this::reverse).ifPresent(embed::setDescription);
-            SafeNav.of(embed.getFooter()).next(EmbedFooter::getText).next(this::reverse).ifPresent(embed.getFooter()::setText);
-            SafeNav.of(embed.getTitle()).next(this::reverse).ifPresent(embed::setTitle);
-            if (embed.getFields() != null) {
-                for (EmbedField field : embed.getFields()) {
-                    SafeNav.of(field).next(EmbedField::getName).next(this::reverse).ifPresent(field::setName);
-                    SafeNav.of(field).next(EmbedField::getValue).next(this::reverse).ifPresent(field::setValue);
-                }
-            }
-        }
+//        String[] splitBody = body.split("\n");
+//        StringJoiner joiner = new StringJoiner("\n");
+//        for (String s : splitBody) {
+//            joiner.add(reverseLine(s));
+//        }
+//        body = joiner.toString();
+//        if (embed != null) {
+//            SafeNav.of(embed.getDescription()).next(this::reverse).ifPresent(embed::setDescription);
+//            SafeNav.of(embed.getFooter()).next(EmbedFooter::getText).next(this::reverse).ifPresent(embed.getFooter()::setText);
+//            SafeNav.of(embed.getTitle()).next(this::reverse).ifPresent(embed::setTitle);
+//            if (embed.getFields() != null) {
+//                for (EmbedField field : embed.getFields()) {
+//                    SafeNav.of(field).next(EmbedField::getName).next(this::reverse).ifPresent(field::setName);
+//                    SafeNav.of(field).next(EmbedField::getValue).next(this::reverse).ifPresent(field::setValue);
+//                }
+//            }
+//        }
 
         boolean ok = false;
         try {
