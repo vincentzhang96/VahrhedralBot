@@ -50,11 +50,11 @@ public class ApiConst {
     /**
      * The format string for avatar URLs
      */
-    public static final String AVATAR_URL_PATTERN = "https://cdn.discordapp.com/avatars/%1$s/%2$s.jpg";
+    public static final String AVATAR_URL_PATTERN = "https://cdn.discordapp.com/avatars/%1$s/%2$s.jpg?size=1024";
     /**
      * The format string for animated avatar URLs
      */
-    public static final String ANIMATED_AVATAR_URL_PATTERN = "https://cdn.discordapp.com/avatars/%1$s/%2$s.gif";
+    public static final String ANIMATED_AVATAR_URL_PATTERN = "https://cdn.discordapp.com/avatars/%1$s/%2$s.gif?size=1024";
     /**
      * The format string for icon URLs
      */
