@@ -108,7 +108,7 @@ public class DnCritDmgCommand implements Command {
                             "commands.dn.critdmg.response.format.required",
                             level,
                             critDmg,
-                            critDmgPercent * 100D
+                            critDmgPercent * 100D + 200D
                     );
                     apiClient.sendMessage(msg, context.getChannel());
                 } else {
