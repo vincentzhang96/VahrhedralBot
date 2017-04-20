@@ -33,7 +33,7 @@ public class DnCritCommand implements Command {
     public static final int[] CRIT_DEFAULT_LEVELS;
 
     static {
-        CRIT_DEFAULT_LEVELS = new int[]{93, 90, 80};
+        CRIT_DEFAULT_LEVELS = new int[]{95, 93, 90, 80};
     }
 
     public DnCritCommand(Localizer loc) {
