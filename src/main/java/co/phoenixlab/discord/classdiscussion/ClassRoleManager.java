@@ -47,11 +47,11 @@ public class ClassRoleManager {
         }
         if (event.isJoin() && taskFuture == null) {
             //  Start workers and listeners
-            VahrhedralBot.LOGGER.info("Starting class discussion server watcher");
+            VahrhedralBot.LOGGER.info("Starting {} server watcher", event.getServer().getName());
             run.set(true);
             taskFuture = event.getApiClient().getExecutorService().submit(this::doUpdateLoop);
         } else {
-            VahrhedralBot.LOGGER.info("Stopping class discussion server watcher");
+            VahrhedralBot.LOGGER.info("Stopping {} server watcher", event.getServer().getName());
             //  Poison the queue and wait for the task to finish
             run.set(false);
             try {
@@ -94,13 +94,13 @@ public class ClassRoleManager {
     private void addRole(String userId, String roleId, DiscordApiClient apiClient) {
         Server server = apiClient.getServerByID(config.getServerId());
         if (server == DiscordApiClient.NO_SERVER) {
-            VahrhedralBot.LOGGER.warn("Unable to get class discussion server");
+            VahrhedralBot.LOGGER.warn("Unable to get server {}", config.getServerId());
             return;
         }
         Member member = apiClient.getUserMember(userId, server);
         User user = member.getUser();
         if (member == DiscordApiClient.NO_MEMBER) {
-            VahrhedralBot.LOGGER.warn("Unable to find member with ID {} in class discussion server", userId);
+            VahrhedralBot.LOGGER.warn("Unable to find member with ID {} in {} server", userId, server.getName());
         }
         Set<String> roles = new HashSet<>(member.getRoles());
         if (!roles.contains(roleId)) {
@@ -112,13 +112,13 @@ public class ClassRoleManager {
     private void deleteRole(String userId, String roleId, DiscordApiClient apiClient) {
         Server server = apiClient.getServerByID(config.getServerId());
         if (server == DiscordApiClient.NO_SERVER) {
-            VahrhedralBot.LOGGER.warn("Unable to get class discussion server");
+            VahrhedralBot.LOGGER.warn("Unable to get server {}", config.getServerId());
             return;
         }
         Member member = apiClient.getUserMember(userId, server);
         User user = member.getUser();
         if (member == DiscordApiClient.NO_MEMBER) {
-            VahrhedralBot.LOGGER.warn("Unable to find member with ID {} in class discussion server", userId);
+            VahrhedralBot.LOGGER.warn("Unable to find member with ID {} in {} server", userId, server.getName());
         }
         Set<String> roles = new HashSet<>(member.getRoles());
         if (roles.contains(roleId)) {
@@ -129,7 +129,7 @@ public class ClassRoleManager {
 
     private Void doUpdateLoop() {
         UpdateInfo info = null;
-        VahrhedralBot.LOGGER.info("Started main loop for class discussion server watcher");
+        VahrhedralBot.LOGGER.info("Started main loop for server watcher");
         while(run.get()) {
             do {
                 try {
@@ -158,7 +158,7 @@ public class ClassRoleManager {
                     return null;
                 }
             } catch (Exception e) {
-                VahrhedralBot.LOGGER.warn("Exception during update loop for class discussion server", e);
+                VahrhedralBot.LOGGER.warn("Exception during update loop for server", e);
             }
             info = null;
         }

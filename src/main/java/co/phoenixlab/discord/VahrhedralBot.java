@@ -30,9 +30,12 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardOpenOption.*;
@@ -44,7 +47,7 @@ public class VahrhedralBot implements Runnable {
     public static final Path CONFIG_PATH = Paths.get("config/config.json");
     public static final Path DNTRACK_PATH = Paths.get("config/dntrack.json");
     public static final Path FEATURETOGGLE_PATH = Paths.get("config/toggle.json");
-    public static final Path CLASSDISCUSS_PATH = Paths.get("config/classdiscussion.json");
+    public static final Path CLASSDISCUSS_PATH = Paths.get("config/reaction/");
 
     public static final String USER_AGENT = "DiscordBot (https://github.com/vincentzhang96/VahrhedralBot, 12)";
 
@@ -73,7 +76,7 @@ public class VahrhedralBot implements Runnable {
 
     private ChatLogger chatLogger;
     private DnTrackStorage dnTrackStorage;
-    private ClassRoleManager classRoleManager;
+    private List<ClassRoleManager> reactionManagers;
     private FeatureToggleConfig toggleConfig;
 
     private static VahrhedralBot instance;
@@ -81,7 +84,7 @@ public class VahrhedralBot implements Runnable {
     public VahrhedralBot() {
         taskQueue = new TaskQueue();
         eventListener = new EventListener(this);
-        classRoleManager = null;
+        reactionManagers = null;
         toggleConfig = null;
     }
 
@@ -107,8 +110,10 @@ public class VahrhedralBot implements Runnable {
         }
 
         try {
-            ClassDiscussionConfig classDiscussionConfig = loadClassDiscussionConfig();
-            classRoleManager = new ClassRoleManager(classDiscussionConfig);
+            List<ClassDiscussionConfig> classDiscussionConfigs = loadClassDiscussionConfigs();
+            reactionManagers = classDiscussionConfigs.stream()
+                .map(ClassRoleManager::new)
+                .collect(Collectors.toList());
         } catch (IOException e) {
             LOGGER.warn("Unable to load class discussion config, ignoring", e);
         }
@@ -128,8 +133,8 @@ public class VahrhedralBot implements Runnable {
 
         apiClient = new DiscordApiClient(config.getApiClientConfig());
         apiClient.getEventBus().register(eventListener);
-        if (classRoleManager != null) {
-            apiClient.getEventBus().register(classRoleManager);
+        if (reactionManagers != null) {
+            reactionManagers.forEach(apiClient.getEventBus()::register);
         }
 
         chatLogger = new ChatLogger(apiClient);
@@ -241,11 +246,23 @@ public class VahrhedralBot implements Runnable {
         }
     }
 
-    private ClassDiscussionConfig loadClassDiscussionConfig() throws IOException {
+    private List<ClassDiscussionConfig> loadClassDiscussionConfigs() throws IOException {
         Gson configGson = new Gson();
-        try (Reader reader = Files.newBufferedReader(CLASSDISCUSS_PATH, UTF_8)) {
-            return configGson.fromJson(reader, ClassDiscussionConfig.class);
+        List<ClassDiscussionConfig> configs;
+        try (Stream<Path> paths = Files.find(
+            CLASSDISCUSS_PATH,
+            1, (p, a) -> Files.isRegularFile(p) && p.getFileName().toString().endsWith(".json"))
+        ) {
+            configs = paths.map((p) -> {
+                try (Reader reader = Files.newBufferedReader(p, UTF_8)) {
+                    return configGson.fromJson(reader, ClassDiscussionConfig.class);
+                } catch (IOException ignored) {
+                    throw new RuntimeException(ignored);
+                }
+            })
+                .collect(Collectors.toList());
         }
+        return configs;
     }
 
     private FeatureToggleConfig loadFeatureToggleConfig() throws IOException {
