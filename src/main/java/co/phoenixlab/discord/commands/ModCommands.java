@@ -533,7 +533,10 @@ public class ModCommands {
 
     public boolean applyTimeout(User issuingUser, Channel noticeChannel, Server server, User user, Duration duration) {
         String serverId = server.getId();
-        if (duration != null && !duration.isNegative() && !duration.isZero()) {
+        if (duration.isNegative() || duration.isZero()) {
+            duration = Duration.ofSeconds(Long.MAX_VALUE);
+        }
+        if (duration != null) {
             ServerTimeout timeout = new ServerTimeout(duration,
                     Instant.now(), user.getId(), serverId,
                     user.getUsername(), issuingUser.getId());
