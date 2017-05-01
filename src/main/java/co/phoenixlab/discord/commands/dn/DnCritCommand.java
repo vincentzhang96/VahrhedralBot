@@ -120,15 +120,12 @@ public class DnCritCommand implements Command {
                     apiClient.sendMessage(msg, context.getChannel());
                 }
             }
-            return;
         } catch (NumberFormatException nfe) {
             apiClient.sendMessage(loc.localize("commands.dn.crit.response.invalid",
                     context.getBot().getMainCommandDispatcher().getCommandPrefix()),
                     context.getChannel());
-            return;
         } catch (IllegalArgumentException ile) {
             apiClient.sendMessage(ile.getMessage(), context.getChannel());
-            return;
         }
     }
 

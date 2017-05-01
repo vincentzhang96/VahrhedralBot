@@ -123,15 +123,12 @@ public class DnCritDmgCommand implements Command {
                     apiClient.sendMessage(msg, context.getChannel());
                 }
             }
-            return;
         } catch (NumberFormatException nfe) {
             apiClient.sendMessage(loc.localize("commands.dn.critdmg.response.invalid",
                     context.getBot().getMainCommandDispatcher().getCommandPrefix()),
                     context.getChannel());
-            return;
         } catch (IllegalArgumentException ile) {
             apiClient.sendMessage(ile.getMessage(), context.getChannel());
-            return;
         }
     }
 

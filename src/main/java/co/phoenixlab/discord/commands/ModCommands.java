@@ -66,7 +66,7 @@ public class ModCommands {
 
     public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("MMM dd uuuu HH:mm:ss z");
     private final CommandDispatcher dispatcher;
-    private Localizer loc;
+    private final Localizer loc;
     private final VahrhedralBot bot;
     private final DiscordApiClient apiClient;
 
@@ -191,11 +191,7 @@ public class ModCommands {
             return;
         }
         String serverId = context.getServer().getId();
-        TempServerConfig config = serverStorage.get(serverId);
-        if (config == null) {
-            config = new TempServerConfig(serverId);
-            serverStorage.put(serverId, config);
-        }
+        TempServerConfig config = serverStorage.computeIfAbsent(serverId, TempServerConfig::new);
         Channel channel = context.getChannel();
         if (args.equalsIgnoreCase("off")) {
             config.setDnTrackChannel(null);
@@ -214,11 +210,7 @@ public class ModCommands {
             return;
         }
         String serverId = context.getServer().getId();
-        TempServerConfig config = serverStorage.get(serverId);
-        if (config == null) {
-            config = new TempServerConfig(serverId);
-            serverStorage.put(serverId, config);
-        }
+        TempServerConfig config = serverStorage.computeIfAbsent(serverId, TempServerConfig::new);
         Channel channel = context.getChannel();
         if (args.isEmpty() || args.equalsIgnoreCase("none")) {
             config.setCustomWelcomeMessage("");
@@ -240,11 +232,7 @@ public class ModCommands {
             return;
         }
         String serverId = context.getServer().getId();
-        TempServerConfig config = serverStorage.get(serverId);
-        if (config == null) {
-            config = new TempServerConfig(serverId);
-            serverStorage.put(serverId, config);
-        }
+        TempServerConfig config = serverStorage.computeIfAbsent(serverId, TempServerConfig::new);
         Channel channel = context.getChannel();
         if (args.isEmpty() || args.equalsIgnoreCase("none")) {
             config.setCustomLeaveMessage("");
@@ -266,11 +254,7 @@ public class ModCommands {
             return;
         }
         String serverId = context.getServer().getId();
-        TempServerConfig config = serverStorage.get(serverId);
-        if (config == null) {
-            config = new TempServerConfig(serverId);
-            serverStorage.put(serverId, config);
-        }
+        TempServerConfig config = serverStorage.computeIfAbsent(serverId, TempServerConfig::new);
         args = args.toLowerCase();
         String[] split = args.split(" ");
         String cid = split[0];
@@ -540,11 +524,7 @@ public class ModCommands {
             ServerTimeout timeout = new ServerTimeout(duration,
                     Instant.now(), user.getId(), serverId,
                     user.getUsername(), issuingUser.getId());
-            TempServerConfig serverConfig = serverStorage.get(serverId);
-            if (serverConfig == null) {
-                serverConfig = new TempServerConfig(serverId);
-                serverStorage.put(serverId, serverConfig);
-            }
+            TempServerConfig serverConfig = serverStorage.computeIfAbsent(serverId, TempServerConfig::new);
             ServerTimeoutStorage storage = serverConfig.getServerTimeouts();
             if (storage == null) {
                 storage = new ServerTimeoutStorage();
@@ -661,11 +641,7 @@ public class ModCommands {
             return;
         }
         String serverId = context.getServer().getId();
-        TempServerConfig serverConfig = serverStorage.get(serverId);
-        if (serverConfig == null) {
-            serverConfig = new TempServerConfig(serverId);
-            serverStorage.put(serverId, serverConfig);
-        }
+        TempServerConfig serverConfig = serverStorage.computeIfAbsent(serverId, TempServerConfig::new);
         ServerTimeoutStorage storage = serverConfig.getServerTimeouts();
         if (storage == null) {
             storage = new ServerTimeoutStorage();
@@ -760,11 +736,7 @@ public class ModCommands {
      */
     public boolean applyTimeoutRole(User user, Server server, Channel invocationChannel) {
         String serverId = server.getId();
-        TempServerConfig serverConfig = serverStorage.get(serverId);
-        if (serverConfig == null) {
-            serverConfig = new TempServerConfig(serverId);
-            serverStorage.put(serverId, serverConfig);
-        }
+        TempServerConfig serverConfig = serverStorage.computeIfAbsent(serverId, TempServerConfig::new);
         ServerTimeoutStorage storage = serverConfig.getServerTimeouts();
         String serverName = server.getName();
         if (storage != null && storage.getTimeoutRoleId() != null) {
@@ -833,11 +805,7 @@ public class ModCommands {
 
     public void cancelTimeout(User user, Server server, Channel invocationChannel) {
         String serverId = server.getId();
-        TempServerConfig serverConfig = serverStorage.get(serverId);
-        if (serverConfig == null) {
-            serverConfig = new TempServerConfig(serverId);
-            serverStorage.put(serverId, serverConfig);
-        }
+        TempServerConfig serverConfig = serverStorage.computeIfAbsent(serverId, TempServerConfig::new);
         ServerTimeoutStorage storage = serverConfig.getServerTimeouts();
         removeTimeoutRole(user, server, apiClient.getChannelById(serverId));
         if (storage != null) {
@@ -864,11 +832,7 @@ public class ModCommands {
 
     public void onTimeoutExpire(User user, Server server) {
         String serverId = server.getId();
-        TempServerConfig serverConfig = serverStorage.get(serverId);
-        if (serverConfig == null) {
-            serverConfig = new TempServerConfig(serverId);
-            serverStorage.put(serverId, serverConfig);
-        }
+        TempServerConfig serverConfig = serverStorage.computeIfAbsent(serverId, TempServerConfig::new);
         ServerTimeoutStorage storage = serverConfig.getServerTimeouts();
         if (storage != null) {
             ServerTimeout timeout = storage.getTimeouts().remove(user.getId());
@@ -901,11 +865,7 @@ public class ModCommands {
      */
     public boolean removeTimeoutRole(User user, Server server, Channel invocationChannel) {
         String serverId = server.getId();
-        TempServerConfig serverConfig = serverStorage.get(serverId);
-        if (serverConfig == null) {
-            serverConfig = new TempServerConfig(serverId);
-            serverStorage.put(serverId, serverConfig);
-        }
+        TempServerConfig serverConfig = serverStorage.computeIfAbsent(serverId, TempServerConfig::new);
         ServerTimeoutStorage storage = serverConfig.getServerTimeouts();
         String serverName = server.getName();
         if (storage != null && storage.getTimeoutRoleId() != null) {
@@ -968,7 +928,6 @@ public class ModCommands {
                     forEach(this::loadServerConfig);
         } catch (IOException e) {
             LOGGER.warn("Unable to load server storage files", e);
-            return;
         }
     }
 

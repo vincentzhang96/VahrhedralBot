@@ -55,8 +55,8 @@ public class Commands {
     private final ModCommands modCommands;
     private final Localizer loc;
     private final Random random;
-    public StabCommand stabCommand;
-    public SignCommand signCommand;
+    public final StabCommand stabCommand;
+    public final SignCommand signCommand;
     //  Temporary until command throttling is implemented
     private Instant lastInsultTime;
     private MinificStorage minificStorage;
@@ -374,11 +374,7 @@ public class Commands {
             if (game == null || game.trim().isEmpty() || "[misc.nothing]".equalsIgnoreCase(game.trim())) {
                 ++noGame;
             } else {
-                LongAdder adder = gameCount.get(game);
-                if (adder == null) {
-                    adder = new LongAdder();
-                    gameCount.put(game, adder);
-                }
+                LongAdder adder = gameCount.computeIfAbsent(game, k -> new LongAdder());
                 ++playing;
                 adder.increment();
             }
@@ -737,7 +733,6 @@ public class Commands {
                 return;
             case "list":
                 listMinificsCmd(apiClient, ctxChannel);
-                return;
         }
     }
 
@@ -746,11 +741,7 @@ public class Commands {
         Map<String, String> usernameCache = new HashMap<>();
         for (Minific minific : minificStorage.getMinifics()) {
             String authorId = minific.getAuthorId();
-            String uname = usernameCache.get(authorId);
-            if (uname == null) {
-                uname = apiClient.getUserById(authorId, false).getUsername();
-                usernameCache.put(authorId, uname);
-            }
+            String uname = usernameCache.computeIfAbsent(authorId, i -> apiClient.getUserById(i, false).getUsername());
             joiner.add(loc.localize("commands.general.minific.response.manage.list.entry",
                 minific.getId(),
                 uname,

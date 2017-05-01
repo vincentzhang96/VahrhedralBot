@@ -734,7 +734,6 @@ public class DiscordApiClient {
                     user.getUsername(), user.getId(),
                     server.getName(), server.getId());
             LOGGER.warn("Unable to update member roles", e);
-            return;
         } finally {
             update("update_roles").forBool(ok);
         }
@@ -1057,7 +1056,7 @@ public class DiscordApiClient {
         return ret;
     }
 
-    public Member getMemberHttp(String serverId, String userId) throws UnirestException {
+    public Member getMemberHttp(String serverId, String userId) {
         if ("NO_USER".equals(userId)) {
             return NO_MEMBER;
         }

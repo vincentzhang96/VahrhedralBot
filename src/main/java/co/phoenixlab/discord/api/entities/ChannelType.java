@@ -6,6 +6,6 @@ public enum ChannelType {
     @SerializedName("text")
     TEXT,
     @SerializedName("voice")
-    VOICE;
+    VOICE
 
 }

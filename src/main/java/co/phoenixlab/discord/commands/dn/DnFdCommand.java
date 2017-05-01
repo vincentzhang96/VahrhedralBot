@@ -124,15 +124,12 @@ public class DnFdCommand implements Command {
                     apiClient.sendMessage(msg, context.getChannel());
                 }
             }
-            return;
         } catch (NumberFormatException nfe) {
             apiClient.sendMessage(loc.localize("commands.dn.finaldamage.response.invalid",
                     context.getBot().getMainCommandDispatcher().getCommandPrefix()),
                     context.getChannel());
-            return;
         } catch (IllegalArgumentException ile) {
             apiClient.sendMessage(ile.getMessage(), context.getChannel());
-            return;
         }
     }
 

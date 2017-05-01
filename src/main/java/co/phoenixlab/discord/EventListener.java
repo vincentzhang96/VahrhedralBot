@@ -46,18 +46,18 @@ public class EventListener {
     private static final Pattern SIGNATURE_MATCHER = Pattern.compile("[0-9a-fA-F]{29}\\b");
     private final VahrhedralBot bot;
     private final ScheduledExecutorService executorService;
-    public Map<String, Consumer<MemberChangeEvent>> memberChangeEventListener;
-    public Map<String, String> joinMessageRedirect;
-    public Map<String, String> leaveMessageRedirect;
-    public Set<String> ignoredServers;
+    public final Map<String, Consumer<MemberChangeEvent>> memberChangeEventListener;
+    public final Map<String, String> joinMessageRedirect;
+    public final Map<String, String> leaveMessageRedirect;
+    public final Set<String> ignoredServers;
     public Map<String, Deque<String>> newest = new HashMap<>();
-    private Map<String, VersionTracker> versionTrackers = new HashMap<>();
-    private Map<String, StatusTracker> statusTrackers = new HashMap<>();
-    private Map<String, Consumer<Message>> messageListeners;
-    private Map<String, Long> currentDateTimeLastUse = new HashMap<>();
+    private final Map<String, VersionTracker> versionTrackers = new HashMap<>();
+    private final Map<String, StatusTracker> statusTrackers = new HashMap<>();
+    private final Map<String, Consumer<Message>> messageListeners;
+    private final Map<String, Long> currentDateTimeLastUse = new HashMap<>();
     private LoadingCache<String, RateLimiter> joinLeaveLimiters;
     private LoadingCache<String, RateLimiter> dnnacdMentionLimiters;
-    private Random random;
+    private final Random random;
 
 
     public EventListener(VahrhedralBot bot) {
@@ -281,7 +281,6 @@ public class EventListener {
         messageListeners.values().forEach(c -> c.accept(message));
         if (isCommand && !message.getAuthor().isBot()) {
             bot.getMainCommandDispatcher().handleCommand(message);
-            return;
         }
     }
 
@@ -563,10 +562,7 @@ public class EventListener {
             return true;
         }
         //  Normalize I and l
-        if (a.replace('I', 'l').equalsIgnoreCase(b.replace('I', 'l'))) {
-            return true;
-        }
-        return false;
+        return a.replace('I', 'l').equalsIgnoreCase(b.replace('I', 'l'));
     }
 
     public boolean isJoin(MemberChangeEvent event) {

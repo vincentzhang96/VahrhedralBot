@@ -42,7 +42,7 @@ public class ChatLogger {
 
     private boolean logFailure = false;
 
-    private DiscordApiClient apiClient;
+    private final DiscordApiClient apiClient;
 
     public ChatLogger(DiscordApiClient apiClient) {
         this.apiClient = apiClient;
@@ -154,10 +154,8 @@ public class ChatLogger {
         if (logFailure) {
             return;
         }
-        String srv = serverId;
-        String ch = channelId;
-        Path serverDir = LOG_PATH.resolve(srv);
-        Path channelLog = serverDir.resolve(ch + ".log");
+        Path serverDir = LOG_PATH.resolve(serverId);
+        Path channelLog = serverDir.resolve(channelId + ".log");
         boolean newFile = false;
         try {
             if (!Files.isDirectory(serverDir)) {
@@ -170,7 +168,7 @@ public class ChatLogger {
             }
         } catch (IOException e) {
             VahrhedralBot.LOGGER.error("Unable to log chat message - cannot create required files.", e);
-            VahrhedralBot.LOGGER.error("Chat logging has stopped due to an error for srv {} ch {}", srv, ch);
+            VahrhedralBot.LOGGER.error("Chat logging has stopped due to an error for srv {} ch {}", serverId, channelId);
             logFailure = true;
             return;
         }
@@ -184,7 +182,7 @@ public class ChatLogger {
             writer.flush();
         } catch (IOException e) {
             VahrhedralBot.LOGGER.error("Unable to log chat message - cannot write to file.", e);
-            VahrhedralBot.LOGGER.error("Chat logging has stopped due to an error for srv {} ch {}", srv, ch);
+            VahrhedralBot.LOGGER.error("Chat logging has stopped due to an error for srv {} ch {}", serverId, channelId);
             logFailure = true;
         }
     }
