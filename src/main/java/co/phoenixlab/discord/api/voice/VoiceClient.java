@@ -25,7 +25,7 @@ public class VoiceClient implements Runnable {
 
     private static final AtomicBoolean active = new AtomicBoolean(false);
 
-    public static Logger LOGGER = LoggerFactory.getLogger("VoiceClient");
+    public static final Logger LOGGER = LoggerFactory.getLogger("VoiceClient");
 
     private final DiscordApiClient apiClient;
     private final DiscordWebSocketClient mainWebSocketClient;

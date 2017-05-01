@@ -5,7 +5,7 @@ import co.phoenixlab.discord.api.entities.Server;
 
 public class PresenceUpdateEvent {
 
-    private String oldUsername;
+    private final String oldUsername;
 
     private final PresenceUpdate presenceUpdate;
 

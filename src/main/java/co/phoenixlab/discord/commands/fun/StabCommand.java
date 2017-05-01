@@ -23,11 +23,11 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 
 public class StabCommand implements Command {
 
-    public float regularStabChance = 0.90F;
+    public final float regularStabChance = 0.90F;
 
-    private LoadingCache<String, RateLimiter> rateLimiters;
-    private Random random;
-    private List<BiFunction<String, String, String>> alternateStabs;
+    private final LoadingCache<String, RateLimiter> rateLimiters;
+    private final Random random;
+    private final List<BiFunction<String, String, String>> alternateStabs;
 
     public StabCommand() {
         alternateStabs = new ArrayList<>();

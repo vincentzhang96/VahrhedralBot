@@ -13,7 +13,7 @@ public class MessageReactionChangeEvent {
     }
 
     private final MessageReactionUpdate update;
-    private ReactionChange type;
+    private final ReactionChange type;
     private final Server server;
     private final Channel channel;
     private final DiscordApiClient apiClient;

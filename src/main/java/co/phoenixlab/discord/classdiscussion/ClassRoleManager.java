@@ -23,13 +23,13 @@ import static java.util.function.Function.identity;
 
 public class ClassRoleManager {
 
-    private ClassDiscussionConfig config;
+    private final ClassDiscussionConfig config;
 
-    private Map<String, EmojiRoleBinding> emojiIdToBindings;
+    private final Map<String, EmojiRoleBinding> emojiIdToBindings;
 
-    private BlockingDeque<UpdateInfo> pendingUpdates;
+    private final BlockingDeque<UpdateInfo> pendingUpdates;
     private Future<Void> taskFuture;
-    private AtomicBoolean run;
+    private final AtomicBoolean run;
 
     public ClassRoleManager(ClassDiscussionConfig config) {
         this.config = config;

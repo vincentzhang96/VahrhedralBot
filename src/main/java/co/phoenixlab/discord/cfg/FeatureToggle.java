@@ -13,8 +13,8 @@ public class FeatureToggle {
 
     private boolean globalDisable;
     private boolean enabled;
-    private Map<String, Override> serverOverrides;
-    private Map<String, Override> channelOverrides;
+    private final Map<String, Override> serverOverrides;
+    private final Map<String, Override> channelOverrides;
 
     public FeatureToggle() {
         serverOverrides = new HashMap<>();

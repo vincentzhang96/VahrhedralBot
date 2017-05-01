@@ -164,8 +164,8 @@ public class StatusTracker implements Runnable {
 
 
     static class IpAndPort {
-        String ip;
-        int port;
+        final String ip;
+        final int port;
 
         public IpAndPort(String ip, int port) {
             this.ip = ip;

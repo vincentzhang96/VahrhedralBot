@@ -7,7 +7,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class Results {
 
     private final TreeMap<String, LongAdder> days;
-    private ReentrantReadWriteLock lock;
+    private final ReentrantReadWriteLock lock;
 
     public Results() {
         days = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);

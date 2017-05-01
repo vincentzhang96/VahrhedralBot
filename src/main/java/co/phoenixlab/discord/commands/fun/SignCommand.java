@@ -27,7 +27,7 @@ public class SignCommand implements Command {
             "              (•ㅅ•) ||   ~%s\n" +
             "             / 　 づ";
     public static final int MESSAGE_AREA_WIDTH = 64;
-    private LoadingCache<String, RateLimiter> rateLimiters;
+    private final LoadingCache<String, RateLimiter> rateLimiters;
 
     public SignCommand() {
         rateLimiters = CacheBuilder.newBuilder()

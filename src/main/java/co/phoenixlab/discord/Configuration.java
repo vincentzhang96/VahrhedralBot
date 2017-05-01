@@ -14,8 +14,8 @@ public class Configuration {
     private String token;
     private String commandPrefix;
     private transient int prefixLength;
-    private Set<String> blacklist;
-    private Set<String> admins;
+    private final Set<String> blacklist;
+    private final Set<String> admins;
     private RegionDescriptor[] dnRegions;
     private boolean selfBot;
     private int exMentionTimeoutThreshold;
@@ -23,7 +23,7 @@ public class Configuration {
     private int exMentionTemporalThreshold;
     private long exMentionPeriodMs;
     private long exMentionCacheEvictionTimeMs;
-    private JoinLeaveLimits jlLimit;
+    private final JoinLeaveLimits jlLimit;
     private DiscordApiClientConfig apiClientConfig;
 
     public Configuration() {

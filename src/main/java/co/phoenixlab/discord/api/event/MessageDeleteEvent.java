@@ -2,8 +2,8 @@ package co.phoenixlab.discord.api.event;
 
 public class MessageDeleteEvent {
 
-    private String messageId;
-    private String channelId;
+    private final String messageId;
+    private final String channelId;
 
     public MessageDeleteEvent(String messageId, String channelId) {
         this.messageId = messageId;

@@ -33,15 +33,15 @@ public class RateLimiter {
     /**
      * The maximum number of charges that can be on cooldown at the same time.
      */
-    private int maxCharges;
+    private final int maxCharges;
     /**
      * Charge cooldown time.
      */
-    private long periodMs;
+    private final long periodMs;
     /**
      * Charge timestamps.
      */
-    private long[] charges;
+    private final long[] charges;
 
     /**
      * Constructs a new RateLimiter with no label and the given period time and maximum number of charges.

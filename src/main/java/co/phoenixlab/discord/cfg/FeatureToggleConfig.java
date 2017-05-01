@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class FeatureToggleConfig {
 
-    private Map<String, FeatureToggle> toggles;
+    private final Map<String, FeatureToggle> toggles;
 
     public FeatureToggleConfig() {
         toggles = new HashMap<>();
@@ -16,11 +16,7 @@ public class FeatureToggleConfig {
     }
 
     public FeatureToggle getToggle(String key) {
-        FeatureToggle featureToggle = toggles.get(key);
-        if (featureToggle == null) {
-            featureToggle = new FeatureToggle();
-            toggles.put(key, featureToggle);
-        }
+        FeatureToggle featureToggle = toggles.computeIfAbsent(key, k -> new FeatureToggle());
         return featureToggle;
     }
 }

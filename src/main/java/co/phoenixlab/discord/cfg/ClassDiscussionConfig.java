@@ -8,7 +8,7 @@ import java.util.List;
 
 public class ClassDiscussionConfig {
 
-    private List<EmojiRoleBinding> emojiRoleBindings;
+    private final List<EmojiRoleBinding> emojiRoleBindings;
     private String serverId;
     private String channelId;
 

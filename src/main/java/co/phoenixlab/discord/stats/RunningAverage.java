@@ -38,7 +38,7 @@ public class RunningAverage {
     }
 
     public void add(double val) {
-        running = (running * (double) count + (double) val) / (double) (count + 1);
+        running = (running * (double) count + val) / (double) (count + 1);
         count++;
         min = min(min, val);
         max = max(max, val);

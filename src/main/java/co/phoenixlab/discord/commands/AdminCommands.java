@@ -37,7 +37,7 @@ import static co.phoenixlab.discord.commands.CommandUtil.findUser;
 public class AdminCommands {
 
     private final CommandDispatcher dispatcher;
-    private Localizer loc;
+    private final Localizer loc;
     private final ScriptEngine scriptEngine;
     private final Gson gson;
     private final VahrhedralBot bot;
@@ -130,16 +130,16 @@ public class AdminCommands {
             return false;
         }
         long count = server.getMembers().stream().
-                filter(m -> m == null).
+                filter(Objects::isNull).
                 count();
         if (count > 0) {
             reportBuilder.append(id).append(" ").append(count).append(" null members\n");
             return false;
         }
         count = server.getMembers().stream().
-                filter(m -> m != null).
+                filter(Objects::nonNull).
                 map(Member::getUser).
-                filter(u -> u == null).
+                filter(Objects::isNull).
                 count();
         if (count > 0) {
             reportBuilder.append(id).append(" ").append(count).append(" null member users\n");
@@ -253,7 +253,7 @@ public class AdminCommands {
         StringJoiner joiner = new StringJoiner(", ");
         bot.getConfig().getBlacklist().stream().
                 map(apiClient::getUserById).
-                filter(user -> user != null).
+                filter(Objects::nonNull).
                 map(User::getUsername).
                 forEach(joiner::add);
         String res = joiner.toString();
@@ -530,8 +530,8 @@ public class AdminCommands {
             if (fieldName.contains(".")) {
                 String[] split = fieldName.split("\\.");
                 Object ret = object;
-                for (int i = 0; i < split.length; i++) {
-                    ret = field(ret, split[i]);
+                for (String aSplit : split) {
+                    ret = field(ret, aSplit);
                 }
                 return ret;
             }

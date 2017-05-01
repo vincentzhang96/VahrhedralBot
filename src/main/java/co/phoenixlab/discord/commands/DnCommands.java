@@ -94,11 +94,11 @@ public class DnCommands {
 
     private final CommandDispatcher dispatcher;
     private final VahrhedralBot bot;
-    private Localizer loc;
-    private DnFdCommand dnFdCommand;
-    private DnCritCommand dnCritCommand;
-    private DnDefCommand dnDefCommand;
-    private DnCritDmgCommand dnCritDmgCommand;
+    private final Localizer loc;
+    private final DnFdCommand dnFdCommand;
+    private final DnCritCommand dnCritCommand;
+    private final DnDefCommand dnDefCommand;
+    private final DnCritDmgCommand dnCritDmgCommand;
 
     public DnCommands(VahrhedralBot bot) {
         this.bot = bot;

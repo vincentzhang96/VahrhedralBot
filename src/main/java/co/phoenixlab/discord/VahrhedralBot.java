@@ -69,8 +69,8 @@ public class VahrhedralBot implements Runnable {
 
     private Commands commands;
     private CommandDispatcher commandDispatcher;
-    private EventListener eventListener;
-    private TaskQueue taskQueue;
+    private final EventListener eventListener;
+    private final TaskQueue taskQueue;
     private String versionInfo;
     private Localizer localizer;
 

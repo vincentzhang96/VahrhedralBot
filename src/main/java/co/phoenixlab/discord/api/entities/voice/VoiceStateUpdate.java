@@ -11,7 +11,7 @@ import static co.phoenixlab.discord.api.DiscordApiClient.*;
 public class VoiceStateUpdate {
 
     @SerializedName("self_deaf")
-    private boolean selfDeaf;
+    private final boolean selfDeaf;
 
     @SerializedName("user_id")
     private String userId;
@@ -23,16 +23,16 @@ public class VoiceStateUpdate {
 
     private transient Server server = NO_SERVER;
 
-    private boolean deaf;
+    private final boolean deaf;
 
     @SerializedName("session_id")
-    private String sessionId;
+    private final String sessionId;
 
-    private boolean mute;
+    private final boolean mute;
 
-    private boolean suppress;
+    private final boolean suppress;
 
-    private boolean selfMute;
+    private final boolean selfMute;
 
     @SerializedName("channel_id")
     private String channelId;

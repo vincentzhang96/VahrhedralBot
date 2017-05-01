@@ -45,7 +45,7 @@ import static java.util.concurrent.TimeUnit.*;
 public class DiscordWebSocketClient extends WebSocketClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("DiscordApiWebSocketClient");
-    private static Map<String, String> header;
+    private static final Map<String, String> header;
 
     static {
         header = new HashMap<>();
@@ -639,11 +639,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
             LOGGER.warn("No presences received on new server");
         }
         //  need to delete the null named versions
-        for (Iterator<Server> iterator = apiClient.getServers().iterator(); iterator.hasNext();) {
-            if (iterator.next().getId().equals(server.getId())) {
-                iterator.remove();
-            }
-        }
+        apiClient.getServers().removeIf(server1 -> server1.getId().equals(server.getId()));
         apiClient.getServers().add(server);
         apiClient.getServerMap().put(server.getId(), server);
         apiClient.requestLargerServerUsers(server);

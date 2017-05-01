@@ -2,7 +2,7 @@ package co.phoenixlab.discord.api.entities;
 
 public class Embed {
 
-    public static String TYPE_RICH = "rich";
+    public static final String TYPE_RICH = "rich";
 
     private String title;
     private String type;

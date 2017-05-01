@@ -20,7 +20,7 @@ import java.util.stream.Stream;
 public class Frequency {
 
     public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("MM/dd/yy");
-    private static Pattern DATE = Pattern.compile("[0-1][0-9]/[0-3][0-9]/[0-9][0-9]");
+    private static final Pattern DATE = Pattern.compile("[0-1][0-9]/[0-3][0-9]/[0-9][0-9]");
 
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
@@ -84,9 +84,9 @@ public class Frequency {
 
     static class ForkCount extends RecursiveAction {
 
-        Map<String, LongAdd> days = new HashMap<>();
-        private List<String> lines;
-        private Results results;
+        final Map<String, LongAdd> days = new HashMap<>();
+        private final List<String> lines;
+        private final Results results;
 
         ForkCount(List<String> lines, Results results) {
             this.lines = lines;
@@ -98,7 +98,7 @@ public class Frequency {
             if (lines.size() < 4096) {
                 lines.stream().map(s -> s.substring(0, 8)).
                         forEach(this::count);
-                days.entrySet().forEach(e -> results.accumulate(e.getKey(), e.getValue().value));
+                days.forEach((key, value) -> results.accumulate(key, value.value));
             } else {
                 int splitSize = lines.size() / 2;
                 invokeAll(new ForkCount(lines.subList(0, splitSize), results),
@@ -107,11 +107,7 @@ public class Frequency {
         }
 
         private void count(String date) {
-            LongAdd add = days.get(date);
-            if (add == null) {
-                add = new LongAdd();
-                days.put(date, add);
-            }
+            LongAdd add = days.computeIfAbsent(date, k -> new LongAdd());
             add.increment();
         }
 

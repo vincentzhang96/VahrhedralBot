@@ -26,7 +26,7 @@ public class CommandDispatcher {
 
     private final Map<String, CommandWrapper> commands;
     private final Statistics statistics;
-    private AtomicBoolean active;
+    private final AtomicBoolean active;
     private String commandPrefix;
     private BiPredicate<CommandWrapper, MessageContext> customCommandDispatchChecker;
 
