@@ -370,7 +370,7 @@ public class EventListener {
         } else {
             return;
         }
-        if (!server.getId().equals("106293726271246336")) {
+        if (!server.getId().equals("106293726271246336") && !server.getId().equals("312008379818311680")) {
             return;
         }
         Member member = bot.getApiClient().getUserMember(author, server);
