@@ -504,7 +504,7 @@ public class EventListener {
                     .forEach(joiner::add);
                 bot.getApiClient()
                     .sendMessage(String.format("**WARNING**\n`%s#%s` (%s) has the same name as:\n```%s```",
-                        user.getUsername(), user.getDiscriminator(), user.getId(), joiner.toString()), channel);
+                        user.getUsername(), user.getDiscriminator(), user.getId(), joiner.toString()), cid);
             }
 
             if (joinLeaveLimiters == null) {
@@ -525,7 +525,7 @@ public class EventListener {
                     bot.getCommands().getModCommands().banChecked(channel,
                         bot.getApiClient().getClientUser(), user, server);
                     bot.getApiClient().sendMessage(String.format("`%s#%s` (%s) has been banned for join-leave spam",
-                        user.getUsername(), user.getDiscriminator(), user.getId()), channel);
+                        user.getUsername(), user.getDiscriminator(), user.getId()), cid);
                     return;
                 }
             } catch (ExecutionException e) {
