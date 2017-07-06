@@ -212,12 +212,27 @@ public class Commands {
             String id = user.getId();
             String status = "[" + Optional.ofNullable(apiClient.getUserPresences().get(id)).map(Presence::getDisplayKey)
                 .orElse("misc.unknown") + "]";
-            String playingGame = Optional.ofNullable(apiClient.getUserGames().get(id)).orElse("[misc.nothing]");
+
+            Game nowPlaying = apiClient.getUserGames().get(id);
+            String nowPlayingBody;
+            if (nowPlaying != null) {
+                if (nowPlaying.isStreaming()) {
+                    nowPlayingBody = loc.localize("commands.general.info2.response.field.status.g.fmt",
+                            status, nowPlaying.getName(), nowPlaying.getUrl());
+                } else {
+                    nowPlayingBody = loc.localize("commands.general.info2.response.field.status.fmt",
+                            status, nowPlaying.getName());
+                }
+            } else {
+                nowPlayingBody = loc.localize("commands.general.info2.response.field.status.fmt",
+                        status, "[misc.nothing]");
+            }
             fields.add(new EmbedField(
                 loc.localize("commands.general.info2.response.field.status"),
-                loc.localize("commands.general.info2.response.field.status.fmt", status, playingGame),
+                nowPlayingBody,
                 true
             ));
+
             Member member = apiClient.getUserMember(user, context.getServer());
             String memberJoinDate = member.getJoinedAt();
             if (member != NO_MEMBER) {
@@ -324,7 +339,7 @@ public class Commands {
                     loc.localize("commands.general.info.response.admin") : "",
                 avatar,
                 joined,
-                Optional.ofNullable(apiClient.getUserGames().get(id)).orElse("[misc.nothing]"),
+                Optional.ofNullable(apiClient.getUserGames().get(id)).map(Game::getName).orElse("[misc.nothing]"),
                 "[" + Optional.ofNullable(apiClient.getUserPresences().get(id)).map(Presence::getDisplayKey).
                     orElse("misc.unknown") + "]",
                 user.getDiscriminator(),
@@ -360,7 +375,7 @@ public class Commands {
                 }).
                 collect(Collectors.toSet());
         }
-        Map<String, String> games = api.getUserGames();
+        Map<String, Game> games = api.getUserGames();
 
         Map<String, LongAdder> gameCount = new HashMap<>();
         long playing = 0L;
@@ -370,7 +385,7 @@ public class Commands {
             if (presence == null || presence == Presence.OFFLINE) {
                 continue;
             }
-            String game = games.get(serverUser);
+            String game = SafeNav.of(games.get(serverUser)).next(Game::getName).get();
             if (game == null || game.trim().isEmpty() || "[misc.nothing]".equalsIgnoreCase(game.trim())) {
                 ++noGame;
             } else {

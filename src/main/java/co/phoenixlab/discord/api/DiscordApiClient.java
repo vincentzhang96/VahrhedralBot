@@ -82,7 +82,7 @@ public class DiscordApiClient {
     private final AtomicBoolean active;
     private final Statistics statistics;
     private final Map<String, Presence> userPresences;
-    private final Map<String, String> userGames;
+    private final Map<String, Game> userGames;
     private String email;
     private String password;
     private String token;
@@ -267,7 +267,7 @@ public class DiscordApiClient {
                 forEach(p -> {
                     String id = p.getUser().getId();
                     userPresences.put(id, p.getStatus());
-                    userGames.put(id, SafeNav.of(p.getGame()).next(Game::getName).orElse("[misc.nothing]"));
+                    userGames.put(id, p.getGame());
                 });
         //  Request to populate the large servers
         servers.stream().filter(Server::isLarge).
@@ -1115,7 +1115,7 @@ public class DiscordApiClient {
         return userPresences;
     }
 
-    public Map<String, String> getUserGames() {
+    public Map<String, Game> getUserGames() {
         return userGames;
     }
 

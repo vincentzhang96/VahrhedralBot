@@ -444,9 +444,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
                 LOGGER.debug("[{}] '{}': {}'s ({}) presence changed",
                         server.getId(), server.getName(),
                         user.getUsername(), user.getId());
-                apiClient.getUserGames().put(user.getId(), SafeNav.of(update.getGame()).
-                        next(Game::getName).
-                        orElse("[misc.nothing]"));
+                apiClient.getUserGames().put(user.getId(), update.getGame());
                 apiClient.getUserPresences().put(user.getId(), update.getStatus());
                 apiClient.getEventBus().post(new PresenceUpdateEvent(oldUsername, update, server));
             } else {
@@ -633,7 +631,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
             Arrays.stream(server.getPresences()).forEach(p -> {
                 String id = p.getUser().getId();
                 apiClient.getUserPresences().put(id, p.getStatus());
-                apiClient.getUserGames().put(id, SafeNav.of(p.getGame()).next(Game::getName).orElse("[misc.nothing]"));
+                apiClient.getUserGames().put(id, p.getGame());
             });
         } else {
             LOGGER.warn("No presences received on new server");
