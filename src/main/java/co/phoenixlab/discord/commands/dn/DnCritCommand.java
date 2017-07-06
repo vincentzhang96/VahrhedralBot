@@ -11,22 +11,22 @@ import co.phoenixlab.discord.api.entities.EmbedFooter;
 
 public class DnCritCommand implements Command {
 
-    public static final float CRIT_MAX_PERCENT = 0.89F;
-    public static final float[] critCaps = {
-            1000.0F, 1160.0F, 1320.0F, 1480.0F, 1640.0F, 1800.0F, 1960.0F, 2120.0F,
-            2280.0F, 2440.0F, 2600.0F, 2760.0F, 2920.0F, 3080.0F, 3800.0F, 4000.0F,
-            4200.0F, 4400.0F, 4600.0F, 4800.0F, 5000.0F, 5200.0F, 5400.0F, 5600.0F,
-            5900.0F, 6200.0F, 6500.0F, 6800.0F, 7100.0F, 7400.0F, 7700.0F, 8000.0F,
-            8400.0F, 8800.0F, 9200.0F, 9600.0F, 10000.0F, 10400.0F, 10800.0F, 11200.0F,
-            12000.0F, 12800.0F, 13600.0F, 14400.0F, 15300.0F, 16200.0F, 17100.0F,
-            18000.0F, 19000.0F, 20000.0F, 21500.0F, 23000.0F, 24600.0F, 26200.0F,
-            27900.0F, 29600.0F, 31400.0F, 33200.0F, 35200.0F, 37200.0F, 40200.0F,
-            43200.0F, 46200.0F, 49200.0F, 52400.0F, 55600.0F, 58800.0F, 62000.0F,
-            65400.0F, 68800.0F, 74745.0F, 80619.0F, 86438.0F, 92373.0F, 98284.0F,
-            104245.0F, 110176.0F, 116008.0F, 121899.0F, 127685.0F, 138684.0F, 149565.0F,
-            160545.0F, 171433.0F, 182263.0F, 192994.0F, 203931.0F, 214891.0F, 225855.0F,
-            236880.0F, 277830.0F, 321300.0F, 367290.0F, 794640.0F, 937755.0F, 1599360.0F,
-            1867320.0F, 2150400.0F, 2448600.0F, 2704380.0F
+    public static final double CRIT_MAX_PERCENT = 0.89;
+    public static final double[] critCaps = {
+            1000.0, 1160.0, 1320.0, 1480.0, 1640.0, 1800.0, 1960.0, 2120.0,
+            2280.0, 2440.0, 2600.0, 2760.0, 2920.0, 3080.0, 3800.0, 4000.0,
+            4200.0, 4400.0, 4600.0, 4800.0, 5000.0, 5200.0, 5400.0, 5600.0,
+            5900.0, 6200.0, 6500.0, 6800.0, 7100.0, 7400.0, 7700.0, 8000.0,
+            8400.0, 8800.0, 9200.0, 9600.0, 10000.0, 10400.0, 10800.0, 11200.0,
+            12000.0, 12800.0, 13600.0, 14400.0, 15300.0, 16200.0, 17100.0,
+            18000.0, 19000.0, 20000.0, 21500.0, 23000.0, 24600.0, 26200.0,
+            27900.0, 29600.0, 31400.0, 33200.0, 35200.0, 37200.0, 40200.0,
+            43200.0, 46200.0, 49200.0, 52400.0, 55600.0, 58800.0, 62000.0,
+            65400.0, 68800.0, 74745.0, 80619.0, 86438.0, 92373.0, 98284.0,
+            104245.0, 110176.0, 116008.0, 121899.0, 127685.0, 138684.0, 149565.0,
+            160545.0, 171433.0, 182263.0, 192994.0, 203931.0, 214891.0, 225855.0,
+            236880.0, 277830.0, 321300.0, 367290.0, 794640.0, 937755.0, 1599360.0,
+            1867320.0, 2150400.0, 2448600.0, 2704380.0
     };
 
     private final Localizer loc;
@@ -51,7 +51,7 @@ public class DnCritCommand implements Command {
             level = ParseInt.parseOrDefault(split[1], -1);
         }
         int crit = -1;
-        float critPercent = 0;
+        double critPercent = 0;
         String critAmt = split[0];
         try {
             if (critAmt.endsWith("%")) {
@@ -130,7 +130,7 @@ public class DnCritCommand implements Command {
     }
 
 
-    public float calculateCritPercent(int crit, int level) {
+    public double calculateCritPercent(int crit, int level) {
         int levelIndex = level - 1;
         if (levelIndex < 0 || levelIndex > critCaps.length) {
             throw new IllegalArgumentException(loc.localize(
@@ -145,12 +145,12 @@ public class DnCritCommand implements Command {
                     0
             ));
         }
-        float critCap = critCaps[levelIndex];
-        float critPercent = crit / critCap;
-        return Math.max(0, Math.min(CRIT_MAX_PERCENT, critPercent)) * 100F;
+        double critCap = critCaps[levelIndex];
+        double critPercent = crit / critCap;
+        return Math.max(0, Math.min(CRIT_MAX_PERCENT, critPercent)) * 100D;
     }
 
-    public int calculateCritRequiredForPercent(float percent, int level) {
+    public int calculateCritRequiredForPercent(double percent, int level) {
         int levelIndex = level - 1;
         if (levelIndex < 0 || levelIndex > critCaps.length) {
             throw new IllegalArgumentException(loc.localize(
@@ -166,9 +166,9 @@ public class DnCritCommand implements Command {
             ));
         }
         percent = Math.min(percent, CRIT_MAX_PERCENT);
-        float critCap = critCaps[levelIndex];
-        float crit = critCap * percent;
-        return (int) crit;
+        double critCap = critCaps[levelIndex];
+        double crit = critCap * percent;
+        return (int) Math.round(crit);
     }
 
 }
