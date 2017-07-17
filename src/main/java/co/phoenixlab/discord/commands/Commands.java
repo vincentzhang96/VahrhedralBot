@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
 import static co.phoenixlab.discord.api.DiscordApiClient.*;
+import static co.phoenixlab.discord.api.entities.Permission.ADMINISTRATOR;
 import static co.phoenixlab.discord.api.entities.Permission.CHAT_MANAGE_MESSAGES;
 import static co.phoenixlab.discord.commands.CommandUtil.findUser;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -639,7 +640,7 @@ public class Commands {
         }
         for (String roleId : member.getRoles()) {
             Role role = apiClient.getRole(roleId, server);
-            if (permission.test(role.getPermissions())) {
+            if (permission.test(role.getPermissions()) || ADMINISTRATOR.test(role.getPermissions())) {
                 return true;
             }
         }
