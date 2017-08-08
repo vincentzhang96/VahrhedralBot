@@ -10,6 +10,7 @@ import co.phoenixlab.discord.chatlogger.ChatLogger;
 import co.phoenixlab.discord.classdiscussion.ClassRoleManager;
 import co.phoenixlab.discord.commands.Commands;
 import co.phoenixlab.discord.commands.tempstorage.DnTrackStorage;
+import com.divinitor.discord.vahrhedralbot.EntryPoint;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.mashape.unirest.http.HttpResponse;
@@ -78,6 +79,7 @@ public class VahrhedralBot implements Runnable {
     private DnTrackStorage dnTrackStorage;
     private List<ClassRoleManager> reactionManagers;
     private FeatureToggleConfig toggleConfig;
+    private EntryPoint entryPoint;
 
     private static VahrhedralBot instance;
 
@@ -86,6 +88,7 @@ public class VahrhedralBot implements Runnable {
         eventListener = new EventListener(this);
         reactionManagers = null;
         toggleConfig = null;
+        entryPoint = new EntryPoint(this);
     }
 
     @Override
@@ -141,6 +144,9 @@ public class VahrhedralBot implements Runnable {
 
         commands = new Commands(this);
         commands.register(commandDispatcher);
+
+        entryPoint.init();
+
         try {
             String token = config.getToken();
             if (token == null || token.isEmpty()) {
