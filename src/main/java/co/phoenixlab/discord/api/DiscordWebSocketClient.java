@@ -697,7 +697,9 @@ public class DiscordWebSocketClient extends WebSocketClient {
         }
         statistics.deathCount.increment();
         apiClient.getEventBus().post(new WebSocketCloseEvent(code, reason, remote));
-        metricReporter.stop();
+        if (metricReporter != null) {
+            metricReporter.stop();
+        }
     }
 
     @Override
