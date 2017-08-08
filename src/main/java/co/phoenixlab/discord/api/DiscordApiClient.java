@@ -1,6 +1,5 @@
 package co.phoenixlab.discord.api;
 
-import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.LogInEvent;
 import co.phoenixlab.discord.api.event.UserUpdateEvent;
@@ -446,7 +445,8 @@ public class DiscordApiClient {
             int status = response.getStatus();
             if (status != 200) {
                 statistics.restErrorCount.increment();
-                LOGGER.warn("Unable to send message: HTTP {}: {}", status, response.getStatusText());
+                LOGGER.warn("Unable to send message: HTTP {}: {}: {}",
+                    status, response.getStatusText(), response.getBody());
                 return null;
             }
             Message message = g.fromJson(response.getBody(), Message.class);
