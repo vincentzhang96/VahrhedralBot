@@ -11,6 +11,7 @@ import co.phoenixlab.discord.classdiscussion.ClassRoleManager;
 import co.phoenixlab.discord.commands.Commands;
 import co.phoenixlab.discord.commands.tempstorage.DnTrackStorage;
 import com.divinitor.discord.vahrhedralbot.EntryPoint;
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.mashape.unirest.http.HttpResponse;
@@ -21,6 +22,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -81,6 +85,8 @@ public class VahrhedralBot implements Runnable {
     private FeatureToggleConfig toggleConfig;
     private EntryPoint entryPoint;
 
+    private JedisPool jedisPool;
+
     private static VahrhedralBot instance;
 
     public VahrhedralBot() {
@@ -102,6 +108,22 @@ public class VahrhedralBot implements Runnable {
             LOGGER.error("Unable to load configuration", e);
             return;
         }
+
+        jedisPool = new JedisPool(
+            new JedisPoolConfig(),
+            config.getRedis().getHost(),
+            config.getRedis().getPort(),
+            5000,
+            config.getRedis().getPassword());
+
+        try(Jedis jedis = jedisPool.getResource()) {
+            String ret = jedis.ping();
+            if (!Strings.isNullOrEmpty(ret)) {
+                LOGGER.info("Successfully connected to redis @ {}:{}",
+                    config.getRedis().getHost(), config.getRedis().getPort());
+            }
+        }
+
         try {
             dnTrackStorage = loadDnTrackInfo();
         } catch (IOException e) {
@@ -331,6 +353,10 @@ public class VahrhedralBot implements Runnable {
         return toggleConfig;
     }
 
+    public JedisPool getJedisPool() {
+        return jedisPool;
+    }
+
     public void shutdown() {
         shutdown(0);
     }
@@ -344,6 +370,9 @@ public class VahrhedralBot implements Runnable {
         } catch (IOException e) {
             LOGGER.warn("Was unable to cleanly shut down Unirest", e);
         }
+
+        jedisPool.destroy();
+
         System.exit(code);
     }
 
