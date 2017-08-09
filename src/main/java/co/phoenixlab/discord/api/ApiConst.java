@@ -52,6 +52,10 @@ public class ApiConst {
      */
     public static final String AVATAR_URL_PATTERN = "https://cdn.discordapp.com/avatars/%1$s/%2$s.jpg?size=1024";
     /**
+     * The format string for Discord's default avatar URLs. Values from 0 to 4 inclusive.
+     */
+    public static final String NO_AVATAR_URL_PATTERN = "https://cdn.discordapp.com/embed/avatars/%d.png";
+    /**
      * The format string for animated avatar URLs
      */
     public static final String ANIMATED_AVATAR_URL_PATTERN = "https://cdn.discordapp.com/avatars/%1$s/%2$s.gif?size=1024";

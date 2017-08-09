@@ -87,7 +87,7 @@ public class User {
             if (avatar != null) {
                 avatarUrl = ApiUtils.url(String.format(ApiConst.AVATAR_URL_PATTERN, id, avatar));
             } else {
-                avatarUrl = ApiUtils.url(String.format(ApiConst.AVATAR_URL_PATTERN, id, "NO_AVATAR.JPG"));
+                avatarUrl = ApiUtils.url(String.format(ApiConst.NO_AVATAR_URL_PATTERN, getDiscriminatorAsInt() % 4));
             }
         }
         return avatarUrl;
@@ -98,7 +98,7 @@ public class User {
             if (avatar != null) {
                 animatedAvatarUrl = ApiUtils.url(String.format(ApiConst.ANIMATED_AVATAR_URL_PATTERN, id, avatar));
             } else {
-                animatedAvatarUrl = ApiUtils.url(String.format(ApiConst.AVATAR_URL_PATTERN, id, "NO_AVATAR.JPG"));
+                animatedAvatarUrl = ApiUtils.url(String.format(ApiConst.NO_AVATAR_URL_PATTERN, getDiscriminatorAsInt() % 4));
             }
         }
         return animatedAvatarUrl;
@@ -141,6 +141,10 @@ public class User {
 
     public void setDiscriminator(String discriminator) {
         this.discriminator = discriminator;
+    }
+
+    public int getDiscriminatorAsInt() {
+        return Integer.parseInt(discriminator);
     }
 
     @Override
