@@ -10,6 +10,7 @@ import co.phoenixlab.discord.chatlogger.ChatLogger;
 import co.phoenixlab.discord.classdiscussion.ClassRoleManager;
 import co.phoenixlab.discord.commands.Commands;
 import co.phoenixlab.discord.commands.tempstorage.DnTrackStorage;
+import co.phoenixlab.discord.util.ResourceBundleLocaleStringProvider;
 import com.divinitor.discord.vahrhedralbot.EntryPoint;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
@@ -38,7 +39,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
-import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -185,26 +185,8 @@ public class VahrhedralBot implements Runnable {
     private void loadLocalization() {
         localizer = new LocalizerImpl(Locale.getDefault());
         localizer.registerPluralityRules(LocalizerImpl.defaultPluralityRules());
-        LocaleStringProvider provider = new LocaleStringProvider() {
-            ResourceBundle bundle;
-            @Override
-            public void setActiveLocale(Locale locale) {
-                bundle = ResourceBundle.getBundle("co.phoenixlab.discord.resources.locale", locale);
-            }
-
-            @Override
-            public String get(String key) {
-                if (!contains(key)) {
-                    return key;
-                }
-                return bundle.getString(key);
-            }
-
-            @Override
-            public boolean contains(String key) {
-                return bundle.containsKey(key);
-            }
-        };
+        LocaleStringProvider provider = new ResourceBundleLocaleStringProvider(
+            "co.phoenixlab.discord.resources.locale");
         localizer.addLocaleStringProvider(provider);
     }
 
