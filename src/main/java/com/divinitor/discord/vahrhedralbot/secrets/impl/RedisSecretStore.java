@@ -33,9 +33,13 @@ public class RedisSecretStore implements SecretsStore {
 
     @Override
     public String getSecret(String key) throws NoSuchElementException {
+        return getSecret(key, true);
+    }
+
+    public String getSecret(String key, boolean throwExcept) throws NoSuchElementException {
         try (Jedis jedis = pool.getResource()) {
             String ret = jedis.get(SECRETS_KEY_BASE + key);
-            if (ret == null) {
+            if (ret == null && throwExcept) {
                 throw new NoSuchElementException(key);
             }
             return ret;
@@ -60,6 +64,6 @@ public class RedisSecretStore implements SecretsStore {
 
     @Override
     public SecretHandle getSecretHandler(String key) {
-        return () -> getSecret(key);
+        return () -> getSecret(key, false);
     }
 }

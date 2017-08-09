@@ -2,6 +2,7 @@ package com.divinitor.discord.vahrhedralbot;
 
 import co.phoenixlab.discord.VahrhedralBot;
 import com.divinitor.discord.vahrhedralbot.secrets.SecretsStore;
+import com.divinitor.discord.vahrhedralbot.secrets.impl.RedisSecretStore;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +30,9 @@ public class EntryPoint {
     }
 
     public void init() {
+
+        secretsStore = new RedisSecretStore(bot.getJedisPool());
+
         //  Load components
         Reflections reflections = new Reflections("com.divinitor.discord.vahrhedralbot.component");
         Set<Class<? extends BotComponent>> componentClasses = reflections.getSubTypesOf(BotComponent.class);
