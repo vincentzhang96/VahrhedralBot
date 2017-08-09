@@ -3,6 +3,7 @@ package com.divinitor.discord.vahrhedralbot.component;
 import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.PresenceUpdateEvent;
+import co.phoenixlab.discord.util.ResourceBundleLocaleStringProvider;
 import com.divinitor.discord.vahrhedralbot.AbstractBotComponent;
 import com.divinitor.discord.vahrhedralbot.EntryPoint;
 import com.divinitor.discord.vahrhedralbot.secrets.SecretHandle;
@@ -20,13 +21,13 @@ import com.mashape.unirest.http.exceptions.UnirestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class TwitchStreamStatusListener extends AbstractBotComponent {
+public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("VahrhedralBot.TwitchStreamStatus");
     public static final String TWITCH_API_CLIENTID_SECRET_KEY = "api.twitch.clientid";
@@ -52,6 +53,10 @@ public class TwitchStreamStatusListener extends AbstractBotComponent {
     @Override
     public void register(EntryPoint entryPoint) throws Exception {
         super.register(entryPoint);
+
+        entryPoint.getBot().getLocalizer().addLocaleStringProvider(
+            new ResourceBundleLocaleStringProvider(
+                "com.divinitor.discord.vahrhedralbot.component.twitchstreamdiscordstatuslocale"));
 
         twitchClientId = entryPoint.getSecretsStore().getSecretHandler(TWITCH_API_CLIENTID_SECRET_KEY);
 
@@ -98,7 +103,7 @@ public class TwitchStreamStatusListener extends AbstractBotComponent {
         };
     }
 
-    private String getId(String twitchUsername) throws UnirestException, UnsupportedEncodingException {
+    private String getId(String twitchUsername) throws UnirestException, IOException {
         HttpResponse<JsonNode> resp = Unirest.get("https://api.twitch.tv/kraken/users?login=" +
             URLEncoder.encode(twitchUsername, "UTF-8"))
         .headers(headers())
@@ -106,11 +111,16 @@ public class TwitchStreamStatusListener extends AbstractBotComponent {
 
         LOGGER.debug(resp.getBody().toString());
 
-        return resp.getBody()
-            .getObject()
-            .getJSONArray("users")
-            .getJSONObject(0)
-            .getString("_id");
+        try {
+            return resp.getBody()
+                .getObject()
+                .getJSONArray("users")
+                .getJSONObject(0)
+                .getString("_id");
+        } catch (Exception e) {
+            throw new IOException("Failed to get id for " + twitchUsername + ": " + resp.getStatus() + ": " +
+                resp.getStatusText() + ": " + resp.getBody().toString());
+        }
     }
 
     private Map<String, String> headers() {
@@ -135,6 +145,10 @@ public class TwitchStreamStatusListener extends AbstractBotComponent {
         //  This event fires off once for each server that the user shares with us
         String userId = event.getPresenceUpdate().getUser().getId();
         String serverId = event.getServer().getId();
+
+        if (!getBot().getToggleConfig().getToggle("component.twitch.discord.streamstatus.listen").use(serverId)) {
+            return;
+        }
 
         String uuid = uuid(userId, serverId);
 
@@ -182,6 +196,11 @@ public class TwitchStreamStatusListener extends AbstractBotComponent {
     }
 
     private void announceStreamUp(PresenceUpdateEvent event) {
+        if (!getBot().getToggleConfig().getToggle("component.twitch.discord.streamstatus.announce")
+            .use(event.getServer().getId())) {
+            return;
+        }
+
         String twitchUrl = event.getPresenceUpdate().getGame().getUrl();
         if (twitchUrl.endsWith("/")) {
             twitchUrl = twitchUrl.substring(0, twitchUrl.length() - 1);
@@ -211,13 +230,10 @@ public class TwitchStreamStatusListener extends AbstractBotComponent {
         PresenceUpdate update = event.getPresenceUpdate();
         User user = update.getUser();
         Member member = getBot().getApiClient().getUserMember(user.getId(), update.getServerId());
-//        LOGGER.info("TESTING {} ({}#{}) (twitch:{}) is now streaming '{}' - playing {}!",
-//            member.getNickOrUsername(),
-//            user.getUsername(),
-//            user.getDiscriminator(),
-//            stream.getStream().getChannel().getDisplayName(),
-//            stream.getStream().getChannel().getStatus(),
-//            stream.getStream().getGame());
+
+//        Embed embed = new Embed();
+//        embed.setType(Embed.TYPE_RICH);
+//        embed.setColor(5846677);
     }
 
     private boolean shouldWatchUser(String userId, String serverId) {
