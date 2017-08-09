@@ -209,7 +209,7 @@ public class TwitchStreamStatusListener extends AbstractBotComponent {
 
         //  TODO
         PresenceUpdate update = event.getPresenceUpdate();
-        User user = ;
+        User user = update.getUser();
         Member member = getBot().getApiClient().getUserMember(user.getId(), update.getServerId());
         LOGGER.info("TESTING {} ({}#{}) (twitch:{}) is now streaming '{}' - playing {}!",
             member.getNickOrUsername(),
