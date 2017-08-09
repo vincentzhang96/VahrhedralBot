@@ -2,6 +2,7 @@ package co.phoenixlab.discord;
 
 import co.phoenixlab.discord.cfg.DiscordApiClientConfig;
 import co.phoenixlab.discord.cfg.JoinLeaveLimits;
+import co.phoenixlab.discord.cfg.RedisConfig;
 import co.phoenixlab.discord.dntrack.event.RegionDescriptor;
 
 import java.util.HashSet;
@@ -25,6 +26,7 @@ public class Configuration {
     private long exMentionCacheEvictionTimeMs;
     private final JoinLeaveLimits jlLimit;
     private DiscordApiClientConfig apiClientConfig;
+    private RedisConfig redis;
 
     public Configuration() {
         email = "";
@@ -40,6 +42,7 @@ public class Configuration {
         exMentionBanThreshold = Integer.MAX_VALUE;
         jlLimit = new JoinLeaveLimits();
         apiClientConfig = new DiscordApiClientConfig();
+        redis = new RedisConfig();
     }
 
     public String getEmail() {
@@ -162,5 +165,13 @@ public class Configuration {
 
     public void setApiClientConfig(DiscordApiClientConfig apiClientConfig) {
         this.apiClientConfig = apiClientConfig;
+    }
+
+    public RedisConfig getRedis() {
+        return redis;
+    }
+
+    public void setRedis(RedisConfig redis) {
+        this.redis = redis;
     }
 }
