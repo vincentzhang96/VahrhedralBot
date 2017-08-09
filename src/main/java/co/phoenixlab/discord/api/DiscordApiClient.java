@@ -11,6 +11,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
+import com.google.common.base.Strings;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.gson.Gson;
@@ -775,6 +776,10 @@ public class DiscordApiClient {
         return server;
     }
 
+    public Server getServerById(String id) {
+        return getServerByID(id);
+    }
+
     public Map<String, Channel> getPrivateChannels() {
         return privateChannels;
     }
@@ -968,6 +973,13 @@ public class DiscordApiClient {
             return NO_MEMBER;
         }
         return getUserMember(user.getId(), server);
+    }
+
+    public Member getUserMember(String userId, String server) {
+        if (Strings.isNullOrEmpty(userId) || Strings.isNullOrEmpty(server)) {
+            return NO_MEMBER;
+        }
+        return getUserMember(userId, getServerByID(server));
     }
 
     public Member getUserMember(String userId, Server server) {
