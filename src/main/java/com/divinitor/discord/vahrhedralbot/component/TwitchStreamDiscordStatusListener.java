@@ -1,6 +1,7 @@
 package com.divinitor.discord.vahrhedralbot.component;
 
 import co.phoenixlab.common.lang.SafeNav;
+import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.PresenceUpdateEvent;
 import co.phoenixlab.discord.util.ResourceBundleLocaleStringProvider;
@@ -23,7 +24,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -191,13 +194,14 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
         //  Change in stream?
         if (oldGame.isStreaming() && newGame.isStreaming()) {
             //  TODO
-            announceStreamUp(event);
+//            announceStreamUp(event);
         }
     }
 
     private void announceStreamUp(PresenceUpdateEvent event) {
+        String serverId = event.getServer().getId();
         if (!getBot().getToggleConfig().getToggle("component.twitch.discord.streamstatus.announce")
-            .use(event.getServer().getId())) {
+            .use(serverId)) {
             return;
         }
 
@@ -221,19 +225,77 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
             return;
         }
 
-        if (stream.getStream() == null) {
+        StreamInfo sinfo = stream.getStream();
+        if (sinfo == null) {
             LOGGER.warn("Stream {} has no channel info", twitchUrl);
             return;
         }
 
-        //  TODO
+        ChannelInfo channel = sinfo.getChannel();
+
         PresenceUpdate update = event.getPresenceUpdate();
         User user = update.getUser();
         Member member = getBot().getApiClient().getUserMember(user.getId(), update.getServerId());
+        Localizer loc = getBot().getLocalizer();
 
-//        Embed embed = new Embed();
-//        embed.setType(Embed.TYPE_RICH);
-//        embed.setColor(5846677);
+        Embed embed = new Embed();
+        embed.setType(Embed.TYPE_RICH);
+        embed.setColor(5846677);
+
+        embed.setDescription(loc.localize("component.twitch.sdsl.status.startstream.message",
+            channel.getDisplayName(),
+            sinfo.getGame(),
+            channel.getUrl()));
+
+        EmbedAuthor author = new EmbedAuthor();
+        author.setIconUrl(user.getAvatarUrl().toExternalForm());
+        String authorNameFormatKey;
+        if (member.getNick() != null) {
+            authorNameFormatKey = "component.twitch.sdsl.status.startstream.author.nickname";
+        } else {
+            authorNameFormatKey = "component.twitch.sdsl.status.startstream.author";
+        }
+        author.setName(loc.localize(authorNameFormatKey,
+            user.getUsername(), user.getDiscriminator(), member.getNick()));
+        embed.setAuthor(author);
+
+        EmbedImage image = new EmbedImage();
+        image.setUrl(sinfo.getPreview().getMedium());
+        embed.setImage(image);
+
+        EmbedThumbnail thumbnail = new EmbedThumbnail();
+        thumbnail.setUrl(channel.getLogo());
+        embed.setThumbnail(thumbnail);
+
+        EmbedFooter footer = new EmbedFooter();
+        footer.setText(loc.localize("component.twitch.sdsl.status.startstream.footer"));
+        embed.setFooter(footer);
+
+        embed.setTimestamp(sinfo.getCreatedAt());
+
+        List<EmbedField> fields = new ArrayList<>();
+        fields.add(new EmbedField(
+            loc.localize("component.twitch.sdsl.status.startstream.field.title"),
+            loc.localize("component.twitch.sdsl.status.startstream.field.title.value",
+                channel.getStatus()),
+            false));
+        fields.add(new EmbedField(
+            loc.localize("component.twitch.sdsl.status.startstream.field.followers"),
+            loc.localize("component.twitch.sdsl.status.startstream.field.followers.value",
+                channel.getFollowers()),
+            true));
+        fields.add(new EmbedField(
+            loc.localize("component.twitch.sdsl.status.startstream.field.views"),
+            loc.localize("component.twitch.sdsl.status.startstream.field.views.value",
+                channel.getViews()),
+            true));
+
+        embed.setFields(fields.toArray(new EmbedField[fields.size()]));
+
+        getBot().getApiClient().sendMessage("", getBroadcastChannelForServer(serverId), embed);
+
+        LOGGER.debug("Dispatched Twitch notice for {}#{} in {}",
+            user.getUsername(), user.getDiscriminator(), serverId);
     }
 
     private boolean shouldWatchUser(String userId, String serverId) {
@@ -243,6 +305,11 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
     private boolean shouldWatchUser(String uuid) {
         //  TODO
         return true;
+    }
+
+    private String getBroadcastChannelForServer(String serverId) {
+        //  TODO
+        return serverId;
     }
 
     private static String uuid(String userId, String serverId) {
