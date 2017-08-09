@@ -2,15 +2,19 @@ package co.phoenixlab.discord.dntrack;
 
 import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.common.lang.number.ParseInt;
+import co.phoenixlab.discord.api.util.ApiUtils;
 import co.phoenixlab.discord.dntrack.event.RegionDescriptor;
 import co.phoenixlab.discord.dntrack.event.VersionUpdateEvent;
 import com.google.common.eventbus.EventBus;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
+import com.mashape.unirest.http.exceptions.UnirestException;
+import org.apache.http.conn.ConnectTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -73,6 +77,19 @@ public class VersionTracker implements Runnable {
                     + ", " + resp.getBody());
             }
         } catch (Exception e) {
+            if (e instanceof UnirestException) {
+                Throwable cause = e.getCause();
+                if (cause != null) {
+                    if (cause instanceof ConnectTimeoutException) {
+                        LOGGER.warn("Connection to {} timed out", region.getVersionCheckUrl());
+                        return;
+                    } else if (cause instanceof UnknownHostException) {
+                        LOGGER.warn("Unable to look up hostname {} (this usually temporary)",
+                            ApiUtils.url(region.getVersionCheckUrl()).getHost());
+                        return;
+                    }
+                }
+            }
             //  Ignored (kinda)
             LOGGER.warn("Failed version check for " + region.getRegionCode(), e);
         }
