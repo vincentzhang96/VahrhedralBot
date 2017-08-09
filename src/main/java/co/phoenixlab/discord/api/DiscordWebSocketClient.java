@@ -446,6 +446,12 @@ public class DiscordWebSocketClient extends WebSocketClient {
                         user.getUsername(), user.getId());
                 apiClient.getUserGames().put(user.getId(), update.getGame());
                 apiClient.getUserPresences().put(user.getId(), update.getStatus());
+
+                //  Rewrite the updateUser to have the right info
+                updateUser.setUsername(user.getUsername());
+                updateUser.setDiscriminator(user.getDiscriminator());
+                updateUser.setAvatar(user.getAvatar());
+
                 apiClient.getEventBus().post(new PresenceUpdateEvent(oldUsername, update, server));
             } else {
 //                LOGGER.warn("[{}] '{}': Orphan presence update received, ignored (userid={} username={}): Not found",
