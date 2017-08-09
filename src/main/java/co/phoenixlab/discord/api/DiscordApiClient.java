@@ -392,7 +392,9 @@ public class DiscordApiClient {
         if (body == null || channelId == null || mentions == null) {
             throw new IllegalArgumentException("Arguments may not be null");
         }
-        Future<Message> future = executorService.submit(() -> sendMessageInternal(body, channelId, mentions, embed));
+        //  Track the call site
+        Exception exception = new Exception();
+        Future<Message> future = executorService.submit(() -> sendMessageInternal(body, channelId, mentions, embed, exception));
         if (!async) {
             try {
                 future.get();
@@ -403,7 +405,7 @@ public class DiscordApiClient {
         return future;
     }
 
-    private Message sendMessageInternal(String body, String channelId, String[] mentions, Embed embed) {
+    private Message sendMessageInternal(String body, String channelId, String[] mentions, Embed embed, Throwable callSite) {
         Gson g = new GsonBuilder().create();
         //  April fools.
 //        String[] splitBody = body.split("\n");
@@ -440,7 +442,8 @@ public class DiscordApiClient {
                     asString();
             } catch (UnirestException e) {
                 statistics.restErrorCount.increment();
-                LOGGER.warn("Unable to send message", e);
+                callSite.initCause(e);
+                LOGGER.warn("Unable to send message", callSite);
                 return null;
             }
             int status = response.getStatus();
@@ -448,6 +451,8 @@ public class DiscordApiClient {
                 statistics.restErrorCount.increment();
                 LOGGER.warn("Unable to send message: HTTP {}: {}: {}",
                     status, response.getStatusText(), response.getBody());
+                //  Get caller so we know who to yell at
+                LOGGER.warn("Call stack", callSite);
                 return null;
             }
             Message message = g.fromJson(response.getBody(), Message.class);
