@@ -10,6 +10,7 @@ import co.phoenixlab.discord.chatlogger.ChatLogger;
 import co.phoenixlab.discord.classdiscussion.ClassRoleManager;
 import co.phoenixlab.discord.commands.Commands;
 import co.phoenixlab.discord.commands.tempstorage.DnTrackStorage;
+import co.phoenixlab.discord.util.NoMatchedStringLocaleStringProvider;
 import co.phoenixlab.discord.util.ResourceBundleLocaleStringProvider;
 import com.divinitor.discord.vahrhedralbot.EntryPoint;
 import com.google.common.base.Strings;
@@ -184,6 +185,7 @@ public class VahrhedralBot implements Runnable {
 
     private void loadLocalization() {
         localizer = new LocalizerImpl(Locale.getDefault());
+        localizer.addLocaleStringProvider(new NoMatchedStringLocaleStringProvider());
         localizer.registerPluralityRules(LocalizerImpl.defaultPluralityRules());
         LocaleStringProvider provider = new ResourceBundleLocaleStringProvider(
             "co.phoenixlab.discord.resources.locale");
