@@ -223,6 +223,9 @@ public class DiscordWebSocketClient extends WebSocketClient {
                     case "GUILD_BAN_DELETE":
                         handleGuildBanDelete(data);
                         break;
+                    case "GUILD_EMOJIS_UPDATE":
+                        //  Ignored
+                        break;
                     case "MESSAGE_ACK":
                         //  Ignored
                         break;
