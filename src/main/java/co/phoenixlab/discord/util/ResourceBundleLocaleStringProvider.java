@@ -23,7 +23,7 @@ public class ResourceBundleLocaleStringProvider implements LocaleStringProvider 
     @Override
     public String get(String key) {
         if (!contains(key)) {
-            return key;
+            return null;
         }
         return bundle.getString(key);
     }
