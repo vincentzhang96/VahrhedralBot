@@ -211,13 +211,13 @@ public class TwitchStreamStatusListener extends AbstractBotComponent {
         PresenceUpdate update = event.getPresenceUpdate();
         User user = update.getUser();
         Member member = getBot().getApiClient().getUserMember(user.getId(), update.getServerId());
-        LOGGER.info("TESTING {} ({}#{}) (twitch:{}) is now streaming '{}' - playing {}!",
-            member.getNickOrUsername(),
-            user.getUsername(),
-            user.getDiscriminator(),
-            stream.getStream().getChannel().getDisplayName(),
-            stream.getStream().getChannel().getStatus(),
-            stream.getStream().getGame());
+//        LOGGER.info("TESTING {} ({}#{}) (twitch:{}) is now streaming '{}' - playing {}!",
+//            member.getNickOrUsername(),
+//            user.getUsername(),
+//            user.getDiscriminator(),
+//            stream.getStream().getChannel().getDisplayName(),
+//            stream.getStream().getChannel().getStatus(),
+//            stream.getStream().getGame());
     }
 
     private boolean shouldWatchUser(String userId, String serverId) {
