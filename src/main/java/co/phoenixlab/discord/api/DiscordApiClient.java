@@ -449,7 +449,16 @@ public class DiscordApiClient {
             int status = response.getStatus();
             if (status != 200) {
                 statistics.restErrorCount.increment();
-                LOGGER.warn("Unable to send message: HTTP {}: {}: {}",
+                String parentServerId = "private";
+                Channel channel = getChannelById(channelId);
+                if (channel != null && channel != NO_CHANNEL) {
+                    Server parent = channel.getParent();
+                    if (parent != null && parent != NO_SERVER) {
+                        parentServerId = parent.getId();
+                    }
+                }
+                LOGGER.warn("Unable to send message to {}#{}: HTTP {}: {}: {}",
+                    parentServerId, channelId,
                     status, response.getStatusText(), response.getBody());
                 //  Get caller so we know who to yell at
                 LOGGER.warn("Call stack", callSite);
