@@ -1,6 +1,7 @@
 package com.divinitor.discord.vahrhedralbot;
 
 import co.phoenixlab.discord.VahrhedralBot;
+import com.divinitor.discord.vahrhedralbot.secrets.SecretsStore;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,9 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class EntryPoint {
 
@@ -19,10 +18,14 @@ public class EntryPoint {
     private final VahrhedralBot bot;
 
     private final List<BotComponent> components;
+    private final Map<Class<? extends BotComponent>, BotComponent> componentsAsMap;
+
+    private SecretsStore secretsStore;
 
     public EntryPoint(VahrhedralBot bot) {
         this.bot = bot;
         this.components = new ArrayList<>();
+        this.componentsAsMap = new HashMap<>();
     }
 
     public void init() {
@@ -48,6 +51,7 @@ public class EntryPoint {
         }
 
         components.add(component);
+        componentsAsMap.put(clazz, component);
         LOGGER.info("Registered component {}", clazz.getName());
     }
 
@@ -74,8 +78,16 @@ public class EntryPoint {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    public <T extends BotComponent> T get(Class<? extends BotComponent> clazz) {
+        return (T) componentsAsMap.get(clazz);
+    }
+
     public VahrhedralBot getBot() {
         return bot;
     }
 
+    public SecretsStore getSecretsStore() {
+        return secretsStore;
+    }
 }
