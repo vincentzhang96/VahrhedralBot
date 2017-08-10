@@ -167,6 +167,8 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
 
         Game oldGame = gameStatus.get(uuid);
         Game newGame = SafeNav.of(event).next(PresenceUpdateEvent::getPresenceUpdate).get(PresenceUpdate::getGame);
+        //  Update
+        gameStatus.put(uuid, newGame);
 
         //  Null
         if (oldGame == null && newGame == null) {
