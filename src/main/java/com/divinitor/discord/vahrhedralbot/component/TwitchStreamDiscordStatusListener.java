@@ -156,7 +156,7 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
         String uuid = uuid(userId, serverId);
 
         //  Check that we care about this user
-        if (!shouldWatchUser(uuid)) {
+        if (!shouldWatchUser(userId, serverId)) {
             return;
         }
 
@@ -301,12 +301,12 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
     }
 
     private boolean shouldWatchUser(String userId, String serverId) {
-        return shouldWatchUser(uuid(userId, serverId));
+        return true;
     }
 
     private boolean shouldWatchUser(String uuid) {
-        //  TODO
-        return true;
+        String[] split = uuid.split("-");
+        return shouldWatchUser(split[0], split[1]);
     }
 
     private String getBroadcastChannelForServer(String serverId) {

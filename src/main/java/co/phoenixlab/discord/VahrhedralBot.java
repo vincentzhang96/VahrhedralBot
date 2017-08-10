@@ -12,6 +12,7 @@ import co.phoenixlab.discord.commands.Commands;
 import co.phoenixlab.discord.commands.tempstorage.DnTrackStorage;
 import co.phoenixlab.discord.util.NoMatchedStringLocaleStringProvider;
 import co.phoenixlab.discord.util.ResourceBundleLocaleStringProvider;
+import co.phoenixlab.discord.util.TryingScheduledExecutor;
 import com.divinitor.discord.vahrhedralbot.EntryPoint;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
@@ -40,6 +41,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -87,6 +90,9 @@ public class VahrhedralBot implements Runnable {
     private EntryPoint entryPoint;
 
     private JedisPool jedisPool;
+
+    public static final ScheduledExecutorService EXECUTOR_SERVICE =
+        new TryingScheduledExecutor(Executors.newScheduledThreadPool(8), LOGGER);
 
     private static VahrhedralBot instance;
 
