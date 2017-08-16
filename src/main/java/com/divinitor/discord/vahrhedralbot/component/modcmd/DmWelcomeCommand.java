@@ -8,19 +8,15 @@ import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.entities.Channel;
 import co.phoenixlab.discord.api.entities.Server;
 import com.divinitor.discord.vahrhedralbot.serverstorage.ServerStorage;
-import com.divinitor.discord.vahrhedralbot.serverstorage.ServerStorageManager;
-import redis.clients.jedis.Jedis;
 
 public class DmWelcomeCommand implements Command {
 
     private final VahrhedralBot bot;
     private final Localizer loc;
-    private ServerStorageManager storageManager;
 
     public DmWelcomeCommand(VahrhedralBot bot) {
         this.bot = bot;
         this.loc = bot.getLocalizer();
-        this.storageManager = bot.getEntryPoint().getServerStorage();
     }
 
     @Override
@@ -38,7 +34,7 @@ public class DmWelcomeCommand implements Command {
         DiscordApiClient apiClient = context.getApiClient();
         Channel channel = context.getChannel();
 
-        ServerStorage storage = storageManager.getOrInit(server.getId());
+        ServerStorage storage = bot.getEntryPoint().getServerStorage().getOrInit(server.getId());
 
         if (args.equalsIgnoreCase("none")) {
             storage.delete("dmwelcome.message");
@@ -48,7 +44,9 @@ public class DmWelcomeCommand implements Command {
 
         storage.put("dmwelcome.message", args);
 
+        DmWelcomeCommandListener listener = bot.getEntryPoint().getComponent(DmWelcomeCommandListener.class);
+        listener.send(server, context.getAuthor());
 
-
+        apiClient.sendMessage(loc.localize("commands.mod.joindm.response.set"), channel);
     }
 }
