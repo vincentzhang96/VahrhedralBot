@@ -38,10 +38,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
@@ -1114,6 +1111,60 @@ public class DiscordApiClient {
             return NO_MEMBER;
         } finally {
             update("get_member").forBool(ok);
+        }
+    }
+
+    public Future<Channel> createDMAsync(User user) {
+        return executorService.submit(() -> createDM(user));
+    }
+
+    public Future<Channel> createDMAsync(String userId) {
+        return executorService.submit(() -> createDM(userId));
+    }
+
+    public Channel createDM(User user) {
+        if (user == NO_USER) {
+            return NO_CHANNEL;
+        }
+        return createDM(user.getId());
+    }
+
+    public Channel createDM(String userId) {
+        if ("NO_USER".equals(userId)) {
+            return NO_CHANNEL;
+        }
+        Map<String, Object> req = new HashMap<>();
+        req.put("recipient_id", userId);
+
+        boolean ok = false;
+        try {
+            Map<String, String> headers = new HashMap<>();
+            headers.put(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+            headers.put(HttpHeaders.AUTHORIZATION, token);
+            HttpResponse<String> response = Unirest.
+                post("https://discordapp.com/api/users/@me/channels").
+                headers(headers).
+                body(gson.toJson(req)).
+                asString();
+            int status = response.getStatus();
+            if (status == 500) {
+                //  Actually a not found error
+                return NO_CHANNEL;
+            }
+            if (status != 200) {
+                throw new UnirestException("HTTP " + response.getStatus() + ": " + response.getStatusText());
+            }
+            Channel channel = gson.fromJson(response.getBody(), Channel.class);
+            if (channel == null) {
+                throw new UnirestException("Invalid entity: null");
+            }
+            ok = true;
+            return channel;
+        } catch (UnirestException e) {
+            statistics.restErrorCount.increment();
+            return NO_CHANNEL;
+        } finally {
+            update("create_dm").forBool(ok);
         }
     }
 

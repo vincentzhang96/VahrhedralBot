@@ -9,6 +9,7 @@ import co.phoenixlab.discord.VahrhedralBot;
 import co.phoenixlab.discord.api.ApiConst;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.entities.*;
+import co.phoenixlab.discord.commands.admin.DmCommand;
 import co.phoenixlab.discord.commands.admin.FeatureToggleCommand;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -44,6 +45,7 @@ public class AdminCommands {
     private final Map<String, Object> storage;
     public static final String TRIPLE_BACKTICK = "```";
     private final FeatureToggleCommand featureToggleCommand;
+    private final DmCommand dmCommand;
 
     public AdminCommands(VahrhedralBot bot) {
         this.bot = bot;
@@ -56,6 +58,7 @@ public class AdminCommands {
                 disableInnerClassSerialization().
                 create();
         featureToggleCommand = new FeatureToggleCommand(bot);
+        dmCommand = new DmCommand(bot);
     }
 
     public CommandDispatcher getAdminCommandDispatcher() {
@@ -81,6 +84,7 @@ public class AdminCommands {
         d.registerAlwaysActiveCommand("commands.admin.playing", this::updateNowPlaying);
         d.registerAlwaysActiveCommand("commands.admin.integrity", this::checkIntegrity);
         d.registerAlwaysActiveCommand("commands.admin.toggle", featureToggleCommand);
+        d.registerAlwaysActiveCommand("commands.admin.dm", dmCommand);
     }
 
     private void checkIntegrity(MessageContext context, String s) {
