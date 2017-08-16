@@ -43,6 +43,9 @@ public class RedisServerStorage implements ServerStorage {
     @Override
     public <T> T get(String key, Class<T> clazz) {
         String val = getString(key);
+        if (val == null) {
+            return null;
+        }
 
         return gson.fromJson(val, clazz);
     }
