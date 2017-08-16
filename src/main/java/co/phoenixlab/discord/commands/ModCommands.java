@@ -11,6 +11,7 @@ import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.MemberChangeEvent;
 import co.phoenixlab.discord.api.event.MemberChangeEvent.MemberChange;
+import com.divinitor.discord.vahrhedralbot.component.modcmd.DmWelcomeCommand;
 import co.phoenixlab.discord.commands.tempstorage.ServerTimeout;
 import co.phoenixlab.discord.commands.tempstorage.ServerTimeoutStorage;
 import co.phoenixlab.discord.commands.tempstorage.TempServerConfig;
@@ -80,6 +81,8 @@ public class ModCommands {
 
     private final ScheduledExecutorService timeoutService;
 
+    private final DmWelcomeCommand dmWelcomeCommand;
+
     enum JoinLeave {
         JOIN,
         LEAVE,
@@ -98,6 +101,8 @@ public class ModCommands {
                 registerTypeAdapter(Duration.class, new DurationGsonTypeAdapter()).
                 create();
         timeoutService = new TryingScheduledExecutor(Executors.newScheduledThreadPool(10), VahrhedralBot.LOGGER);
+
+        dmWelcomeCommand = new DmWelcomeCommand(bot);
     }
 
     public CommandDispatcher getModCommandDispatcher() {
@@ -116,6 +121,7 @@ public class ModCommands {
             d.registerAlwaysActiveCommand("commands.mod.welcome", this::setWelcome);
             d.registerAlwaysActiveCommand("commands.mod.farewell", this::setFarewell);
             d.registerAlwaysActiveCommand("commands.mod.dntrack", this::setDnTrackChannel);
+            d.registerAlwaysActiveCommand("commands.mod.joindm", this.dmWelcomeCommand);
         }
         d.registerAlwaysActiveCommand("commands.admin.find", this::find);
         d.registerAlwaysActiveCommand("commands.mod.setnick", this::setNick);

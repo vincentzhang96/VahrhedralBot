@@ -3,6 +3,8 @@ package com.divinitor.discord.vahrhedralbot;
 import co.phoenixlab.discord.VahrhedralBot;
 import com.divinitor.discord.vahrhedralbot.secrets.SecretsStore;
 import com.divinitor.discord.vahrhedralbot.secrets.impl.RedisSecretStore;
+import com.divinitor.discord.vahrhedralbot.serverstorage.ServerStorageManager;
+import com.divinitor.discord.vahrhedralbot.serverstorage.impl.RedisServerStorageManager;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +24,7 @@ public class EntryPoint {
     private final Map<Class<? extends BotComponent>, BotComponent> componentsAsMap;
 
     private SecretsStore secretsStore;
+    private ServerStorageManager serverStorage;
 
     public EntryPoint(VahrhedralBot bot) {
         this.bot = bot;
@@ -32,6 +35,7 @@ public class EntryPoint {
     public void init() {
 
         secretsStore = new RedisSecretStore(bot.getJedisPool());
+        serverStorage = new RedisServerStorageManager(bot.getJedisPool());
 
         //  Load components
         Reflections reflections = new Reflections("com.divinitor.discord.vahrhedralbot.component");
@@ -93,5 +97,14 @@ public class EntryPoint {
 
     public SecretsStore getSecretsStore() {
         return secretsStore;
+    }
+
+    public ServerStorageManager getServerStorage() {
+        return serverStorage;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T getComponent(Class<T> clazz) {
+        return (T) componentsAsMap.get(clazz);
     }
 }

@@ -319,6 +319,10 @@ public class VahrhedralBot implements Runnable {
         return eventListener;
     }
 
+    public EntryPoint getEntryPoint() {
+        return entryPoint;
+    }
+
     public DiscordApiClient getApiClient() {
         return apiClient;
     }
