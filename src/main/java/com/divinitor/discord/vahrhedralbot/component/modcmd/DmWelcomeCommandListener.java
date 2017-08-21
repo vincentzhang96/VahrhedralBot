@@ -10,18 +10,15 @@ import com.divinitor.discord.vahrhedralbot.EntryPoint;
 import com.divinitor.discord.vahrhedralbot.serverstorage.ServerStorage;
 import com.divinitor.discord.vahrhedralbot.serverstorage.ServerStorageManager;
 import com.google.common.eventbus.Subscribe;
-import redis.clients.jedis.JedisPool;
 
 public class DmWelcomeCommandListener extends AbstractBotComponent {
 
-    private JedisPool jedisPool;
     private ServerStorageManager storageManager;
 
     @Override
     public void register(EntryPoint entryPoint) throws Exception {
         super.register(entryPoint);
 
-        this.jedisPool = entryPoint.getBot().getJedisPool();
         this.storageManager = entryPoint.getServerStorage();
     }
 
