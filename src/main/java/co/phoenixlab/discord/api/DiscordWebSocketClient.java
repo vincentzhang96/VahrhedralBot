@@ -724,6 +724,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         } else {
             org.json.JSONObject game = new org.json.JSONObject();
             game.put("name", message);
+            game.put("type", 0);
             data.put("game", game);
         }
         data.put("idle_since", org.json.JSONObject.NULL);
