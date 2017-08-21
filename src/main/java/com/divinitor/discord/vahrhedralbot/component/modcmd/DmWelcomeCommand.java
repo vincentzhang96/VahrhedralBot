@@ -11,6 +11,7 @@ import com.divinitor.discord.vahrhedralbot.serverstorage.ServerStorage;
 
 public class DmWelcomeCommand implements Command {
 
+    public static final String DMWELCOME_MESSAGE_STORAGE_KEY = "dmwelcome.message";
     private final VahrhedralBot bot;
     private final Localizer loc;
 
@@ -37,12 +38,12 @@ public class DmWelcomeCommand implements Command {
         ServerStorage storage = bot.getEntryPoint().getServerStorage().getOrInit(server.getId());
 
         if (args.equalsIgnoreCase("none")) {
-            storage.delete("dmwelcome.message");
+            storage.delete(DMWELCOME_MESSAGE_STORAGE_KEY);
             apiClient.sendMessage(loc.localize("commands.mod.joindm.response.none"), channel);
             return;
         }
 
-        storage.put("dmwelcome.message", args);
+        storage.put(DMWELCOME_MESSAGE_STORAGE_KEY, args);
 
         DmWelcomeCommandListener listener = bot.getEntryPoint().getComponent(DmWelcomeCommandListener.class);
         listener.send(server, context.getAuthor());
