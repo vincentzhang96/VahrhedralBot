@@ -160,11 +160,6 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
             return;
         }
 
-        if (!gameStatus.containsKey(uuid)) {
-            gameStatus.put(uuid, event.getPresenceUpdate().getGame());
-            return;
-        }
-
         Game oldGame = gameStatus.get(uuid);
         Game newGame = SafeNav.of(event).next(PresenceUpdateEvent::getPresenceUpdate).get(PresenceUpdate::getGame);
         //  Update
@@ -183,7 +178,7 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
         //  No previous status, now streaming
         if (oldGame == null || !oldGame.isStreaming()) {
             if (newGame.isStreaming()) {
-                announceStreamUp(event);
+                announceStreamUp(event, "null/not to true");
             }
             return;
         }
@@ -200,7 +195,7 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
         }
     }
 
-    private void announceStreamUp(PresenceUpdateEvent event) {
+    private void announceStreamUp(PresenceUpdateEvent event, String reason) {
         String serverId = event.getServer().getId();
         if (!getBot().getToggleConfig().getToggle("component.twitch.discord.streamstatus.announce")
             .use(serverId)) {
@@ -270,7 +265,7 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
         embed.setThumbnail(thumbnail);
 
         EmbedFooter footer = new EmbedFooter();
-        footer.setText(loc.localize("component.twitch.sdsl.status.startstream.footer"));
+        footer.setText(loc.localize("component.twitch.sdsl.status.startstream.footer") + " | " + reason);
         embed.setFooter(footer);
 
         embed.setTimestamp(sinfo.getCreatedAt());
