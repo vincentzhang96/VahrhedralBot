@@ -261,10 +261,19 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
         embed.setType(Embed.TYPE_RICH);
         embed.setColor(5846677);
 
-        embed.setDescription(loc.localize("component.twitch.sdsl.status.startstream.message",
-            channel.getDisplayName(),
-            sinfo.getGame(),
-            channel.getUrl()));
+        String gameName = sinfo.getGame();
+        String body;
+        if (Strings.isNullOrEmpty(gameName)) {
+            body = loc.localize("component.twitch.sdsl.status.startstream.message",
+                channel.getDisplayName(),
+                gameName,
+                channel.getUrl());
+        } else {
+            body = loc.localize("component.twitch.sdsl.status.startstream.message.nogame",
+                channel.getDisplayName(),
+                channel.getUrl());
+        }
+        embed.setDescription(body);
 
         EmbedAuthor author = new EmbedAuthor();
         author.setIconUrl(user.getAvatarUrl().toExternalForm());
