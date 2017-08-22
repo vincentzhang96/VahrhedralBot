@@ -24,6 +24,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +36,7 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("VahrhedralBot.TwitchStreamStatus");
     public static final String TWITCH_API_CLIENTID_SECRET_KEY = "api.twitch.clientid";
+    public static final Duration DEBOUNCE_DURATION = Duration.ofMinutes(5);
 
     /**
      * UUID (serverId-userId) to Game
@@ -51,6 +54,8 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
     private LoadingCache<String, String> userNameToIdCache;
 
     private SecretHandle twitchClientId;
+
+    private Map<String, Instant> lastUpdateDebounce;
 
 
     @Override
@@ -74,6 +79,8 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
             .expireAfterWrite(6, TimeUnit.HOURS)
             .maximumSize(1024)
             .build(createClientIdCacheLoader());
+
+        lastUpdateDebounce = new HashMap<>();
     }
 
     private CacheLoader<String, Stream> createStreamCacheLoader() {
@@ -178,7 +185,7 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
         //  No previous status, now streaming
         if (oldGame == null || !oldGame.isStreaming()) {
             if (newGame.isStreaming()) {
-                announceStreamUp(event, "null/not to true");
+                announceStreamUp(event, "null/not to true", true);
             }
             return;
         }
@@ -195,7 +202,7 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
         }
     }
 
-    private void announceStreamUp(PresenceUpdateEvent event, String reason) {
+    private void announceStreamUp(PresenceUpdateEvent event, String reason, boolean debounce) {
         String serverId = event.getServer().getId();
         if (!getBot().getToggleConfig().getToggle("component.twitch.discord.streamstatus.announce")
             .use(serverId)) {
@@ -227,6 +234,21 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
             LOGGER.warn("Stream {} has no channel info", twitchUrl);
             return;
         }
+
+        //  Debounce posting
+        String uuid = uuid(
+            event.getPresenceUpdate().getUser().getId(),
+            event.getServer().getId());
+        Instant lastPost = lastUpdateDebounce.get(uuid);
+        if (lastPost != null && debounce) {
+            Duration elapsed = Duration.between(lastPost, Instant.now()).abs();
+            if (elapsed.compareTo(DEBOUNCE_DURATION) <= 0) {
+                //  Don't re-announce
+                return;
+            }
+        }
+
+        lastUpdateDebounce.put(uuid, Instant.now());
 
         ChannelInfo channel = sinfo.getChannel();
 
