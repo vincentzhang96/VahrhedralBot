@@ -1,4 +1,4 @@
-package com.divinitor.discord.vahrhedralbot.component;
+package com.divinitor.discord.vahrhedralbot.component.twitch;
 
 import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.api.entities.*;

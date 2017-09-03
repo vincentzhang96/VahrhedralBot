@@ -1,4 +1,4 @@
-package com.divinitor.discord.vahrhedralbot.component;
+package com.divinitor.discord.vahrhedralbot.component.twitch;
 
 import co.phoenixlab.common.lang.SafeNav;
 import co.phoenixlab.common.localization.Localizer;
@@ -261,9 +261,9 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
         embed.setType(Embed.TYPE_RICH);
         embed.setColor(5846677);
 
-        String gameName = sinfo.getGame();
+        String gameName = Strings.nullToEmpty(sinfo.getGame()).trim();
         String body;
-        if (Strings.isNullOrEmpty(gameName)) {
+        if (!gameName.isEmpty()) {
             body = loc.localize("component.twitch.sdsl.status.startstream.message",
                 channel.getDisplayName(),
                 gameName,
