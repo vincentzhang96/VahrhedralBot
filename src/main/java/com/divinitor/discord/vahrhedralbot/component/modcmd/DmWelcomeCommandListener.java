@@ -33,7 +33,11 @@ public class DmWelcomeCommandListener extends AbstractBotComponent {
             return;
         }
 
-        send(event.getServer(), getBot().getApiClient().getUserById(event.getMember().getUser().getId()));
+        send(
+            event.getServer(),
+            getBot().getApiClient().getUserById(
+                event.getMember().getUser().getId(),
+                event.getServer()));
     }
 
     public void send(Server server, User user) {
