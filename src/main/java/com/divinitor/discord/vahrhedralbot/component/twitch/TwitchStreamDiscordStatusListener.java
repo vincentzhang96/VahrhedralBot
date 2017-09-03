@@ -287,9 +287,9 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
             user.getUsername(), user.getDiscriminator(), member.getNick()));
         embed.setAuthor(author);
 
-        EmbedImage image = new EmbedImage();
-        image.setUrl(sinfo.getPreview().getMedium());
-        embed.setImage(image);
+//        EmbedImage image = new EmbedImage();
+//        image.setUrl(sinfo.getPreview().getSmall());
+//        embed.setImage(image);
 
         EmbedThumbnail thumbnail = new EmbedThumbnail();
         thumbnail.setUrl(channel.getLogo());
