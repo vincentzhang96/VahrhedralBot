@@ -670,7 +670,7 @@ public class Commands {
                 apiClient.sendMessage(loc.localize("commands.general.minific.response.none"),
                     context.getChannel());
             } else {
-                User user = apiClient.getUserById(fic.getAuthorId());
+                User user = apiClient.getUserById(fic.getAuthorId(), false);
                 apiClient.sendMessage(loc.localize("commands.general.minific.response.random",
                     fic.getId(), user.getUsername(), fic.getDate(), fic.getContent()),
                     context.getChannel());
