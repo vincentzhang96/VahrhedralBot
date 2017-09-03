@@ -971,6 +971,7 @@ public class DiscordApiClient {
                     return member.getUser();
                 } else {
                     LOGGER.warn("User {} not found via HTTP", userId);
+                    LOGGER.warn("Trace", new Exception());
                 }
             } catch (Exception e) {
                 LOGGER.warn("Unable to get user " + userId + " via HTTP", e);
@@ -1011,6 +1012,7 @@ public class DiscordApiClient {
                 return member;
             } else {
                 LOGGER.warn("User {} not found via HTTP", userId);
+                LOGGER.warn("Trace", new Exception());
             }
         } catch (Exception e) {
             LOGGER.warn("Unable to get user " + userId + " via HTTP", e);
