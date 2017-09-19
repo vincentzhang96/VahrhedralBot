@@ -30,11 +30,7 @@ public class DnCritCommand implements Command {
     };
 
     private final Localizer loc;
-    public static final int[] CRIT_DEFAULT_LEVELS;
-
-    static {
-        CRIT_DEFAULT_LEVELS = new int[]{95, 93, 90, 80};
-    }
+    public static final int[] CRIT_DEFAULT_LEVELS = DnCommandUtils.getDefaultLevels();
 
     public DnCritCommand(Localizer loc) {
         this.loc = loc;
@@ -54,7 +50,9 @@ public class DnCritCommand implements Command {
         double critPercent = 0;
         String critAmt = split[0];
         try {
-            if (critAmt.endsWith("%")) {
+            if (critAmt.equalsIgnoreCase("cap")) {
+                critPercent = CRIT_MAX_PERCENT;
+            } else if (critAmt.endsWith("%")) {
                 critPercent = (float) Double.parseDouble(critAmt.substring(0, critAmt.length() - 1)) / 100F;
                 critPercent = Math.min(critPercent, CRIT_MAX_PERCENT);
             } else {

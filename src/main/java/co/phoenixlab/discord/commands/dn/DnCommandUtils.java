@@ -7,6 +7,11 @@ public class DnCommandUtils {
 
     public static final String DIVINITOR_FOOTER_TEXT = "Powered by Divinitor";
     public static final String DIVINITOR_FOOTER_ICON_URL = "https://divinitor.com/resources/img/dv-logo.png";
+    private static final int[] DEFAULT_LEVELS = new int[] {95, 93, 90, 80};
+
+    public static int[] getDefaultLevels() {
+        return DEFAULT_LEVELS;
+    }
 
     private DnCommandUtils() {}
 

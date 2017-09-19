@@ -30,11 +30,7 @@ public class DnCritDmgCommand implements Command {
     };
 
     private final Localizer loc;
-    public static final int[] CRITDMG_DEFAULT_LEVELS;
-
-    static {
-        CRITDMG_DEFAULT_LEVELS = new int[]{95, 93, 90, 80};
-    }
+    public static final int[] CRITDMG_DEFAULT_LEVELS = DnCommandUtils.getDefaultLevels();
 
     public DnCritDmgCommand(Localizer loc) {
         this.loc = loc;
@@ -54,7 +50,9 @@ public class DnCritDmgCommand implements Command {
         float critDmgPercent = 0;
         String critDmgAmt = split[0];
         try {
-            if (critDmgAmt.endsWith("%")) {
+            if (critDmgAmt.equalsIgnoreCase("cap")) {
+                critDmgPercent = CRITDMG_MAX_PERCENT;
+            } else if (critDmgAmt.endsWith("%")) {
                 String noPercent = critDmgAmt.substring(0, critDmgAmt.length() - 1);
                 critDmgPercent = ((float) Double.parseDouble(noPercent) - 200F) / 100F;
                 critDmgPercent = Math.min(critDmgPercent, CRITDMG_MAX_PERCENT);

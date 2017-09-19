@@ -30,11 +30,7 @@ public class DnDefCommand implements Command {
     };
 
     private final Localizer loc;
-    public static final int[] DEF_DEFAULT_LEVELS;
-
-    static {
-        DEF_DEFAULT_LEVELS = new int[]{95, 93, 90, 80};
-    }
+    public static final int[] DEF_DEFAULT_LEVELS = DnCommandUtils.getDefaultLevels();
 
     public DnDefCommand(Localizer loc) {
         this.loc = loc;
@@ -54,7 +50,9 @@ public class DnDefCommand implements Command {
         float defPercent = 0;
         String defAmt = split[0];
         try {
-            if (defAmt.endsWith("%")) {
+            if (defAmt.equalsIgnoreCase("cap")) {
+                defPercent = DEF_MAX_PERCENT;
+            } else if (defAmt.endsWith("%")) {
                 defPercent = (float) Double.parseDouble(defAmt.substring(0, defAmt.length() - 1)) / 100F;
                 defPercent = Math.min(defPercent, DEF_MAX_PERCENT);
             } else {

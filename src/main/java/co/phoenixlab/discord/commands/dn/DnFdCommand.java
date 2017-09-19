@@ -32,11 +32,7 @@ public class DnFdCommand implements Command {
     public static final float FD_INVERSE_POWER = 0.45454545454545454545F;
     public static final float FD_INVERSE_COEFF = 2.857142857F;
     public static final float FD_INVERSE_BREAKING_POINT = 0.146F;
-    public static final int[] FD_DEFAULT_LEVELS;
-
-    static {
-        FD_DEFAULT_LEVELS = new int[]{95, 93, 90, 80};
-    }
+    public static final int[] FD_DEFAULT_LEVELS = DnCommandUtils.getDefaultLevels();
 
     private final Localizer loc;
 
@@ -58,7 +54,9 @@ public class DnFdCommand implements Command {
         float fdPercent = 0;
         String fdAmt = split[0];
         try {
-            if (fdAmt.endsWith("%")) {
+            if (fdAmt.equalsIgnoreCase("cap")) {
+                fdPercent = FD_MAX_PERCENT;
+            } else if (fdAmt.endsWith("%")) {
                 fdPercent = (float) Double.parseDouble(fdAmt.substring(0, fdAmt.length() - 1)) / 100F;
                 fdPercent = Math.min(fdPercent, FD_MAX_PERCENT);
             } else {
