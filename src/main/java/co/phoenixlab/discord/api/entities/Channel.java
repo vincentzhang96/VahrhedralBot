@@ -1,5 +1,6 @@
 package co.phoenixlab.discord.api.entities;
 
+import co.phoenixlab.discord.api.DiscordApiClient;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Objects;
@@ -34,6 +35,7 @@ public class Channel {
     public Channel(String id, String name) {
         this.id = id;
         this.name = name;
+        this.parent = DiscordApiClient.NO_SERVER;
     }
 
     public Channel() {
