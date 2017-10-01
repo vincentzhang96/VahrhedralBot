@@ -2,16 +2,12 @@ package co.phoenixlab.discord.chatlogger;
 
 import co.phoenixlab.discord.VahrhedralBot;
 import co.phoenixlab.discord.api.DiscordApiClient;
-import co.phoenixlab.discord.api.entities.Channel;
-import co.phoenixlab.discord.api.entities.Message;
-import co.phoenixlab.discord.api.entities.Server;
-import co.phoenixlab.discord.api.entities.User;
-import co.phoenixlab.discord.api.event.ChannelChangeEvent;
-import co.phoenixlab.discord.api.event.MessageDeleteEvent;
-import co.phoenixlab.discord.api.event.MessageEditEvent;
-import co.phoenixlab.discord.api.event.MessageReceivedEvent;
+import co.phoenixlab.discord.api.entities.*;
+import co.phoenixlab.discord.api.event.*;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.primitives.Longs;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -42,9 +38,12 @@ public class ChatLogger {
 
     private boolean logFailure = false;
 
+    private final Gson gson;
+
     private final DiscordApiClient apiClient;
 
     public ChatLogger(DiscordApiClient apiClient) {
+        this.gson = new GsonBuilder().create();
         this.apiClient = apiClient;
         apiClient.getEventBus().register(this);
     }
@@ -73,8 +72,22 @@ public class ChatLogger {
         if (channelChangeEvent.getChannelChange() == ChannelChangeEvent.ChannelChange.UPDATED) {
             Channel channel = channelChangeEvent.getChannel();
             log(DATE_TIME_FORMATTER.format(ZonedDateTime.now()) +
-                            " -C- Channel name changed to #" + channel.getName(),
+                            " -C- Channel: " + gson.toJson(channelChangeEvent),
                     channel.getParent(), channel);
+        }
+    }
+
+    @Subscribe
+    public void onMemberChange(MemberChangeEvent event) {
+        User user = event.getMember().getUser();
+        if (event.getMemberChange() == MemberChangeEvent.MemberChange.ADDED) {
+            log(DATE_TIME_FORMATTER.format(ZonedDateTime.now()) +
+                    " -M- JOINED: " + user.getUsername() + "#" + user.getDiscriminator() + ":" + user.getId(),
+                event.getServer().getId(), event.getServer().getId(), "general");
+        } else if (event.getMemberChange() == MemberChangeEvent.MemberChange.DELETED) {
+            log(DATE_TIME_FORMATTER.format(ZonedDateTime.now()) +
+                    " -M- LEFT: " + user.getUsername() + "#" + user.getDiscriminator() + ":" + user.getId(),
+                event.getServer().getId(), event.getServer().getId(), "general");
         }
     }
 
