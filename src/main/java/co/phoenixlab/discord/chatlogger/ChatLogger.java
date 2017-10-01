@@ -83,11 +83,11 @@ public class ChatLogger {
         if (event.getMemberChange() == MemberChangeEvent.MemberChange.ADDED) {
             log(DATE_TIME_FORMATTER.format(ZonedDateTime.now()) +
                     " -M- JOINED: " + user.getUsername() + "#" + user.getDiscriminator() + ":" + user.getId(),
-                event.getServer().getId(), event.getServer().getId(), "general");
+                event.getServer().getId(), "userlog", "userlog");
         } else if (event.getMemberChange() == MemberChangeEvent.MemberChange.DELETED) {
             log(DATE_TIME_FORMATTER.format(ZonedDateTime.now()) +
                     " -M- LEFT: " + user.getUsername() + "#" + user.getDiscriminator() + ":" + user.getId(),
-                event.getServer().getId(), event.getServer().getId(), "general");
+                event.getServer().getId(), "userlog", "userlog");
         }
     }
 
