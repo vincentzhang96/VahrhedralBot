@@ -18,7 +18,7 @@ public class ApiConst {
     /**
      * Base API path
      */
-    public static final String API_BASE_PATH = BASE_URL + "api";
+    public static final String API_BASE_PATH = BASE_URL + "api/v6";
     /**
      * WebSocket gateway
      */
