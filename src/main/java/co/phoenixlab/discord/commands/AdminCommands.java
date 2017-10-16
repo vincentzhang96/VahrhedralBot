@@ -85,6 +85,15 @@ public class AdminCommands {
         d.registerAlwaysActiveCommand("commands.admin.integrity", this::checkIntegrity);
         d.registerAlwaysActiveCommand("commands.admin.toggle", featureToggleCommand);
         d.registerAlwaysActiveCommand("commands.admin.dm", dmCommand);
+        d.registerAlwaysActiveCommand("commands.admin.announce", this::announce);
+    }
+
+    private void announce(MessageContext context, String s) {
+        DiscordApiClient api = context.getApiClient();
+        api.getServers().forEach(server -> {
+            Channel c = api.getChannelById(server.getId());
+            api.sendMessage(s, c);
+        });
     }
 
     private void checkIntegrity(MessageContext context, String s) {
