@@ -536,24 +536,28 @@ public class EventListener {
         TempServerConfig config = bot.getCommands().getModCommands().getServerStorage().get(server.getId());
         String customWelcomeMessage = SafeNav.of(config).get(TempServerConfig::getCustomWelcomeMessage);
         String customLeaveMessage = SafeNav.of(config).get(TempServerConfig::getCustomLeaveMessage);
-        if (event.getMemberChange() == MemberChangeEvent.MemberChange.ADDED && customWelcomeMessage != null) {
-            if (!customWelcomeMessage.isEmpty()) {
-                bot.getApiClient().sendMessage(createJoinLeaveMessage(user, server, customWelcomeMessage),
+
+        if (bot.getToggleConfig().getToggle("listener.jl").use(server.getId(), cid)) {
+            if (event.getMemberChange() == MemberChangeEvent.MemberChange.ADDED && customWelcomeMessage != null) {
+                if (!customWelcomeMessage.isEmpty()) {
+                    bot.getApiClient().sendMessage(createJoinLeaveMessage(user, server, customWelcomeMessage),
+                        cid);
+                }
+            } else if (event.getMemberChange() == MemberChangeEvent.MemberChange.DELETED && customLeaveMessage != null) {
+                if (!customLeaveMessage.isEmpty()) {
+                    bot.getApiClient().sendMessage(createJoinLeaveMessage(user, server, customLeaveMessage),
+                        cid);
+                }
+            } else {
+                bot.getApiClient().sendMessage(bot.getLocalizer().localize(key,
+                    user.getUsername(),
+                    user.getId(),
+                    user.getDiscriminator(),
+                    DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())),
                     cid);
             }
-        } else if (event.getMemberChange() == MemberChangeEvent.MemberChange.DELETED && customLeaveMessage != null) {
-            if (!customLeaveMessage.isEmpty()) {
-                bot.getApiClient().sendMessage(createJoinLeaveMessage(user, server, customLeaveMessage),
-                    cid);
-            }
-        } else {
-            bot.getApiClient().sendMessage(bot.getLocalizer().localize(key,
-                user.getUsername(),
-                user.getId(),
-                user.getDiscriminator(),
-                DateTimeFormatter.ofPattern("HH:mm:ss z").format(ZonedDateTime.now())),
-                cid);
         }
+
         memberChangeEventListener.values().forEach(c -> c.accept(event));
     }
 
