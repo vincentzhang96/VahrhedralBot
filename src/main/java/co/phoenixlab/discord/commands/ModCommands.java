@@ -112,19 +112,19 @@ public class ModCommands {
     public void registerModCommands() {
         CommandDispatcher d = dispatcher;
         if (!bot.getConfig().isSelfBot()) {
-            d.registerAlwaysActiveCommand("commands.mod.timeout", this::timeout);
-            d.registerAlwaysActiveCommand("commands.mod.stoptimeout", this::stopTimeout);
-            d.registerAlwaysActiveCommand("commands.mod.settimeoutrole", this::setTimeoutRole);
-            d.registerAlwaysActiveCommand("commands.mod.vanish", this::vanish);
-            d.registerAlwaysActiveCommand("commands.mod.ban", this::ban);
-            d.registerAlwaysActiveCommand("commands.mod.jl", this::joinLeave);
-            d.registerAlwaysActiveCommand("commands.mod.welcome", this::setWelcome);
-            d.registerAlwaysActiveCommand("commands.mod.farewell", this::setFarewell);
-            d.registerAlwaysActiveCommand("commands.mod.dntrack", this::setDnTrackChannel);
-            d.registerAlwaysActiveCommand("commands.mod.joindm", this.dmWelcomeCommand);
+            d.registerCommand("commands.mod.timeout", this::timeout);
+            d.registerCommand("commands.mod.stoptimeout", this::stopTimeout);
+            d.registerCommand("commands.mod.settimeoutrole", this::setTimeoutRole);
+            d.registerCommand("commands.mod.vanish", this::vanish);
+            d.registerCommand("commands.mod.ban", this::ban);
+            d.registerCommand("commands.mod.jl", this::joinLeave);
+            d.registerCommand("commands.mod.welcome", this::setWelcome);
+            d.registerCommand("commands.mod.farewell", this::setFarewell);
+            d.registerCommand("commands.mod.dntrack", this::setDnTrackChannel);
+            d.registerCommand("commands.mod.joindm", this.dmWelcomeCommand);
         }
-        d.registerAlwaysActiveCommand("commands.admin.find", this::find);
-        d.registerAlwaysActiveCommand("commands.mod.setnick", this::setNick);
+        d.registerCommand("commands.admin.find", this::find);
+        d.registerCommand("commands.mod.setnick", this::setNick);
 
         EventBus eventBus = bot.getApiClient().getEventBus();
         eventBus.register(new WeakEventSubscriber<>(memberJoinListener, eventBus, MemberChangeEvent.class));
