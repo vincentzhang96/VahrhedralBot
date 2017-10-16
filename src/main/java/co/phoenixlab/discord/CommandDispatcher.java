@@ -227,8 +227,7 @@ public class CommandDispatcher {
             customCommandDispatchChecker.test(command, context);
         VahrhedralBot bot = context.getBot();
         FeatureToggle toggle = bot.getToggleConfig().getToggle(command.commandKey);
-        return !(!toggle.use(context.getServer().getId(), context.getChannel().getId())
-            && /*!bot.getConfig().isAdmin(context.getAuthor().getId())) &&*/ generalAllow;
+        return toggle.use(context.getServer().getId(), context.getChannel().getId()) && generalAllow;
     }
 
     public static class Statistics {
