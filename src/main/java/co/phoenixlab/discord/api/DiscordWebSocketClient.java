@@ -97,7 +97,7 @@ public class DiscordWebSocketClient extends WebSocketClient {
         connectObj.put("op", 2);
         org.json.JSONObject dataObj = new org.json.JSONObject();
         dataObj.put("token", apiClient.getToken());
-        dataObj.put("v", 3);
+        dataObj.put("v", 6);
         dataObj.put("large_threshold", 250);
         dataObj.put("compress", false);
         org.json.JSONObject properties = new org.json.JSONObject();
