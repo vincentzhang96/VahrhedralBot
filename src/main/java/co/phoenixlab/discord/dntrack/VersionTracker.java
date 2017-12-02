@@ -97,7 +97,7 @@ public class VersionTracker implements Runnable {
 
     private int parseVersion(String verStr) {
         //  Version strings come in as "version #" sometimes with other junk coming after
-        String[] split = verStr.split(" ");
+        String[] split = verStr.split("\\s+");
         if (split.length < 2) {
             throw new NumberFormatException(verStr);
         }
