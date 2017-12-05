@@ -131,6 +131,12 @@ public class DiscordWebSocketClient extends WebSocketClient {
                     return;
                 }
                 int opCode = ((Number) msg.get("op")).intValue();
+
+                if (opCode == 10) {
+                    handleHeartbeatMessage((JSONObject) msg.get("d"));
+                    return;
+                }
+
                 if (opCode != 0) {
                     LOGGER.warn("Unknown opcode {} received: {}", opCode,
                             message);
@@ -624,11 +630,17 @@ public class DiscordWebSocketClient extends WebSocketClient {
 
     private void handleReadyMessage(JSONObject data) {
         ReadyMessage readyMessage = jsonObjectToObject(data, ReadyMessage.class);
-        startKeepAlive(readyMessage.getHeartbeatInterval());
-        LOGGER.info("[0] '': Sending keepAlive every {} ms", readyMessage.getHeartbeatInterval());
+//        startKeepAlive(readyMessage.getHeartbeatInterval());
+//        LOGGER.info("[0] '': Sending keepAlive every {} ms", readyMessage.getHeartbeatInterval());
         LogInEvent event = new LogInEvent(readyMessage);
         apiClient.onLogInEvent(event);
         apiClient.getEventBus().post(event);
+    }
+
+    private void handleHeartbeatMessage(JSONObject data) {
+        int interval = ((Number) data.get("heartbeat_interval")).intValue();
+        startKeepAlive(interval);
+        LOGGER.info("[0] '': Sending keepAlive every {} ms", interval);
     }
 
     private void handleGuildCreate(JSONObject data) {
