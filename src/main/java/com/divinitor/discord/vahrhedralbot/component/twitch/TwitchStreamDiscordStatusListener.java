@@ -8,6 +8,7 @@ import co.phoenixlab.discord.util.ResourceBundleLocaleStringProvider;
 import com.divinitor.discord.vahrhedralbot.AbstractBotComponent;
 import com.divinitor.discord.vahrhedralbot.EntryPoint;
 import com.divinitor.discord.vahrhedralbot.secrets.SecretHandle;
+import com.divinitor.discord.vahrhedralbot.serverstorage.ServerStorage;
 import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -57,6 +58,9 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
 
     private Map<String, Instant> lastUpdateDebounce;
 
+    private static String uuid(String userId, String serverId) {
+        return userId + "-" + serverId;
+    }
 
     @Override
     public void register(EntryPoint entryPoint) throws Exception {
@@ -116,8 +120,8 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
     private String getId(String twitchUsername) throws UnirestException, IOException {
         HttpResponse<JsonNode> resp = Unirest.get("https://api.twitch.tv/kraken/users?login=" +
             URLEncoder.encode(twitchUsername, "UTF-8"))
-        .headers(headers())
-        .asJson();
+            .headers(headers())
+            .asJson();
 
         LOGGER.debug(resp.getBody().toString());
 
@@ -336,12 +340,13 @@ public class TwitchStreamDiscordStatusListener extends AbstractBotComponent {
     }
 
     private String getBroadcastChannelForServer(String serverId) {
-        //  TODO
-        return serverId;
-    }
+        ServerStorage storage = this.getEntryPoint().getServerStorage().getOrInit(serverId);
+        String ch = storage.getString("component.twitch.discord.streamstatus.announce.channel");
+        if (Strings.isNullOrEmpty(ch)) {
+            return serverId;
+        }
 
-    private static String uuid(String userId, String serverId) {
-        return userId + "-" + serverId;
+        return ch;
     }
 
     public static class Stream {
