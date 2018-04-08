@@ -78,13 +78,13 @@ public class Commands {
         modCommands.registerModCommands();
         d.registerAlwaysActiveCommand("commands.general.admin", this::admin, true);
         d.registerAlwaysActiveCommand("commands.general.mod", this::mod);
-        d.registerCommand("commands.general.info", this::info);
-        d.registerCommand("commands.general.info2", this::info2);
-        d.registerCommand("commands.general.avatar", this::avatar);
+//        d.registerCommand("commands.general.info", this::info);
+//        d.registerCommand("commands.general.info2", this::info2);
+//        d.registerCommand("commands.general.avatar", this::avatar);
         d.registerCommand("commands.general.version", this::version, true);
         d.registerCommand("commands.general.stats", this::stats, true);
         d.registerCommand("commands.general.roles", this::roles, true);
-        d.registerCommand("commands.general.dn", this::dnCommands);
+//        d.registerCommand("commands.general.dn", this::dnCommands);
         d.registerCommand("commands.general.insult", this::insult);
         d.registerCommand("commands.general.minific", this::minific);
         d.registerCommand("commands.general.gamepop", this::gamePop);

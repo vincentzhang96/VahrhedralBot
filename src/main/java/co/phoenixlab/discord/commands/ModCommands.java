@@ -117,11 +117,11 @@ public class ModCommands {
             d.registerCommand("commands.mod.settimeoutrole", this::setTimeoutRole);
             d.registerCommand("commands.mod.vanish", this::vanish);
             d.registerCommand("commands.mod.ban", this::ban);
-            d.registerCommand("commands.mod.jl", this::joinLeave);
-            d.registerCommand("commands.mod.welcome", this::setWelcome);
-            d.registerCommand("commands.mod.farewell", this::setFarewell);
+//            d.registerCommand("commands.mod.jl", this::joinLeave);
+//            d.registerCommand("commands.mod.welcome", this::setWelcome);
+//            d.registerCommand("commands.mod.farewell", this::setFarewell);
             d.registerCommand("commands.mod.dntrack", this::setDnTrackChannel);
-            d.registerCommand("commands.mod.joindm", this.dmWelcomeCommand);
+//            d.registerCommand("commands.mod.joindm", this.dmWelcomeCommand);
         }
         d.registerCommand("commands.admin.find", this::find);
         d.registerCommand("commands.mod.setnick", this::setNick);
