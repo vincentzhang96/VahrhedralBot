@@ -120,7 +120,7 @@ public class ModCommands {
 //            d.registerCommand("commands.mod.jl", this::joinLeave);
 //            d.registerCommand("commands.mod.welcome", this::setWelcome);
 //            d.registerCommand("commands.mod.farewell", this::setFarewell);
-            d.registerCommand("commands.mod.dntrack", this::setDnTrackChannel);
+//            d.registerCommand("commands.mod.dntrack", this::setDnTrackChannel);
 //            d.registerCommand("commands.mod.joindm", this.dmWelcomeCommand);
         }
         d.registerCommand("commands.admin.find", this::find);

@@ -6,6 +6,7 @@ import co.phoenixlab.common.localization.Localizer;
 import co.phoenixlab.discord.api.DiscordApiClient;
 import co.phoenixlab.discord.api.entities.*;
 import co.phoenixlab.discord.api.event.*;
+import co.phoenixlab.discord.cfg.FeatureToggleConfig;
 import co.phoenixlab.discord.cfg.JoinLeaveLimits;
 import co.phoenixlab.discord.commands.tempstorage.DnTrackInfo;
 import co.phoenixlab.discord.commands.tempstorage.TempServerConfig;
@@ -477,7 +478,9 @@ public class EventListener {
 
         //  167264528537485312 dnnacd #activity-log
         //  avoid duplicates
-        if (event.getServer().getId().equals("106293726271246336") && !"167264528537485312".equals(cid)) {
+        FeatureToggleConfig toggleConfig = bot.getToggleConfig();
+        if (toggleConfig.getToggle("listener.jl.dnnacd.activitylog").use(event.getServer().getId()) &&
+            event.getServer().getId().equals("106293726271246336") && !"167264528537485312".equals(cid)) {
             bot.getApiClient().sendMessage(bot.getLocalizer().localize(key,
                 user.getUsername(),
                 user.getId(),
@@ -489,47 +492,51 @@ public class EventListener {
         //  Join-leave spam prevention
         if (event.getServer().getId().equals("106293726271246336")) {
             //  Name collision check
-            Set<Member> members = event.getServer().getMembers();
-            Set<Member> similar = members.stream()
-                .filter(m -> !m.getUser().getId().equals(user.getId()))
-                .filter(m -> isNameSimilar(m.getUser().getUsername(), user.getUsername()))
-                .collect(Collectors.toSet());
-            if (!similar.isEmpty()) {
-                StringJoiner joiner = new StringJoiner("\n");
-                similar.stream()
-                    .map(member -> String.format("%s#%s (%s)",
-                        member.getUser().getUsername(),
-                        member.getUser().getDiscriminator(),
-                        member.getUser().getId()))
-                    .forEach(joiner::add);
-                bot.getApiClient()
-                    .sendMessage(String.format("**WARNING**\n`%s#%s` (%s) has the same name as:\n```%s```",
-                        user.getUsername(), user.getDiscriminator(), user.getId(), joiner.toString()), cid);
+            if (toggleConfig.getToggle("listener.jl.dnnacd.samename").use(event.getServer().getId())) {
+                Set<Member> members = event.getServer().getMembers();
+                Set<Member> similar = members.stream()
+                    .filter(m -> !m.getUser().getId().equals(user.getId()))
+                    .filter(m -> isNameSimilar(m.getUser().getUsername(), user.getUsername()))
+                    .collect(Collectors.toSet());
+                if (!similar.isEmpty()) {
+                    StringJoiner joiner = new StringJoiner("\n");
+                    similar.stream()
+                        .map(member -> String.format("%s#%s (%s)",
+                            member.getUser().getUsername(),
+                            member.getUser().getDiscriminator(),
+                            member.getUser().getId()))
+                        .forEach(joiner::add);
+                    bot.getApiClient()
+                        .sendMessage(String.format("**WARNING**\n`%s#%s` (%s) has the same name as:\n```%s```",
+                            user.getUsername(), user.getDiscriminator(), user.getId(), joiner.toString()), cid);
+                }
             }
 
-            if (joinLeaveLimiters == null) {
-                joinLeaveLimiters = CacheBuilder.newBuilder()
-                    .expireAfterAccess(bot.getConfig().getJlLimit().getCacheEvictionTimeMs(),
-                        TimeUnit.MILLISECONDS)
-                    .build(new CacheLoader<String, RateLimiter>() {
-                        @Override
-                        public RateLimiter load(String key) throws Exception {
-                            return buildLimiter(key);
-                        }
-                    });
-            }
-            try {
-                RateLimiter limiter = joinLeaveLimiters.get(user.getId());
-                if (limiter.tryMark() != 0) {
-                    //  Join-leave spam detected
-                    bot.getCommands().getModCommands().banChecked(channel,
-                        bot.getApiClient().getClientUser(), user, server);
-                    bot.getApiClient().sendMessage(String.format("`%s#%s` (%s) has been banned for join-leave spam",
-                        user.getUsername(), user.getDiscriminator(), user.getId()), cid);
-                    return;
+            if (toggleConfig.getToggle("listener.jl.dnnacd.spam").use(event.getServer().getId())) {
+                if (joinLeaveLimiters == null) {
+                    joinLeaveLimiters = CacheBuilder.newBuilder()
+                        .expireAfterAccess(bot.getConfig().getJlLimit().getCacheEvictionTimeMs(),
+                            TimeUnit.MILLISECONDS)
+                        .build(new CacheLoader<String, RateLimiter>() {
+                            @Override
+                            public RateLimiter load(String key) throws Exception {
+                                return buildLimiter(key);
+                            }
+                        });
                 }
-            } catch (ExecutionException e) {
-                VahrhedralBot.LOGGER.warn("Failed to load rate limiter for " + user.getId(), e);
+                try {
+                    RateLimiter limiter = joinLeaveLimiters.get(user.getId());
+                    if (limiter.tryMark() != 0) {
+                        //  Join-leave spam detected
+                        bot.getCommands().getModCommands().banChecked(channel,
+                            bot.getApiClient().getClientUser(), user, server);
+                        bot.getApiClient().sendMessage(String.format("`%s#%s` (%s) has been banned for join-leave spam",
+                            user.getUsername(), user.getDiscriminator(), user.getId()), cid);
+                        return;
+                    }
+                } catch (ExecutionException e) {
+                    VahrhedralBot.LOGGER.warn("Failed to load rate limiter for " + user.getId(), e);
+                }
             }
         }
 
@@ -537,7 +544,7 @@ public class EventListener {
         String customWelcomeMessage = SafeNav.of(config).get(TempServerConfig::getCustomWelcomeMessage);
         String customLeaveMessage = SafeNav.of(config).get(TempServerConfig::getCustomLeaveMessage);
 
-        if (bot.getToggleConfig().getToggle("listener.jl").use(server.getId(), cid)) {
+        if (toggleConfig.getToggle("listener.jl").use(server.getId(), cid)) {
             if (event.getMemberChange() == MemberChangeEvent.MemberChange.ADDED && customWelcomeMessage != null) {
                 if (!customWelcomeMessage.isEmpty()) {
                     bot.getApiClient().sendMessage(createJoinLeaveMessage(user, server, customWelcomeMessage),
@@ -582,12 +589,15 @@ public class EventListener {
         if (!event.getServer().getId().equals("106293726271246336")) {
             return;
         }
-        User user = event.getPresenceUpdate().getUser();
-        if (user.getUsername() != null && !event.getOldUsername().equals(user.getUsername())) {
-            //  167264528537485312 dnnacd #activity-log
-            bot.getApiClient().sendMessage(String.format("`%s` changed name to `%s` (%s)",
-                event.getOldUsername(), user.getUsername(),
-                user.getId()), "167264528537485312");
+
+        if (bot.getToggleConfig().getToggle("listener.presence.dnnacd").use(event.getServer().getId())) {
+            User user = event.getPresenceUpdate().getUser();
+            if (user.getUsername() != null && !event.getOldUsername().equals(user.getUsername())) {
+                //  167264528537485312 dnnacd #activity-log
+                bot.getApiClient().sendMessage(String.format("`%s` changed name to `%s` (%s)",
+                    event.getOldUsername(), user.getUsername(),
+                    user.getId()), "167264528537485312");
+            }
         }
     }
 
@@ -642,7 +652,8 @@ public class EventListener {
         if (server == null || user == null) {
             return;
         }
-        if (server.getId().equals("106293726271246336")) {
+        if (bot.getToggleConfig().getToggle("listener.jl.dnnacd.spam").use(server.getId()) &&
+            server.getId().equals("106293726271246336")) {
             //  167264528537485312 dnnacd #activity-log
             if (event.getChange() == ServerBanChangeEvent.BanChange.ADDED) {
                 bot.getApiClient().sendMessage(String.format("`%s` (%s) was banned",
