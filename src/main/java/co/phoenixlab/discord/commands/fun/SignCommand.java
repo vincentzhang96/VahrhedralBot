@@ -56,6 +56,9 @@ public class SignCommand implements Command {
         if (checkRateLimit(context, context.getAuthor(), context.getChannel())) {
             return;
         }
+        
+        args = args.replace("@everyone", "@someone").replace("@here", "@someone");  
+        
         String[] lines = new String[args.length() / MESSAGE_AREA_WIDTH + 1];
         for (int i = 0; i < lines.length; i++) {
             lines[i] = args.substring(i * MESSAGE_AREA_WIDTH,
@@ -85,8 +88,11 @@ public class SignCommand implements Command {
     }
 
     private String getUserDisplayName(User user, Member member) {
-        return isNullOrEmpty(member.getNick()) ?
+        String ret = isNullOrEmpty(member.getNick()) ?
             user.getUsername() : member.getNick();
+        ret = ret.replace("@everyone", "nice try").replace("@here", "nice try");
+
+        return ret;
     }
 
     private boolean checkRateLimit(MessageContext context, User user, Channel channel) {
